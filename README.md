@@ -7,7 +7,7 @@ Tesis de grado de IA
 ## Links
 
 - [Overleaf Project](https://es.overleaf.com/project)
-
+- [IA super set](https://superset.apache.org/user-docs/using-superset/using-ai-with-superset)
 
 
 pendientes:
