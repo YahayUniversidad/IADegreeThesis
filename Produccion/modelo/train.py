@@ -2,6 +2,11 @@
 # Script generado a partir del notebook Final_V2.ipynb
 # Contiene el pipeline principal para entrenamiento del modelo CNN multi-horizonte
 
+# [Probar con otros elementos que no sea solo sigmoide para mejorar el balanceo que es un error]
+## en las epocas se puede mejorar con una parada temprana para mejorar el numero de epocas.
+## Tambien colocar graficas que se vean del entrenamiento para mostrar los procesos de entrenamiento. Resumen luego de cada proceso de entrenamiento para 
+## tomar las decisiones sobre los proceso. poner como resumen y enviar quatro
+## Tecnicas de balanceo de datos analizar y probar. con muestras sinteticas.. Y ver el tiempo que tengo para la muestra... 
 import os
 import wandb
 import numpy as np
