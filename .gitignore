@@ -4,6 +4,6 @@ wandb/
 .vscode/
 .venv/
 
-
+.env
 
 *.csv

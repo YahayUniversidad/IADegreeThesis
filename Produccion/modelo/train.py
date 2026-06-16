@@ -28,7 +28,6 @@ from sklearn.preprocessing import MinMaxScaler
 from sqlalchemy import create_engine
 from tensorflow.keras import layers, Model
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from prometheus_client import start_http_server
 from wandb.integration.keras import WandbCallback
 
@@ -39,7 +38,6 @@ os.environ['WANDB_API_KEY'] = 'wandb_v1_aR1svxhThTwkQb3ggxdopxypBHi_M6r2l7EySm1N
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configuración de conexión a la base de datos
@@ -458,6 +456,205 @@ def evaluar_y_guardar(
     logging.info("Configuracion guardada")
 
 
+def poblar_datamart_historico(df_features):
+    """
+    Inserta las dimensiones y los hechos históricos en el datamart
+    a partir del DataFrame de features generado durante el entrenamiento.
+    Usa ON CONFLICT para ser idempotente (re-ejecución segura).
+    """
+    logging.info("Poblando datamart historico...")
+
+    # 1. Upsert dim_tiempo desde los meses únicos
+    meses_unicos = pd.to_datetime(df_features["mes"]).dt.date.unique()
+    with engine.connect() as conn:
+        for mes in meses_unicos:
+            conn.execute(
+                """
+                INSERT INTO dim_tiempo (mes, anio, trimestre, mes_del_anio, nombre_mes)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (mes) DO NOTHING
+                """,
+                (
+                    mes,
+                    mes.year,
+                    (mes.month - 1) // 3 + 1,
+                    mes.month,
+                    mes.strftime("%B"),
+                ),
+            )
+        conn.commit()
+
+    # 2. Upsert dim_riesgo
+    with engine.connect() as conn:
+        for riesgo in df_features["riesgo"].unique():
+            conn.execute(
+                """
+                INSERT INTO dim_riesgo (codigo_riesgo, descripcion)
+                VALUES (%s, %s)
+                ON CONFLICT (codigo_riesgo) DO NOTHING
+                """,
+                (str(riesgo), str(riesgo)),
+            )
+        conn.commit()
+
+    # 3. Upsert dim_sector
+    with engine.connect() as conn:
+        for sector in df_features["sector"].unique():
+            conn.execute(
+                """
+                INSERT INTO dim_sector (codigo_sector, descripcion)
+                VALUES (%s, %s)
+                ON CONFLICT (codigo_sector) DO NOTHING
+                """,
+                (str(sector), str(sector)),
+            )
+        conn.commit()
+
+    # 4. Upsert dim_sucursal
+    sucursales = (
+        df_features[["codigo_sucursal", "codigo_provincia"]]
+        .drop_duplicates()
+        .values
+    )
+    with engine.connect() as conn:
+        for cod_suc, cod_prov in sucursales:
+            conn.execute(
+                """
+                INSERT INTO dim_sucursal (codigo_sucursal, codigo_provincia)
+                VALUES (%s, %s)
+                ON CONFLICT (codigo_sucursal, codigo_provincia) DO NOTHING
+                """,
+                (int(cod_suc), int(cod_prov) if pd.notna(cod_prov) else None),
+            )
+        conn.commit()
+
+    # 5. Leer dimensiones para resolver FKs
+    dim_tiempo = pd.read_sql_query("SELECT id_tiempo, mes FROM dim_tiempo", engine)
+    dim_riesgo = pd.read_sql_query(
+        "SELECT id_riesgo, codigo_riesgo FROM dim_riesgo", engine
+    )
+    dim_sector = pd.read_sql_query(
+        "SELECT id_sector, codigo_sector FROM dim_sector", engine
+    )
+    dim_sucursal = pd.read_sql_query(
+        "SELECT id_sucursal, codigo_sucursal, codigo_provincia FROM dim_sucursal",
+        engine,
+    )
+
+    # 6. Preparar fact_creditos_mensual con FKs resueltos
+    df_facts = df_features.copy()
+    df_facts["mes_date"] = pd.to_datetime(df_facts["mes"]).dt.date
+    df_facts["codigo_sucursal_int"] = df_facts["codigo_sucursal"].astype(int)
+
+    df_facts = df_facts.merge(
+        dim_tiempo, left_on="mes_date", right_on="mes", how="left"
+    )
+    df_facts = df_facts.merge(
+        dim_riesgo, left_on="riesgo", right_on="codigo_riesgo", how="left"
+    )
+    df_facts = df_facts.merge(
+        dim_sector, left_on="sector", right_on="codigo_sector", how="left"
+    )
+    df_facts = df_facts.merge(
+        dim_sucursal,
+        left_on=["codigo_sucursal_int", "codigo_provincia"],
+        right_on=["codigo_sucursal", "codigo_provincia"],
+        how="left",
+    )
+
+    columnas_fact = {
+        "id_tiempo": "id_tiempo",
+        "id_riesgo": "id_riesgo",
+        "id_sector": "id_sector",
+        "id_sucursal": "id_sucursal",
+        "num_creditos": "num_creditos",
+        "monto_total": "monto_total",
+        "monto_promedio": "monto_promedio",
+        "dias_mora_promedio": "dias_mora_promedio",
+        "num_moras_promedio": "num_moras_promedio",
+        "tasa_mora_90": "tasa_mora_90",
+        "tasa_judicial": "tasa_judicial",
+        "tasa_cierre": "tasa_cierre",
+        "total_gestion_cobro": "total_gestion_cobro",
+        "total_costo_judicial": "total_costo_judicial",
+        "tasa_interes_promedio": "tasa_interes_promedio",
+        "saldo_promedio": "saldo_promedio",
+        "creditos_cerrados": "creditos_cerrados",
+        "num_clientes_unicos": "num_clientes_unicos",
+        "creditos_por_cliente": "creditos_por_cliente",
+        "plazo_promedio": "plazo_promedio",
+        "desviacion_montos": "desviacion_montos",
+        "coef_variacion_montos": "coef_variacion_montos",
+        "antiguedad_promedio_meses": "antiguedad_promedio_meses",
+        "tasa_crecimiento_creditos": "tasa_crecimiento_creditos",
+        "tasa_crecimiento_monto": "tasa_crecimiento_monto",
+        "crisis_flag": "crisis_flag",
+        "bloque_id": "bloque_id",
+    }
+
+    df_insert = df_facts[list(columnas_fact.keys())].copy()
+    df_insert.columns = list(columnas_fact.values())
+    df_insert = df_insert.dropna(
+        subset=["id_tiempo", "id_riesgo", "id_sector", "id_sucursal"]
+    )
+
+    # 7. Upsert en fact_creditos_mensual
+    with engine.connect() as conn:
+        for _, row in df_insert.iterrows():
+            conn.execute(
+                """
+                INSERT INTO fact_creditos_mensual (
+                    id_tiempo, id_riesgo, id_sector, id_sucursal,
+                    num_creditos, monto_total, monto_promedio,
+                    dias_mora_promedio, num_moras_promedio,
+                    tasa_mora_90, tasa_judicial, tasa_cierre,
+                    total_gestion_cobro, total_costo_judicial,
+                    tasa_interes_promedio, saldo_promedio,
+                    creditos_cerrados, num_clientes_unicos,
+                    creditos_por_cliente, plazo_promedio,
+                    desviacion_montos, coef_variacion_montos,
+                    antiguedad_promedio_meses,
+                    tasa_crecimiento_creditos, tasa_crecimiento_monto,
+                    crisis_flag, bloque_id
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+                ON CONFLICT (id_tiempo, id_riesgo, id_sector, id_sucursal)
+                DO UPDATE SET
+                    num_creditos = EXCLUDED.num_creditos,
+                    monto_total = EXCLUDED.monto_total,
+                    monto_promedio = EXCLUDED.monto_promedio,
+                    dias_mora_promedio = EXCLUDED.dias_mora_promedio,
+                    num_moras_promedio = EXCLUDED.num_moras_promedio,
+                    tasa_mora_90 = EXCLUDED.tasa_mora_90,
+                    tasa_judicial = EXCLUDED.tasa_judicial,
+                    tasa_cierre = EXCLUDED.tasa_cierre,
+                    total_gestion_cobro = EXCLUDED.total_gestion_cobro,
+                    total_costo_judicial = EXCLUDED.total_costo_judicial,
+                    tasa_interes_promedio = EXCLUDED.tasa_interes_promedio,
+                    saldo_promedio = EXCLUDED.saldo_promedio,
+                    creditos_cerrados = EXCLUDED.creditos_cerrados,
+                    num_clientes_unicos = EXCLUDED.num_clientes_unicos,
+                    creditos_por_cliente = EXCLUDED.creditos_por_cliente,
+                    plazo_promedio = EXCLUDED.plazo_promedio,
+                    desviacion_montos = EXCLUDED.desviacion_montos,
+                    coef_variacion_montos = EXCLUDED.coef_variacion_montos,
+                    antiguedad_promedio_meses = EXCLUDED.antiguedad_promedio_meses,
+                    tasa_crecimiento_creditos = EXCLUDED.tasa_crecimiento_creditos,
+                    tasa_crecimiento_monto = EXCLUDED.tasa_crecimiento_monto,
+                    crisis_flag = EXCLUDED.crisis_flag,
+                    bloque_id = EXCLUDED.bloque_id
+                """,
+                tuple(row.values),
+            )
+        conn.commit()
+
+    logging.info(
+        f"Datamart historico poblado: {len(df_insert)} registros en fact_creditos_mensual"
+    )
+
+
 def main():
     # 1. Extraer datos
     df_bloques_18m = ejecutar_query(
@@ -472,23 +669,26 @@ def main():
     # 2. Preprocesar y crear features
     df_features, features_numericas = preprocesar_y_features(df_bloques_18m)
 
-    # 3. Generar secuencias para la CNN
+    # 3. Poblar datamart historico (dimensiones + fact_creditos_mensual)
+    poblar_datamart_historico(df_features)
+
+    # 4. Generar secuencias para la CNN
     X_cnn, y_cnn, bloques_validos, VENTANA_CNN, MAX_HORIZONTE = generar_secuencias(
         df_features, features_numericas
     )
 
-    # 4. Normalizar y dividir datos
+    # 5. Normalizar y dividir datos
     X_train, X_test, y_train_list, y_test_list, scaler = normalizar_y_split(
         X_cnn, y_cnn, MAX_HORIZONTE
     )
 
-    # 5. Construir el modelo
+    # 6. Construir el modelo
     modelo_cnn = construir_modelo(X_train, MAX_HORIZONTE)
 
-    # 6. Entrenar el modelo
+    # 7. Entrenar el modelo
     historia = entrenar_modelo(modelo_cnn, X_train, y_train_list)
 
-    # 7. Evaluar y guardar artefactos
+    # 8. Evaluar y guardar artefactos
     evaluar_y_guardar(
         modelo_cnn,
         X_test,
