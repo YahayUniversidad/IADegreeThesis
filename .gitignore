@@ -1,6 +1,6 @@
 /.continue/
 
-*/modelos_cnn/
+modelos_cnn/
 
 wandb/
 .vscode/
