@@ -1,5 +1,7 @@
 /.continue/
 
+modelo_cnn/
+
 wandb/
 .vscode/
 .venv/
