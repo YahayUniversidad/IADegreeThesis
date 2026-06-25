@@ -9,3 +9,10 @@ wandb/
 .env
 
 *.csv
+
+*logs/
+
+# Datos de contenedores Docker
+*postgres_data/
+*superset_data/
+*superset/__pycache__/

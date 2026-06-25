@@ -1,0 +1,20 @@
+##
+## Contenedor de Persistencias
+##
+services:
+  postgres_srv:
+    image: postgres:15
+    container_name: postgres_persistencia
+    environment:
+      POSTGRES_DB: postgres_db
+      POSTGRES_USER: postgres_usr
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres_usr -d postgres_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
