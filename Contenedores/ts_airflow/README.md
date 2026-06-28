@@ -2,7 +2,7 @@
 
 Apache Airflow es una plataforma de gestión de flujo de trabajo de código abierto escrita en Python, donde los flujos de trabajo se crean a través de scripts de Python. Fue creada por Airbnb en octubre de 2014 como solución para la gestión de flujos de trabajo dentro de la empresa.
 
-> > [!IMPORTANT]
+> [!IMPORTANT]
 > Airflow está diseñado bajo el principio de "configuración como código"
 
 ## Ejecución:
