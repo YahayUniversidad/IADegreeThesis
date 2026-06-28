@@ -25,7 +25,7 @@ Para iniciar el proyecto se usa los siguientes comandos:
 
 Para ejecutar el proyecto solo requiere `./ejecutar.sh` y para detenerlo `parar.sh`
 
-> > [!IMPORTANT]
+> [!IMPORTANT]
 > Luego de iniciar el proyecto el script indicaran la dirección de ingreso al proyecto.
 
 ## Flujo de Riesgo Crediticio:
