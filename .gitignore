@@ -6,11 +6,11 @@ wandb/
 .venv/
 *logs/
 
-/ts_airflow/config/
-/ts_airflow/dags/
-/ts_airflow/data/
-/ts_airflow/logs/
-/ts_airflow/plugins/
+Contenedores/ts_airflow/config/
+Contenedores/ts_airflow/dags/
+Contenedores/ts_airflow/data/
+Contenedores/ts_airflow/logs/
+Contenedores/ts_airflow/plugins/
 
 # Archivos de configuración y datos sensibles
 .env
@@ -20,3 +20,5 @@ wandb/
 *postgres_data/
 *superset_data/
 *superset/__pycache__/
+
+*.obsidian/
