@@ -47,4 +47,4 @@ Los flujos de riesgo son dos, el primero para la fase de entrenamiento y el segu
 - [ ] Informe al usuario de para su análisis
 
 ---
-![icon](../../DocumentosBase/yachayCuadrado.jpg)<br/>**<omar.velez@yachaytech.edu.ec>**<br/>*julio 2026*
+![icon](../../DocumentosBase/yachayCuadrado.jpg)<br/>***<omar.velez@yachaytech.edu.ec>***<br/>*julio 2026*

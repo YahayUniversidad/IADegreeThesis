@@ -62,7 +62,4 @@ Indicar qué resultados se van a mostrar y cómo se organizarían. Por ejemplo:
 - Discusión de resultados principales
 
 ---
-![icon](../../DocumentosBase/yachayCuadrado.jpg)
-
-*<omar.velez@yachaytech.edu.ec>*
-*julio 2026*
+![icon](DocumentosBase/yachayCuadrado.jpg)<br/>***<omar.velez@yachaytech.edu.ec>***<br/>*julio 2026*
