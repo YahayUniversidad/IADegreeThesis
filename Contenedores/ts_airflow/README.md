@@ -2,31 +2,29 @@
 
 Apache Airflow es una plataforma de gestión de flujo de trabajo de código abierto escrita en Python, donde los flujos de trabajo se crean a través de scripts de Python. Fue creada por Airbnb en octubre de 2014 como solución para la gestión de flujos de trabajo dentro de la empresa.
 
-> [!IMPORTANT]
+> [!NOTE]
 > Airflow está diseñado bajo el principio de "configuración como código"
 
-## Ejecución:
+## Comandos:
 
-Para ejecutar el proyecto hay que recordar que hay dos instancias el mismo, una primera corrida y una en la que hay que levantar el proyecto de manera regular
-
-### Init
-
-Para iniciar el proyecto se usa los siguientes comandos:
-
-```bash
-
-./instalar.sh
-
-./ejecutar.sh
-
-./parar.sh
-
-```
-
-Para ejecutar el proyecto solo requiere `./ejecutar.sh` y para detenerlo `parar.sh`
+- `instalar.sh`: Bash para instalar el aplicativo, se debe ejecutar una única vez
+- `ejecutar.sh`: Bash para ejecutar el server de Airflow, de ejecución periódica.
+- `parar.sh`: Bash para parar el server Airflow, de ejecución periódica
+- `remove.sh`: Bash para remover el server y sus configuraciones
+- `update.sh`: Bash para actualizar los **DAG** (Grafo Acíclico Dirigido)
 
 > [!IMPORTANT]
 > Luego de iniciar el proyecto el script indicaran la dirección de ingreso al proyecto.
+
+## Configuración
+
+Para la configuración del sistema tenemos los siguientes volúmenes:
+
+- *data*: Carpeta para cargar la data al sistema
+- *dags*: Espacio para cargar los DAG (Grafo Acíclico Dirigido)
+- *logs*: en serio?
+- *plugins*: Espacio para los componentes extras a la configuración.
+- *config*: Carpeta con cambios de configuraciones personalizados.
 
 ## Flujo de Riesgo Crediticio:
 
@@ -49,7 +47,4 @@ Los flujos de riesgo son dos, el primero para la fase de entrenamiento y el segu
 - [ ] Informe al usuario de para su análisis
 
 ---
-![icon](../../DocumentosBase/yachayCuadrado.jpg)
-
-*<omar.velez@yachaytech.edu.ec>*
-*julio 2026*
+![icon](../../DocumentosBase/yachayCuadrado.jpg)<br/>**<omar.velez@yachaytech.edu.ec>**<br/>*julio 2026*

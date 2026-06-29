@@ -60,3 +60,9 @@ Indicar qué resultados se van a mostrar y cómo se organizarían. Por ejemplo:
 - Comparación de modelos o enfoques
 - Análisis de métricas
 - Discusión de resultados principales
+
+---
+![icon](../../DocumentosBase/yachayCuadrado.jpg)
+
+*<omar.velez@yachaytech.edu.ec>*
+*julio 2026*
