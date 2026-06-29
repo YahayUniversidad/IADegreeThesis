@@ -7,38 +7,26 @@
 ## Tambien colocar graficas que se vean del entrenamiento para mostrar los procesos de entrenamiento. Resumen luego de cada proceso de entrenamiento para 
 ## tomar las decisiones sobre los proceso. poner como resumen y enviar quatro
 ## Tecnicas de balanceo de datos analizar y probar. con muestras sinteticas.. Y ver el tiempo que tengo para la muestra... 
-import os
-import wandb
-import numpy as np
-import pandas as pd
-import joblib
+
+
 import json
-import time
-import tensorflow as tf
 import logging
+import os
+import tempfile
+import time
+import joblib
 import mlflow
 import mlflow.keras
-import tempfile
-from mlflow.models.signature import ModelSignature
-from mlflow.types.schema import Schema, TensorSpec
-
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-    classification_report,
-    confusion_matrix,
-)
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.metrics import (accuracy_score, classification_report,
+                             confusion_matrix, precision_score, recall_score,
+                             roc_auc_score)
 from sklearn.preprocessing import MinMaxScaler
-from sqlalchemy import create_engine, text
-from tensorflow.keras import layers, Model
+from sqlalchemy import create_engine
+from tensorflow.keras import Model, layers
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from prometheus_client import start_http_server
-from wandb.integration.keras import WandbCallback
-
-
-os.environ['WANDB_API_KEY'] = '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'  # Reemplaza por tu API key real o usa una variable de entorno
 
 # Configuración de logging
 logging.basicConfig(
@@ -48,11 +36,11 @@ logger = logging.getLogger(__name__)
 
 # Configuración de conexión a la base de datos
 DB_CONFIG = {
-    "host": "192.168.0.97",
-    "port": "5433",
-    "database": "analisis_db",
-    "user": "usuario",
-    "password": "mi_clave_segura",
+    "host": "localhost",
+    "port": "5432",
+    "database": "postgres_db",
+    "user": "postgres_usr",
+    "password": "admin123",
 }
 connection_string = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
 engine = create_engine(connection_string)
@@ -83,7 +71,7 @@ WITH datos_mensuales AS (
         AVG(cp.num_cuotas) as plazo_promedio,
         STDDEV(cp.monto_acreditado) as desviacion_montos,
         AVG(EXTRACT(MONTH FROM AGE(CURRENT_DATE, cp.fecha_credito))) as antiguedad_promedio_meses
-    FROM cabecera_prestamos cp
+    FROM creditos cp
     WHERE cp.fecha_credito >= '2015-07-01' 
       AND cp.fecha_credito < '2025-07-01'
     GROUP BY DATE_TRUNC('month', cp.fecha_credito), cp.codigo_riesgo, cp.act_economica_nvl1, 
