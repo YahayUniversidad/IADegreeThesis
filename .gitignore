@@ -6,6 +6,12 @@ wandb/
 .venv/
 *logs/
 
+ts_airflow/config/
+ts_airflow/dags/
+ts_airflow/data/
+ts_airflow/logs/
+ts_airflow/plugins/
+
 # Archivos de configuración y datos sensibles
 .env
 *.csv
