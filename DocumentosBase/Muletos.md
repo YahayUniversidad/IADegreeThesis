@@ -1,4 +1,8 @@
 
+Detalle de aprendizaje del modelo
+
+https://www.facebook.com/share/r/1Hb3PSV8AT/
+
 ### Documentación de code
 
 ```txt
