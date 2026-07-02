@@ -15,6 +15,7 @@ def get_columnas_numericas(df: pl.DataFrame) -> list[str]:
     """
     return [c for c in df.columns if df[c].dtype.is_numeric()]
 
+
 def get_columnas_string(df: pl.DataFrame) -> list[str]:
     """
     Se obtiene todas las columnas de tipo string o categórico
