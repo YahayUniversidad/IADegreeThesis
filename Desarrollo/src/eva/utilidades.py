@@ -42,3 +42,47 @@ def as_float(value):
         return 0.0 if math.isnan(n) else n
     except (TypeError, ValueError):
         return 0.0
+    
+def titulo(logger, value):
+    """Convierte un valor a string y lo capitaliza.
+
+    Args:
+        logger: Instancia de logger para registrar el título.
+        value: Valor a presentar un titulo
+
+    Returns:
+        str: Valor capitalizado.
+    """    
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info(value.center(60))
+    logger.info("=" * 60)
+    logger.info("")   
+
+def subtitulo(logger, value):
+    """Convierte un valor a string y lo capitaliza.
+
+    Args:
+        logger: Instancia de logger para registrar el título.
+        value: Valor a presentar un subtitulo
+
+    Returns:
+        str: Valor capitalizado.
+    """    
+    logger.info("")
+    logger.info(value)
+    logger.info("─" * 40)
+    
+def informar_razon(logger, razon):
+    """Convierte un valor a string y lo capitaliza.
+
+    Args:
+        logger: Instancia de logger para registrar el título.
+        razon: Valor a presentar un subtitulo, puede contener '|' para indicar salto de línea.
+
+    Returns:
+        str: Valor capitalizado.
+    """    
+    # Dividir por el carácter '|' para manejar múltiples líneas
+    for linea in str(razon).replace(';', '|-').split('|'):
+        logger.info("   %s", linea.strip())
