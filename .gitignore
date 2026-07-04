@@ -6,6 +6,8 @@ wandb/
 .venv/
 *logs/
 
+*/__pycache__/
+
 Contenedores/ts_airflow/config/
 Contenedores/ts_airflow/dags/
 Contenedores/ts_airflow/data/
