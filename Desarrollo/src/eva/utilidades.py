@@ -9,6 +9,20 @@
 import math
 import polars as pl
 
+mode = "notebook" 
+
+def set_mode(new_mode: str):
+    """
+    Establece el modo de operación del proyecto EVA.
+
+    Args:
+        new_mode (str): El nuevo modo a establecer. Puede ser 'notebook', 'mlflow' o 'api'.
+    """
+    global mode
+    if new_mode not in ["notebook", "mlflow", "api"]:
+        raise ValueError("El modo debe ser 'notebook', 'mlflow' o 'api'.")
+    mode = new_mode
+
 def get_columnas_numericas(df: pl.DataFrame) -> list[str]:
     """
     Se obtiene todas las columnas numericas de mi dataframe
@@ -16,14 +30,12 @@ def get_columnas_numericas(df: pl.DataFrame) -> list[str]:
     """
     return [c for c in df.columns if df[c].dtype.is_numeric()]
 
-
 def get_columnas_string(df: pl.DataFrame) -> list[str]:
     """
     Se obtiene todas las columnas de tipo string o categórico
     esto necesito pues los strings tienen un tratameiento para la parte de texto.
     """
     return [c for c in df.columns if df[c].dtype in (pl.String, pl.Categorical)]
-
 
 def as_float(value):
     """Convierte un valor a float si no es None.
@@ -42,7 +54,7 @@ def as_float(value):
         return 0.0 if math.isnan(n) else n
     except (TypeError, ValueError):
         return 0.0
-    
+
 def titulo(logger, value):
     """Convierte un valor a string y lo capitaliza.
 
@@ -52,12 +64,15 @@ def titulo(logger, value):
 
     Returns:
         str: Valor capitalizado.
-    """    
-    logger.info("")
-    logger.info("=" * 60)
-    logger.info(value.center(60))
-    logger.info("=" * 60)
-    logger.info("")   
+    """
+    if mode == "mlflow":
+        logger.info("")
+        logger.info("=" * 60)
+        logger.info(value.center(60))
+        logger.info("=" * 60)
+        logger.info("")
+    else:
+        print("mlflow no definido")
 
 def subtitulo(logger, value):
     """Convierte un valor a string y lo capitaliza.
@@ -68,11 +83,16 @@ def subtitulo(logger, value):
 
     Returns:
         str: Valor capitalizado.
-    """    
-    logger.info("")
-    logger.info(value)
-    logger.info("─" * 40)
-    
+    """
+    if mode == "mlflow":
+        logger.info("")
+        logger.info("-" * 40)
+        logger.info(value.center(40))
+        logger.info("-" * 40)
+        logger.info("")
+    else:
+        print("mlflow no definido")
+
 def informar_razon(logger, razon):
     """Convierte un valor a string y lo capitaliza.
 
@@ -82,7 +102,8 @@ def informar_razon(logger, razon):
 
     Returns:
         str: Valor capitalizado.
-    """    
-    # Dividir por el carácter '|' para manejar múltiples líneas
-    for linea in str(razon).replace(';', '|-').split('|'):
+    """
+    # Para que se separen los punto y coma del analisis, puse un separador temporal '|-' para que no se 
+    # pierda la información de los motivos de exclusión, luego se reemplaza por un salto de línea '|'
+    for linea in str(razon).replace(";", "|-").split("|"):
         logger.info("   %s", linea.strip())

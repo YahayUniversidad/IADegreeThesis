@@ -27,7 +27,7 @@ class AnalisisRiguroso:
     """
     Clase para EVA académico riguroso.
     Cada variable es analizada cuantitativamente para decidir su inclusión.
-    requiere de get_columnas_numericas y get_columnas_string de utilidades.py para poder indentificar dos formas de procesar segun su tipo de dato
+    Requiere de get_columnas_numericas y get_columnas_string de utilidades.py para poder identificar dos formas de procesar según su tipo de dato.
 
     La orquestación (loops, logging, gráficas, MLflow) está en pipeline.py.
     """
