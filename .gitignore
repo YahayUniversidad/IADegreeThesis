@@ -5,7 +5,9 @@ wandb/
 .vscode/
 .venv/
 *logs/
-
+*.zip
+*.mimocode/
+*output/
 *__pycache__/
 
 Contenedores/ts_airflow/config/

@@ -65,15 +65,10 @@ def titulo(logger, value):
     Returns:
         str: Valor capitalizado.
     """
-    if mode == "mlflow":
-        logger.info("")
-        logger.info("=" * 60)
-        logger.info(value.center(60))
-        logger.info("=" * 60)
-        logger.info("")
-    else:
-        print("mlflow no definido")
-
+    logger.info("")
+    logger.info(value.center(60))
+    logger.info("=" * 60)
+    
 def subtitulo(logger, value):
     """Convierte un valor a string y lo capitaliza.
 
@@ -84,15 +79,10 @@ def subtitulo(logger, value):
     Returns:
         str: Valor capitalizado.
     """
-    if mode == "mlflow":
-        logger.info("")
-        logger.info("-" * 40)
-        logger.info(value.center(40))
-        logger.info("-" * 40)
-        logger.info("")
-    else:
-        print("mlflow no definido")
-
+    logger.info("")
+    logger.info(value)
+    logger.info("-" * 40)
+    
 def informar_razon(logger, razon):
     """Convierte un valor a string y lo capitaliza.
 

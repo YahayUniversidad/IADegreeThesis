@@ -73,7 +73,7 @@ class Pipeline:
         modo: str = "notebook",
         mlflow_tracking_uri: str = "http://localhost:5000",
         mlflow_experiment_name: str = "eva_crediticio",
-        output_dir: str = "resultados",
+        output_dir: str = "output",
     ):
         """Constructor de la clase Pipeline.
 
