@@ -1,0 +1,7 @@
+# Configuracion base de Ruff para este workspace.
+required-version = ">=0.15.20"
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "I"]

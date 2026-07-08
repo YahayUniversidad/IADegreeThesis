@@ -10,6 +10,7 @@ services:
       - "8088:8088"
       - "5008:5008"
     environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
       SUPERSET_SECRET_KEY: your_secret_key_here
       SUPERSET__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db_srv:5432/${POSTGRES_DB}
       SUPERSET_ADMIN_USERNAME: admin
@@ -17,6 +18,7 @@ services:
       SUPERSET_ADMIN_LASTNAME: Admin
       SUPERSET_ADMIN_EMAIL: omargo33@gmail.com
       SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      MCP_DEV_USERNAME: admin
     volumes:
       - ./superset_data:/var/lib/superset
     command:
@@ -27,8 +29,9 @@ services:
         superset fab create-admin --username "$$SUPERSET_ADMIN_USERNAME" --firstname "$$SUPERSET_ADMIN_FIRSTNAME" --lastname "$$SUPERSET_ADMIN_LASTNAME" --email "$$SUPERSET_ADMIN_EMAIL" --password "$$SUPERSET_ADMIN_PASSWORD" &&
         superset load_examples &&
         superset init &&
-        superset mcp run --host 0.0.0.0 --port 5008 & 
-        superset run -h 0.0.0.0 -p 8088 --with-threads --reload --debugger        
+        superset mcp run --host 0.0.0.0 --port 5008 &
+        sleep 3 &&
+        superset run -h 0.0.0.0 -p 8088 --with-threads --reload --debugger
     depends_on:
       db_srv:
         condition: service_healthy
