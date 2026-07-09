@@ -33,6 +33,10 @@ Args:
 
 Returns:
 	variable: <descripcion>
+	
+Raises: 
+	ZeroDivisionError: Si el denominador 'b' es 0.
+	
 """
 ```
 - Documentación objeto

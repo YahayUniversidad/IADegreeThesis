@@ -7,8 +7,8 @@ Apache Airflow es una plataforma de gestión de flujo de trabajo de código abie
 
 ## Comandos:
 
-- `instalar.sh`: Bash para instalar el aplicativo, se debe ejecutar una única vez
 - `ejecutar.sh`: Bash para ejecutar el server de Airflow, de ejecución periódica.
+- `instalar.sh`: Bash para instalar el aplicativo, se debe ejecutar una única vez
 - `parar.sh`: Bash para parar el server Airflow, de ejecución periódica
 - `remove.sh`: Bash para remover el server y sus configuraciones
 - `update.sh`: Bash para actualizar los **DAG** (Grafo Acíclico Dirigido)
