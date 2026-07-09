@@ -1,0 +1,55 @@
+##
+## Contenedor de MCP Servers
+## Centraliza todos los MCP servers para: PostgreSQL, Airflow, Superset, MLflow
+##
+services:
+
+  postgres_mcp:
+    image: node:20-alpine
+    container_name: postgres_mcp
+    ports:
+      - "5009:5009"
+    environment:
+      POSTGRES_HOST: "192.168.0.97"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: "${PG_USER}"
+      POSTGRES_PASSWORD: "${PG_PASSWORD}"
+      POSTGRES_DB: "${PG_DB}"
+    command:
+      - sh
+      - -c
+      - |
+        npx -y supergateway \
+          --stdio "npx -y @modelcontextprotocol/server-postgres postgresql://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB" \
+          --outputTransport streamableHttp \
+          --port 5009 \
+          --streamableHttpPath /mcp \
+          --stateful \
+          --logLevel debug
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  superset_mcp:
+    image: node:20-alpine
+    container_name: superset_mcp
+    ports:
+      - "5011:5011"
+    environment:
+      SUPERSET_BASE_URL: "http://host.docker.internal:8088"
+      SUPERSET_USERNAME: "admin"
+      SUPERSET_PASSWORD: "${SUPERSET_ADMIN_PASSWORD:-admin123}"
+    command:
+      - sh
+      - -c
+      - |
+        npx -y supergateway \
+          --stdio "npx -y superset-mcp" \
+          --outputTransport streamableHttp \
+          --port 5011 \
+          --streamableHttpPath /mcp \
+          --stateful \
+          --logLevel debug
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

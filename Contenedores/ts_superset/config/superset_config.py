@@ -1,3 +1,7 @@
+##
+## Configuracion para Superset
+## Habilita la configuracion de Superset para que funcione con el MCP.
+##
 import os
  
 # Base de datos para Superset
@@ -13,4 +17,3 @@ MCP_DEV_USERNAME = os.environ.get("MCP_DEV_USERNAME", "admin")
  
 # Opcional: modo debug para validar mcp, por ejemplo.
 MCP_DEBUG = True
- 

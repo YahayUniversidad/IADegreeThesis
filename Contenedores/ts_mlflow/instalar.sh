@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ##
 ## Contenedor de mlFlow
 ##

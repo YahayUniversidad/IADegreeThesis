@@ -13,11 +13,12 @@ from typing import Any
 
 import requests
 
-MCP_URL = "http://127.0.0.1:5008/mcp"
+MCP_URL = "http://127.0.0.1:5011/mcp"
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
+MCP_SESSION_ID = ""
 
-def send_mcp_request(method, params=None, request_id=None):
+def send_mcp_request(method, params=None, request_id=None, is_notification=False):
     """Envio de solicitud a MCP de Superset.
     
     Aca se hace el envio de la solicitud al MCP de Superset, sin enviar el header Authorization.
@@ -30,21 +31,35 @@ def send_mcp_request(method, params=None, request_id=None):
     Returns:
         dict: Respuesta del MCP.
     """
-    if request_id is None:
-        request_id = int(time.time() * 1000)
+    global MCP_SESSION_ID
+
     payload = {
         "jsonrpc": "2.0",
         "method": method,
         "params": params or {},
-        "id": request_id
     }
+    # Las notificaciones MCP van sin id.
+    if not is_notification:
+        payload["id"] = request_id if request_id is not None else int(time.time() * 1000)
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json, text/event-stream"
     }
+    if MCP_SESSION_ID:
+        headers["mcp-session-id"] = MCP_SESSION_ID
+
     # No se envía Authorization esto es porque el MCP esta arrancado como developer
     response = requests.post(MCP_URL, json=payload, headers=headers, stream=True)
     response.raise_for_status()
+
+    # En streamable HTTP stateful el servidor retorna mcp-session-id en initialize.
+    session_id = response.headers.get("mcp-session-id", "")
+    if session_id:
+        MCP_SESSION_ID = session_id
+
+    # Las notificaciones no requieren procesar respuesta.
+    if is_notification:
+        return {"ok": True}
     
     if response.headers.get("content-type", "").startswith("text/event-stream"):
         for line in response.iter_lines(decode_unicode=True):
@@ -80,9 +95,11 @@ def initialize_mcp():
         "clientInfo": {"name": "python-mcp-client", "version": "1.0.0"},
         "capabilities": {}
     }
-    result: Any | None = send_mcp_request("initialize", init_params)
+    result: Any | None = send_mcp_request(
+        "initialize", init_params, request_id=int(time.time() * 1000)
+    )
     # El protocolo MCP requiere enviar esta notificación tras el initialize
-    send_mcp_request("notifications/initialized")
+    send_mcp_request("notifications/initialized", request_id=None, is_notification=True)
     return result
 
 def list_tools():

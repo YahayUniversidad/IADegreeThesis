@@ -6,6 +6,7 @@ wandb/
 .venv/
 *logs/
 *.zip
+*.db
 *.mimocode/
 *output/
 *__pycache__/
