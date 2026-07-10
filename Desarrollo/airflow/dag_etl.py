@@ -13,8 +13,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from airflow import DAG
-from airflow.models.param import Param
 from airflow.models import Variable
+from airflow.models.param import Param
 from airflow.operators.python import PythonOperator
 from src.sql import capturar_datos_csv, crear_tablas_estructura
 
@@ -22,7 +22,6 @@ from src.sql import capturar_datos_csv, crear_tablas_estructura
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
-
 
 dag_args = {
     "depends_on_past": False,
@@ -33,27 +32,24 @@ dag_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-
 def crear_estructura_task(**context):
     string_conexion = context["params"]["string_conexion"]
     crear_tablas_estructura(string_conexion)
-
 
 def cargar_csv_task(**context):
     string_conexion = context["params"]["string_conexion"]
     path_carpeta = context["params"]["path_carpeta"]
     capturar_datos_csv(string_conexion, path_carpeta)
 
-
 dag_etl = DAG(
     dag_id="DAG-ETL-CSV",
     description="Carga ETL de archivos CSV desde carpeta local hacia base de datos",
     default_args=dag_args,
     schedule="0 8-23 * * *",
-    start_date=datetime(2026, 7, 9),
+    start_date=datetime(2026, 7, 1),
     catchup=False,
-    max_active_runs=1,     # No permite que una corrida nueva inicie si la anterior sigue ejecutandose
-    max_active_tasks=1,    # Fuerza una sola tarea activa en este DAG
+    max_active_runs=1,     # Si se demora solo ejecuta una sola vez
+    max_active_tasks=1,    # Fuerza una sola tarea activa en este DAG, es para no saturar servidores
     tags=["ETL", "CSV", "Riesgo Crediticio"],
     params={
         "string_conexion": Param(
@@ -72,7 +68,6 @@ dag_etl = DAG(
     },
 )
 
-
 t1_crear_estructura = PythonOperator(
     task_id="crear_estructura_tablas",
     python_callable=crear_estructura_task,
@@ -86,4 +81,3 @@ t2_cargar_csv = PythonOperator(
 )
 
 t1_crear_estructura >> t2_cargar_csv
-
