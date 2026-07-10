@@ -10,18 +10,18 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, '..')
+sys.path.insert(0, "..")
 
 import polars as pl
 import psycopg2
 from psycopg2 import sql
-from src.sql import (
+from src.sql.queries import (
     SCRIPT_CREATE_TABLE_TEMPORAL_CSV,
     SQL_CREATE_TABLE_AMORTIZACION,
     SQL_CREATE_TABLE_CREDITOS,
     SQL_CREATE_TABLE_JUICIOS,
-    ejeucta_script_generico,
 )
+from src.sql.utilidades import ejeucta_script_generico
 
 
 def crear_tablas_estructura(string_conexion):
@@ -29,12 +29,16 @@ def crear_tablas_estructura(string_conexion):
     Args:
         string_conexion (str): Cadena de conexión a la base de datos.
     """
-    
+
     ## Crea o Actualiza la estructura de las tablas en la base de datos
     ejeucta_script_generico(string_conexion, SQL_CREATE_TABLE_CREDITOS, "Crea tabla creditos")
-    ejeucta_script_generico(string_conexion, SQL_CREATE_TABLE_AMORTIZACION, "Crea tabla amortizacion")
+    ejeucta_script_generico(
+        string_conexion, SQL_CREATE_TABLE_AMORTIZACION, "Crea tabla amortizacion"
+    )
     ejeucta_script_generico(string_conexion, SQL_CREATE_TABLE_JUICIOS, "Crea tabla juicios")
-    ejeucta_script_generico(string_conexion, SCRIPT_CREATE_TABLE_TEMPORAL_CSV, "Crea tabla temporal")
+    ejeucta_script_generico(
+        string_conexion, SCRIPT_CREATE_TABLE_TEMPORAL_CSV, "Crea tabla temporal"
+    )
 
 
 def capturar_datos_csv(string_conexion, path_carpeta):
@@ -71,7 +75,7 @@ def capturar_datos_csv(string_conexion, path_carpeta):
 
 def _ejecutar_proceso_csv(string_conexion, file_path_csv):
     """Ejecuar proceso de csv
-    
+
     Procesa un archivo CSV y lo carga en la tabla correspondiente según el número de columnas.
         39: Carga en la tabla "creditos".
         16: Carga en la tabla "amortizacion".
@@ -80,7 +84,7 @@ def _ejecutar_proceso_csv(string_conexion, file_path_csv):
     Args:
         string_conexion (str): Cadena de conexión a la base de datos.
         file_path_csv (Path): Ruta del archivo CSV a procesar.
-        
+
     Raises:
         ValueError: Si el número de columnas del CSV no coincide con ninguna tabla definida.
     """
@@ -103,17 +107,19 @@ def _ejecutar_proceso_csv(string_conexion, file_path_csv):
 
 
 def _cargar_csv(string_conexion, file_path_csv, nombre_tabla, columnas_conflicto):
-    """Carga un archivo CSV en la tabla temporal correspondiente y luego lo inserta en la tabla principal.
-    
+    """Carga un archivo CSV en la tabla temporal correspondiente y luego lo inserta en la tabla
+    principal.
+
     Args:
         string_conexion (str): Cadena de conexión a la base de datos.
         file_path_csv (Path): Ruta del archivo CSV a cargar.
         nombre_tabla (str): Nombre de la tabla principal donde se insertarán los datos.
-        columnas_conflicto (str): Columnas que se usarán para manejar conflictos durante la inserción (ON CONFLICT).
-    
+        columnas_conflicto (str): Columnas que se usarán para manejar conflictos durante la
+        inserción (ON CONFLICT).
+
     Raises:
         Exception: Si ocurre un error durante la carga del CSV o la inserción en la tabla principal.
-    
+
     """
     # Conexión principal
     conn = psycopg2.connect(string_conexion)

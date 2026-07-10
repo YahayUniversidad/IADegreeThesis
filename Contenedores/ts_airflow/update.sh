@@ -4,4 +4,8 @@
 ## asi no se rompe el desarrollo y se mantiene organozado los DAG.
 
 rm -rf ./dags/*.py
-cp ../../Desarrollo/config/airflow/*.py ./dags/
+cp ../../Desarrollo/airflow/*.py ./dags/
+
+rm -rf ./src/*
+mkdir -p ./src
+cp -a ../../Desarrollo/src/. ./src/

@@ -14,6 +14,7 @@ wandb/
 Contenedores/ts_airflow/config/
 Contenedores/ts_airflow/dags/
 Contenedores/ts_airflow/data/
+Contenedores/ts_airflow/src/
 Contenedores/ts_airflow/logs/
 Contenedores/ts_airflow/plugins/
 

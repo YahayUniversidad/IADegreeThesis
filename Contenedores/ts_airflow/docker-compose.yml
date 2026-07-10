@@ -3,7 +3,8 @@
 ##
 
 x-airflow-common: &airflow-common
-  image: apache/airflow:2.10.4
+  build: .
+  image: ts_airflow:latest
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres_srv:5432/${POSTGRES_DB}
@@ -12,9 +13,11 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false' ## si pone true se cargan los ejemplos
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    PYTHONPATH: /opt/airflow:/opt/airflow/src
     _PIP_ADDITIONAL_REQUIREMENTS: ''
   volumes:
     - ./dags:/opt/airflow/dags
+    - ./src:/opt/airflow/src
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
     - ./config:/opt/airflow/config
