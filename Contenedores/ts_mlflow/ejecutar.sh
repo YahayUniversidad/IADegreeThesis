@@ -3,6 +3,7 @@ source ../script/tools.sh
 
 cd mlflow
 cd docker-compose
+docker compose -p ts_mlflow build
 docker compose -p ts_mlflow up -d
 
 ## Lanza función de espera

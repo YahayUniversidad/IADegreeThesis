@@ -522,6 +522,75 @@ SQL_CREA_FACT_CREDITOS = """
     );
     """
 
+SQL_REFRESH_DIM_TIEMPO = """
+INSERT INTO dim_tiempo (mes, anio, trimestre, mes_del_anio, nombre_mes)
+VALUES (%s, %s, %s, %s, %s)
+ON CONFLICT (mes) DO NOTHING;
+"""
+
+SQL_REFRESH_DIM_RIESGO = """
+INSERT INTO dim_riesgo (codigo_riesgo, descripcion)
+VALUES (%s, %s) ON CONFLICT (codigo_riesgo) DO NOTHING;
+"""
+
+SQL_REFRESH_DIM_SECTOR = """
+INSERT INTO dim_sector (codigo_sector, descripcion)
+VALUES (%s, %s) ON CONFLICT (codigo_sector) DO NOTHING;
+"""
+
+SQL_REFRESH_DIM_SUCURSAL = """
+INSERT INTO dim_sucursal (codigo_sucursal, codigo_provincia)
+VALUES (%s, 0) ON CONFLICT (codigo_sucursal) DO NOTHING;
+"""
+
+SQL_INSERT_PREDICCIONES = """
+INSERT INTO fact_predicciones (
+    id_tiempo, id_riesgo, id_sector, id_sucursal,
+    bloque_id,
+    prob_h01, prob_h02, prob_h03, prob_h04, prob_h05, prob_h06,
+    prob_h07, prob_h08, prob_h09, prob_h10, prob_h11, prob_h12,
+    prob_h13, prob_h14, prob_h15, prob_h16, prob_h17, prob_h18,
+    pred_h01, pred_h02, pred_h03, pred_h04, pred_h05, pred_h06,
+    pred_h07, pred_h08, pred_h09, pred_h10, pred_h11, pred_h12,
+    pred_h13, pred_h14, pred_h15, pred_h16, pred_h17, pred_h18,
+    prob_media, pred_media, crisis_count, fecha_ejecucion
+) VALUES (
+    (SELECT id_tiempo FROM dim_tiempo WHERE mes = %s),
+    (SELECT id_riesgo FROM dim_riesgo WHERE codigo_riesgo = %s),
+    (SELECT id_sector FROM dim_sector WHERE codigo_sector = %s),
+    (SELECT id_sucursal FROM dim_sucursal WHERE codigo_sucursal = %s),
+    %s,
+    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+    %s, %s, %s, %s
+)
+ON CONFLICT (id_tiempo, id_riesgo, id_sector, id_sucursal)
+DO UPDATE SET
+    bloque_id = EXCLUDED.bloque_id,
+    prob_h01 = EXCLUDED.prob_h01, prob_h02 = EXCLUDED.prob_h02,
+    prob_h03 = EXCLUDED.prob_h03, prob_h04 = EXCLUDED.prob_h04,
+    prob_h05 = EXCLUDED.prob_h05, prob_h06 = EXCLUDED.prob_h06,
+    prob_h07 = EXCLUDED.prob_h07, prob_h08 = EXCLUDED.prob_h08,
+    prob_h09 = EXCLUDED.prob_h09, prob_h10 = EXCLUDED.prob_h10,
+    prob_h11 = EXCLUDED.prob_h11, prob_h12 = EXCLUDED.prob_h12,
+    prob_h13 = EXCLUDED.prob_h13, prob_h14 = EXCLUDED.prob_h14,
+    prob_h15 = EXCLUDED.prob_h15, prob_h16 = EXCLUDED.prob_h16,
+    prob_h17 = EXCLUDED.prob_h17, prob_h18 = EXCLUDED.prob_h18,
+    pred_h01 = EXCLUDED.pred_h01, pred_h02 = EXCLUDED.pred_h02,
+    pred_h03 = EXCLUDED.pred_h03, pred_h04 = EXCLUDED.pred_h04,
+    pred_h05 = EXCLUDED.pred_h05, pred_h06 = EXCLUDED.pred_h06,
+    pred_h07 = EXCLUDED.pred_h07, pred_h08 = EXCLUDED.pred_h08,
+    pred_h09 = EXCLUDED.pred_h09, pred_h10 = EXCLUDED.pred_h10,
+    pred_h11 = EXCLUDED.pred_h11, pred_h12 = EXCLUDED.pred_h12,
+    pred_h13 = EXCLUDED.pred_h13, pred_h14 = EXCLUDED.pred_h14,
+    pred_h15 = EXCLUDED.pred_h15, pred_h16 = EXCLUDED.pred_h16,
+    pred_h17 = EXCLUDED.pred_h17, pred_h18 = EXCLUDED.pred_h18,
+    prob_media = EXCLUDED.prob_media,
+    pred_media = EXCLUDED.pred_media,
+    crisis_count = EXCLUDED.crisis_count,
+    fecha_ejecucion = EXCLUDED.fecha_ejecucion;
+"""
+
 SQL_CREA_FACT_PREDICCIONES = """
     DROP TABLE IF EXISTS fact_predicciones CASCADE;
     CREATE TABLE fact_predicciones (

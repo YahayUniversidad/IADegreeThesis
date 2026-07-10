@@ -12,4 +12,4 @@ cd mlflow
 git sparse-checkout set docker-compose
 cd docker-compose
 cp .env.dev.example .env
-docker compose up -d
+docker compose build
