@@ -7,21 +7,9 @@
 ## @version julio 2026
 ##
 import math
+
 import polars as pl
 
-mode = "notebook" 
-
-def set_mode(new_mode: str):
-    """
-    Establece el modo de operación del proyecto EVA.
-
-    Args:
-        new_mode (str): El nuevo modo a establecer. Puede ser 'notebook', 'mlflow' o 'api'.
-    """
-    global mode
-    if new_mode not in ["notebook", "mlflow", "api"]:
-        raise ValueError("El modo debe ser 'notebook', 'mlflow' o 'api'.")
-    mode = new_mode
 
 def get_columnas_numericas(df: pl.DataFrame) -> list[str]:
     """
@@ -55,34 +43,6 @@ def as_float(value):
     except (TypeError, ValueError):
         return 0.0
 
-def titulo(logger, value):
-    """Convierte un valor a string y lo capitaliza.
-
-    Args:
-        logger: Instancia de logger para registrar el título.
-        value: Valor a presentar un titulo
-
-    Returns:
-        str: Valor capitalizado.
-    """
-    logger.info("")
-    logger.info(value.center(60))
-    logger.info("=" * 60)
-    
-def subtitulo(logger, value):
-    """Convierte un valor a string y lo capitaliza.
-
-    Args:
-        logger: Instancia de logger para registrar el título.
-        value: Valor a presentar un subtitulo
-
-    Returns:
-        str: Valor capitalizado.
-    """
-    logger.info("")
-    logger.info(value)
-    logger.info("-" * 40)
-    
 def informar_razon(logger, razon):
     """Convierte un valor a string y lo capitaliza.
 
@@ -93,7 +53,8 @@ def informar_razon(logger, razon):
     Returns:
         str: Valor capitalizado.
     """
-    # Para que se separen los punto y coma del analisis, puse un separador temporal '|-' para que no se 
-    # pierda la información de los motivos de exclusión, luego se reemplaza por un salto de línea '|'
+    # Para que se separen los punto y coma del analisis, puse un separador temporal '|-' 
+    # para que no se pierda la información de los motivos de exclusión, luego se reemplaza 
+    # por un salto de línea '|'
     for linea in str(razon).replace(";", "|-").split("|"):
-        logger.info("   %s", linea.strip())
+        print(f"   {linea.strip()}")

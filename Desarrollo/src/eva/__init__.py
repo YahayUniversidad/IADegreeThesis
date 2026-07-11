@@ -7,16 +7,16 @@
 ## @version julio 2026
 ##
 
-from .utilidades import get_columnas_numericas, get_columnas_string, titulo, subtitulo, informar_razon
 from .analisis_riguroso import AnalisisRiguroso
 from .pipeline import Pipeline
+from .utilidades import (
+    get_columnas_numericas,
+    get_columnas_string,
+)
 
 __all__ = [
     "AnalisisRiguroso",
     "Pipeline",
     "get_columnas_numericas",
     "get_columnas_string",
-    "titulo",
-    "subtitulo",
-    "informar_razon",
 ]

@@ -9,7 +9,6 @@
 ##
 import numpy as np
 import polars as pl
-
 from scipy.stats import (
     chi2_contingency,
     kstest,
@@ -21,15 +20,17 @@ from scipy.stats import (
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import roc_auc_score
+
 from .utilidades import as_float
 
-class AnalisisRiguroso:
-    """
-    Clase para EVA académico riguroso.
-    Cada variable es analizada cuantitativamente para decidir su inclusión.
-    Requiere de get_columnas_numericas y get_columnas_string de utilidades.py para poder identificar dos formas de procesar según su tipo de dato.
 
-    La orquestación (loops, logging, gráficas, MLflow) está en pipeline.py.
+class AnalisisRiguroso:
+    """ Clase para EVA académico riguroso.
+    
+    Cada variable es analizada cuantitativamente para decidir su inclusión.
+    Requiere de get_columnas_numericas y get_columnas_string de utilidades.py para poder identificar
+    dos formas de procesar según su tipo de dato.
+
     """
 
     def __init__(self, df: pl.DataFrame, target_col: str = "crisis_flag"):
@@ -134,16 +135,20 @@ class AnalisisRiguroso:
             dict: Diccionario con los resultados del análisis de correlación.
             resultados["pearson_r"]: Coeficiente de correlación de Pearson.
             resultados["pearson_pvalue"]: Valor p del test de Pearson.
-            resultados["pearson_significativo"]: Booleano indicando si la correlación de Pearson es significativa (p < 0.05).
+            resultados["pearson_significativo"]: Booleano indicando si la correlación de Pearson 
+            es significativa (p < 0.05).
             resultados["spearman_r"]: Coeficiente de correlación de Spearman.
             resultados["spearman_pvalue"]: Valor p del test de Spearman.
-            resultados["spearman_significativo"]: Booleano indicando si la correlación de Spearman es significativa (p < 0.05).
+            resultados["spearman_significativo"]: Booleano indicando si la correlación de Spearman 
+            es significativa (p < 0.05).
             resultados["mutual_information"]: Valor de información mutua.
             resultados["auc_roc_individual"]: Valor de AUC-ROC individual.
-            resultados["poder_discriminativo"]: Categorización del poder discriminativo basado en AUC-ROC.
+            resultados["poder_discriminativo"]: Categorización del poder discriminativo basado 
+            en AUC-ROC.
             resultados["ttest_stat"]: Estadístico t del test de diferencia de medias.
             resultados["ttest_pvalue"]: Valor p del test t.
-            resultados["dif_medias_significativa"]: Booleano indicando si la diferencia de medias es significativa (p < 0.05).
+            resultados["dif_medias_significativa"]: Booleano indicando si la diferencia de medias es
+            significativa (p < 0.05).
             resultados["diferencia_medias"]: Diferencia de medias entre las clases.
             resultados["cohens_d"]: Valor de Cohen's d.
         """
@@ -229,11 +234,11 @@ class AnalisisRiguroso:
     def calcular_vif(
         self, df_numeric: pl.DataFrame, col_excluir: str | None = None
     ) -> pl.DataFrame:
-        """
-            Calcula VIF para detectar multicolinealidad
-            VIF sirve para ver si las variables independientes (las que usas para predecir)
-            están demasiado correlacionadas entre sí, lo que daña la precisión de tu
-            modelo estadístico.
+        """ Calcula VIF para detectar multicolinealidad
+            
+        VIF sirve para ver si las variables independientes (las que usas para predecir)
+        están demasiado correlacionadas entre sí, lo que daña la precisión de tu
+        modelo estadístico.
 
         Args:
             self: Instancia de la clase EVAriguroso.
@@ -281,13 +286,13 @@ class AnalisisRiguroso:
         Returns:
             dict: Diccionario con los resultados del análisis de la variable categórica.
             resultados["num_categorias"]: Número de categorías únicas.
-            resultados["top_categorias"]: Diccionario con las 10 categorías más frecuentes y sus conteos.
+            resultados["top_categorias"]: Diccionario de 10 categorías más frecuentes y sus conteos.
             resultados["categoria_dominante"]: Categoría con mayor frecuencia.
             resultados["pct_categoria_dominante"]: Porcentaje de la categoría dominante.
-            resultados["crisis_por_categoria"]: Diccionario con estadísticas de crisis por categoría (media, conteo, desviación estándar).
+            resultados["crisis_por_categoria"]: Diccionario con estadísticas de crisis por categoría
             resultados["chi2_stat"]: Estadístico chi-cuadrado para independencia.
             resultados["chi2_pvalue"]: Valor p del test chi-cuadrado.
-            resultados["chi2_significativo"]: Booleano indicando si la independencia es significativa (p < 0.05).
+            resultados["chi2_significativo"]: Booleano indicando la independencia es significativa
             resultados["cramers_v"]: Valor de V de Cramer para medir la fuerza de la asociación.
         """
         resultados: dict = {}
@@ -345,9 +350,11 @@ class AnalisisRiguroso:
             dict: Diccionario con los resultados de la evaluación de completitud.
             resultados["completitud"]: Porcentaje de datos no nulos.
             resultados["valores_cero"]: Porcentaje de valores cero (solo para variables numéricas).
-            resultados["valores_negativos"]: Porcentaje de valores negativos (solo para variables numéricas).
-            resultados["inconsistentes_con_estado"]: Número de registros inconsistentes con estado_credito (solo para tot_dias_mora y tot_num_moras).
-            resultados["pct_inconsistentes"]: Porcentaje de registros inconsistentes con estado_credito (solo para tot_dias_mora y tot_num_moras).
+            resultados["valores_negativos"]: Porcentaje de valores negativos.
+            resultados["inconsistentes_con_estado"]: Número de registros inconsistentes con 
+            estado_credito (solo para tot_dias_mora y tot_num_moras).
+            resultados["pct_inconsistentes"]: Porcentaje de registros inconsistentes con 
+            estado_credito (solo para tot_dias_mora y tot_num_moras).
         """
         data = self.df[col]
 
@@ -391,9 +398,12 @@ class AnalisisRiguroso:
                 - "EVALUAR": No hay análisis previo, se requiere evaluación manual.
                 - "✅ INCLUIR": La variable es recomendable para incluir en el modelo.
                 - "❌ EXCLUIR": La variable no es recomendable para incluir en el modelo.
-                - "⚠️ EVALUAR (conflicto)": Hay criterios de inclusión y exclusión conflictivos, se requiere evaluación manual.
-                - "⚠️ EXCLUIR (evidencia fuerte)": Hay evidencia fuerte para excluir la variable, pero también hay criterios de inclusión.
-                - "🔍 EVALUAR MANUALMENTE": No hay criterios automáticos concluyentes, se requiere evaluación manual.
+                - "⚠️ EVALUAR (conflicto)": Hay criterios de inclusión y exclusión conflictivos, 
+                se requiere evaluación manual.
+                - "⚠️ EXCLUIR (evidencia fuerte)": Hay evidencia fuerte para excluir la variable, 
+                pero también hay criterios de inclusión.
+                - "🔍 EVALUAR MANUALMENTE": No hay criterios automáticos concluyentes, 
+                se requiere evaluación manual.
 
         """
         if col in [self.target_col, "numero_credito", "fecha_credito"]:
@@ -467,7 +477,8 @@ class AnalisisRiguroso:
             )
             if analisis.get("completitud", {}).get("pct_inconsistentes", 0) > 5:
                 motivos_exclusion.append(
-                    f"{analisis['completitud']['pct_inconsistentes']:.1f}% registros inconsistentes con estado del crédito"
+                    f"{analisis['completitud']['pct_inconsistentes']:.1f}% "
+                    f"registros inconsistentes con estado del crédito"
                 )
 
         if motivos_exclusion and not motivos_inclusion:
