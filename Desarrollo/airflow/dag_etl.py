@@ -18,7 +18,7 @@ from airflow.models.param import Param
 from airflow.operators.python import PythonOperator
 from src.sql import capturar_datos_csv, crear_tablas_estructura
 
-# Agrega la raiz de Desarrollo al PYTHONPATH para importar src.sql
+## Agrega la raiz de Desarrollo al PYTHONPATH para importar src.sql
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
@@ -38,8 +38,8 @@ def crear_estructura_task(**context):
 
 def cargar_csv_task(**context):
     string_conexion = context["params"]["string_conexion"]
-    path_carpeta = context["params"]["path_carpeta"]
-    capturar_datos_csv(string_conexion, path_carpeta)
+    path_carpeta_csv = context["params"]["path_carpeta_csv"]
+    capturar_datos_csv(string_conexion, path_carpeta_csv)
 
 dag_etl = DAG(
     dag_id="DAG-ETL-CSV",
@@ -58,8 +58,8 @@ dag_etl = DAG(
             title="Cadena de conexión DB",
             description="Cadena psycopg2 de conexión a la base de datos (guardada en Variable 'string_conexion')"
         ),
-        "path_carpeta": Param(
-            default="/opt/airflow/data",
+        "path_carpeta_csv": Param(
+            default="/opt/airflow/data/csv",
             type="string",
             minLength=1,
             title="Ruta carpeta CSV",
@@ -80,4 +80,4 @@ t2_cargar_csv = PythonOperator(
     dag=dag_etl,
 )
 
-t1_crear_estructura >> t2_cargar_csv
+t1_crear_estructura >> t2_cargar_csv # type: ignore

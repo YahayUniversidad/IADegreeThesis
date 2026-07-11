@@ -1,3 +1,4 @@
 {
+    "path_carpeta_csv": "/opt/airflow/data/csv",
     "string_conexion": "postgresql://postgres_usr:admin123@192.168.0.97:5432/postgres_db"
 }
