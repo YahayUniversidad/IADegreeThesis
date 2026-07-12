@@ -8,7 +8,6 @@
 ## @version julio 2026
 ##
 
-
 import psycopg2
 from src.sql import (
     SQL_CREA_DIM_RIESGO,
@@ -28,7 +27,12 @@ from src.sql import (
 
 
 def _crear_ddl(conn):
-    """Crea dimensiones y tabla de hechos (DDL)."""
+    """Crea dimensiones y tabla de hechos (DDL).
+    
+    Args:
+        conn: Conexion a la base de datos.
+    
+    """
     ddl_tablas = [
         ("dim_tiempo", SQL_CREA_DIM_TIEMPO),
         ("dim_riesgo", SQL_CREA_DIM_RIESGO),
@@ -44,7 +48,12 @@ def _crear_ddl(conn):
 
 
 def _crear_mv(conn):
-    """DROP + CREATE + INDEX de la vista materializada."""
+    """DROP + CREATE + INDEX de la vista materializada.
+    
+    Args:
+        conn: Conexion a la base de datos.
+    
+    """
     cur = conn.cursor()
     print("Eliminando vista materializada anterior...")
     cur.execute(SQL_DROP_MV)
@@ -57,7 +66,12 @@ def _crear_mv(conn):
 
 
 def _refresh_mv(conn):
-    """REFRESH MATERIALIZED VIEW CONCURRENTLY."""
+    """REFRESH MATERIALIZED VIEW CONCURRENTLY.
+    
+    Args:
+        conn: Conexion a la base de datos.
+    
+    """
     cur = conn.cursor()
     cur.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY mv_creditos_mensuales")
     cur.execute("SELECT COUNT(*) FROM mv_creditos_mensuales")
@@ -66,49 +80,42 @@ def _refresh_mv(conn):
     print(f"MV refrescada: {count:,} registros")
     return count
 
+def _pobrar_dim_generico(conn, nombre_dim, sql_insert):
+    """Inserta datos en una dimension generica desde la MV.
+    
+    Args:
+        conn: Conexion a la base de datos.
+        nombre_dim: Nombre de la dimension.
+        sql_insert: Sentencia SQL para insertar los datos.
+    
 
-def _poblar_dim_tiempo(conn):
-    """Inserta fechas en dim_tiempo desde la MV."""
+    """
     cur = conn.cursor()
-    cur.execute(SQL_INSERT_DIM_TIEMPO)
-    print(f"dim_tiempo: {cur.rowcount} filas insertadas")
-    cur.close()
-
-
-def _poblar_dim_riesgo(conn):
-    """Inserta riesgos en dim_riesgo desde la MV."""
-    cur = conn.cursor()
-    cur.execute(SQL_INSERT_DIM_RIESGO)
-    print(f"dim_riesgo: {cur.rowcount} filas insertadas")
-    cur.close()
-
-
-def _poblar_dim_sector(conn):
-    """Inserta sectores en dim_sector desde la MV."""
-    cur = conn.cursor()
-    cur.execute(SQL_INSERT_DIM_SECTOR)
-    print(f"dim_sector: {cur.rowcount} filas insertadas")
-    cur.close()
-
-
-def _poblar_dim_sucursal(conn):
-    """Inserta sucursales en dim_sucursal desde la MV."""
-    cur = conn.cursor()
-    cur.execute(SQL_INSERT_DIM_SUCURSAL)
-    print(f"dim_sucursal: {cur.rowcount} filas insertadas")
+    cur.execute(sql_insert)
+    print(f"{nombre_dim}: {cur.rowcount} filas insertadas")
     cur.close()
 
 
 def _poblar_dims(conn):
-    """Pobla todas las dimensiones."""
-    _poblar_dim_tiempo(conn)
-    _poblar_dim_riesgo(conn)
-    _poblar_dim_sector(conn)
-    _poblar_dim_sucursal(conn)
+    """Pobla todas las dimensiones.
+    
+    Args:
+        conn: Conexion a la base de datos.
+    
+    """
+    _pobrar_dim_generico(conn, "dim_riesgo", SQL_INSERT_DIM_TIEMPO)
+    _pobrar_dim_generico(conn, "dim_riesgo", SQL_INSERT_DIM_RIESGO)
+    _pobrar_dim_generico(conn, "dim_sector", SQL_INSERT_DIM_SECTOR)
+    _pobrar_dim_generico(conn, "dim_sucursal", SQL_INSERT_DIM_SUCURSAL)
 
 
 def _poblar_fact(conn):
-    """UPSERT de fact_creditos_mensual desde la MV."""
+    """UPSERT de fact_creditos_mensual desde la MV.
+    
+    Args:
+        conn: Conexion a la base de datos.
+    
+    """
     cur = conn.cursor()
     cur.execute(SQL_UPSERT_FACT_CREDITOS)
     count = cur.rowcount
@@ -118,7 +125,12 @@ def _poblar_fact(conn):
 
 
 def _validar(conn):
-    """Verifica integridad del datamart: FKs nulas, duplicados, conteo."""
+    """Verifica integridad del datamart: FKs nulas, duplicados, conteo.
+    
+    Args:
+        conn: Conexion a la base de datos.
+    
+    """
     cur = conn.cursor()
 
     cur.execute(
@@ -156,7 +168,12 @@ def _validar(conn):
 
 
 def ejecutar(string_conexion):
-    """Ejecuta el pipeline completo: refresh MV -> dims -> fact -> validar."""
+    """Ejecuta el pipeline completo: refresh MV -> dims -> fact -> validar.
+    
+    Args:
+        string_conexion: Cadena de conexion a la base de datos.
+    
+    """
 
     conn = psycopg2.connect(string_conexion)
 
@@ -174,14 +191,3 @@ def ejecutar(string_conexion):
         raise
     finally:
         conn.close()
-
-
-def main():
-
-    ejecutar("postgresql://postgres_usr:admin123@192.168.0.97:5432/postgres_db")
-
-
-if __name__ == "__main__":
-    main()
-
-
