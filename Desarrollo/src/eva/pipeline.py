@@ -3,13 +3,15 @@
 ##
 ## Orquestador del EVA. Contiene toda la lógica de orquestación:
 ##   - Loop de variables para analizar distribución, correlación y completitud
-##   - Generación del dashboard 5×2
-##   - Logging a consola
-##   - Switch de salida: notebook vs MLflow 3.x
+##   - Loop de variables para generar recomendaciones
+##   - Generación de plots individuales
+##   - Salida a MLflow 3.x
+##   - Se genera artefacto JSON con detalle de recomendaciones, evidencias y métricas del dashboard
 ##
 ## @author omar.velez@yachaytech.edu.ec
 ## @version julio 2026
 ##
+
 import json
 import os
 import re
@@ -19,23 +21,54 @@ from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 
-import matplotlib.pyplot as plt
 import mlflow
+import numpy as np
 import polars as pl
+
+
+def _serialize_for_json(obj):
+    """Convierte objetos Polars/numpy a tipos serializables en JSON.
+    
+    Se toma el valor de polars que son Series o DataFrames y se convierten a listas, hay un JSON
+    tiene problemas que ponia los datos continuos.
+    
+    Args:
+        obj: Objeto a serializar (puede ser polars Series, DataFrame, numpy types, dict, list, etc.)
+    
+    Returns:
+        Objeto serializable en JSON (list, dict, int, float, etc.)
+    
+    """
+    if isinstance(obj, pl.Series):
+        return obj.to_list()
+    if isinstance(obj, pl.DataFrame):
+        return obj.to_dict()
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    if isinstance(obj, (np.floating,)):
+        return float(obj)
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, dict):
+        return {k: _serialize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_serialize_for_json(v) for v in obj]
+    return obj
+
 
 ## El paquete eva se puede ejecutar como script independiente o como módulo.
 ## Toco codificar esta lógica para que funcione en ambos casos, Notebook y MLflow.
 if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from eva.analisis_riguroso import AnalisisRiguroso
-    from eva.dashboard import build_dashboard
+    from eva.dashboard import build_all_plots
     from eva.utilidades import (
         get_columnas_numericas,
         get_columnas_string,
     )
 else:
     from .analisis_riguroso import AnalisisRiguroso
-    from .dashboard import build_dashboard
+    from .dashboard import build_all_plots
     from .utilidades import (
         get_columnas_numericas,
         get_columnas_string,
@@ -103,150 +136,53 @@ class Pipeline:
         )
 
     def _analizar_variables_numericas(self, eva: AnalisisRiguroso) -> list[dict]:
-        """Itera sobre todas las columnas y construye el reporte.
-
-        Ejecuta los analiasis para cada variable numérica, incluyendo distribución,
-        correlación y completitud.
+        """Analisis de variables numericas: distribucion, correlacion, completitud.
 
         Args:
-            eva: Instancia de AnalisisRiguroso con el DataFrame y la columna objetivo.
+            eva: Instancia de AnalisisRiguroso que contiene el DataFrame y métodos de análisis.
+
+        Returns:
+            reporte: Lista de diccionarios con el análisis de cada variable numérica.
+
         """
         reporte: list[dict] = []
         cols_numeric = get_columnas_numericas(eva.df)
         excluir = self.COLS_EXCLUIR_BASE + [eva.target_col]
 
-        # -- Numéricas --
-        print("ANÁLISIS DE VARIABLES NUMÉRICAS (%d)" % len(cols_numeric))
-
         for col in cols_numeric:
             if col in excluir:
                 continue
-            print("📊 ANALIZANDO: %s" % col)
 
             analisis_var: dict = {"variable": col, "tipo": "numerica"}
-
-            # Distribución
-            print("  📊 Distribución:")
-            dist = eva.analizar_distribucion(col)
-            analisis_var["distribucion"] = dist
-            if "error" not in dist:
-                print(
-                    "     Media=%.2f  Mediana=%.2f  Std=%.2f"
-                    % (dist["mean"], dist["median"], dist["std"])
-                )
-                print(
-                    "     Skewness=%.2f  Kurtosis=%.2f  Outliers=%.1f%%  Nulos=%.1f%%"
-                    % (
-                        dist["skew"],
-                        dist["kurtosis"],
-                        dist["pct_outliers"],
-                        dist["pct_nulos"],
-                    )
-                )
-                if dist.get("es_normal") is not None:
-                    print("     ¿Distribución normal? %s" % ("SÍ" if dist["es_normal"] else "NO"))
-
-            # Correlación
-            print("  🔗 Correlación con %s:" % eva.target_col)
-            corr = eva.analizar_correlacion(col)
-            analisis_var["correlacion"] = corr
-            if "error" not in corr:
-                if "pearson_r" in corr:
-                    print(
-                        "     Pearson r=%.4f (p=%.4f) %s"
-                        % (
-                            corr["pearson_r"],
-                            corr.get("pearson_pvalue", 1),
-                            "✅" if corr.get("pearson_significativo") else "❌",
-                        )
-                    )
-                if "spearman_r" in corr:
-                    print(
-                        "     Spearman ρ=%.4f (p=%.4f) %s"
-                        % (
-                            corr["spearman_r"],
-                            corr.get("spearman_pvalue", 1),
-                            "✅" if corr.get("spearman_significativo") else "❌",
-                        )
-                    )
-                if "mutual_information" in corr:
-                    print("     Información Mutua=%.4f" % corr["mutual_information"])
-                if "auc_roc_individual" in corr:
-                    print(
-                        "     AUC-ROC individual=%.4f (%s)"
-                        % (
-                            corr["auc_roc_individual"],
-                            corr.get("poder_discriminativo", "N/A"),
-                        )
-                    )
-                if "cohens_d" in corr:
-                    print(
-                        "     Cohen's d=%.4f (Δmedias=%.2f)"
-                        % (
-                            corr["cohens_d"],
-                            corr.get("diferencia_medias", 0),
-                        )
-                    )
-            else:
-                print("     ⚠️ %s" % corr["error"])
-
-            # Completitud
-            print("  ✅ Calidad del dato:")
-            calidad = eva.evaluar_completitud(col)
-            analisis_var["completitud"] = calidad
-            print("     Completitud=%.1f%%" % calidad["completitud"])
-            if "pct_inconsistentes" in calidad:
-                print("     ⚠️ Inconsistencias con estado: %.1f%%" % calidad["pct_inconsistentes"])
+            analisis_var["distribucion"] = eva.analizar_distribucion(col)
+            analisis_var["correlacion"] = eva.analizar_correlacion(col)
+            analisis_var["completitud"] = eva.evaluar_completitud(col)
 
             reporte.append(analisis_var)
 
         return reporte
 
     def _analizar_variables_categoricas(self, eva: AnalisisRiguroso) -> list[dict]:
-        """Itera sobre todas las columnas y construye el reporte.
-
-        Ejecuta los analiasis para cada variable categórica, incluyendo distribución,
-        correlación y completitud.
+        """Analisis de variables categoricas: distribucion, correlacion, completitud.
 
         Args:
-            eva: Instancia de AnalisisRiguroso con el DataFrame y la columna objetivo.
+            eva: Instancia de AnalisisRiguroso que contiene el DataFrame y métodos de análisis.
+
+        Returns:
+            reporte: Lista de diccionarios con el análisis de cada variable categórica.
+
         """
         reporte: list[dict] = []
         cols_categoric = get_columnas_string(eva.df)
         excluir = self.COLS_EXCLUIR_BASE + [eva.target_col]
 
-        # -- Categóricas --
-        print("ANÁLISIS DE VARIABLES CATEGÓRICAS (%d)" % len(cols_categoric))
-
         for col in cols_categoric:
             if col in excluir:
                 continue
 
-            print("📊 ANALIZANDO: %s" % col)
-
             analisis_var: dict[str, Any] = {"variable": col, "tipo": "categorica"}
-
-            cat = eva.analizar_variable_categorica(col)
-            analisis_var["categorico"] = cat
-
-            print("     Categorías únicas: %d" % cat["num_categorias"])
-            print(
-                "     Categoría dominante: %s (%.1f%%)"
-                % (
-                    cat.get("categoria_dominante", "N/A"),
-                    cat["pct_categoria_dominante"],
-                )
-            )
-            print(
-                "     Chi-cuadrado significativo: %s"
-                % ("SÍ" if cat.get("chi2_significativo") else "NO")
-            )
-            if "cramers_v" in cat:
-                print("     V de Cramer: %.4f" % cat["cramers_v"])
-
-            calidad = eva.evaluar_completitud(col)
-            analisis_var["completitud"] = calidad
-            print("     Completitud=%.1f%%" % calidad["completitud"])
+            analisis_var["categorico"] = eva.analizar_variable_categorica(col)
+            analisis_var["completitud"] = eva.evaluar_completitud(col)
 
             reporte.append(analisis_var)
 
@@ -256,48 +192,35 @@ class Pipeline:
         """Calcula VIF y retorna evidencias.
 
         Args:
-            eva: Instancia de AnalisisRiguroso con el DataFrame y la columna objetivo.
-
-        Returns:
-            evidencias: dict con el DataFrame de VIF si se calculó.
+            eva: Instancia de AnalisisRiguroso que contiene el DataFrame y métodos de análisis.
 
         """
         evidencias: dict = {}
-
-        print("Calculando VIF para variables numéricas (excluyendo target)...")
-
         try:
             numeric_for_vif = eva.df.select(get_columnas_numericas(eva.df)).fill_null(0)
             if len(numeric_for_vif.columns) > 1:
                 vif_df = eva.calcular_vif(numeric_for_vif, col_excluir=eva.target_col)
-                high_vif = vif_df.filter(pl.col("VIF") > 10).sort("VIF", descending=True)
-                print("Variables con VIF > 10 (alta multicolinealidad): %d" % len(high_vif))
-                for row in high_vif.iter_rows(named=True):
-                    print("  ⚠️ %s: VIF=%.2f" % (row["variable"], row["VIF"]))
                 evidencias["vif"] = vif_df.to_dict()
-            else:
-                print("⚠️ No hay suficientes variables numéricas para VIF")
-        except Exception as e:
-            print("⚠️ Error en VIF: %s" % e)
-
+        except Exception:
+            pass
         return evidencias
 
     def _generar_recomendaciones(self, eva: AnalisisRiguroso, reporte: list[dict]) -> list[dict]:
-        """Genera recomendaciones a partir del reporte de análisis.
+        """Genera recomendaciones a partir del reporte de analisis.
 
         Args:
-            eva: Instancia de AnalisisRiguroso con el DataFrame y la columna objetivo.
+            eva: Instancia de AnalisisRiguroso que contiene el DataFrame y métodos de análisis.
             reporte: Lista de diccionarios con el análisis de cada variable.
+
+        Returns:
+            recomendaciones: Lista de diccionarios con las recomendaciones para cada variable.
 
         """
         recomendaciones: list[dict] = []
 
-        print("RECOMENDACIONES FINALES")
-
         for analisis in reporte:
             col = analisis["variable"]
             recomendacion, razon = eva.recomendar_variable(col, analisis)
-
             recomendaciones.append(
                 {
                     "variable": col,
@@ -306,36 +229,6 @@ class Pipeline:
                     "razon": razon,
                 }
             )
-
-            print("")
-            if "INCLUIR" in recomendacion:
-                print("✅ %s: %s" % (col, recomendacion))
-            elif "EXCLUIR" in recomendacion:
-                print("❌ %s: %s" % (col, recomendacion))
-            else:
-                print("⚠️ %s: %s" % (col, recomendacion))
-                print("   Razón: %s" % razon)
-
-        # Resumen
-        resumen = pl.DataFrame(recomendaciones)
-
-        print("RESUMEN DE RECOMENDACIONES")
-        for row in resumen["recomendacion"].value_counts().iter_rows(named=True):
-            print("   %s: %s" % (row["recomendacion"], row["count"]))
-
-        # Variables problemáticas
-        print("🔍 VERIFICACIÓN DE VARIABLES PROBLEMÁTICAS")
-        for var in [
-            "tot_dias_mora",
-            "tot_num_moras",
-            "tot_dias_mora_promedio",
-            "tot_num_moras_promedio",
-        ]:
-            rec = next((r for r in recomendaciones if r["variable"] == var), None)
-            if rec:
-                print("")
-                print("   %s: %s" % (var, rec["recomendacion"]))
-                print("   Razón: %s" % rec["razon"])
 
         return recomendaciones
 
@@ -346,24 +239,36 @@ class Pipeline:
         evidencias: dict,
         recomendaciones: list[dict],
     ) -> tuple[Any, dict]:
-        """Delega la construccion del dashboard EVA al modulo de visualizacion."""
-        return build_dashboard(df, target_col, evidencias, recomendaciones)
+        """Genera los plots individuales del EVA.
         
+        Args:
+            df: DataFrame de entrada con todas las variables.
+            target_col: nombre de la columna objetivo (target) para correlación y análisis.
+            evidencias: Diccionario con evidencias del análisis, incluyendo VIF si se calculó.
+            recomendaciones: Lista de diccionarios con las recomendaciones para cada variable.
+            
+        Returns:
+            image_paths: Lista de rutas de los plots generados.
+            dashboard_summary: Diccionario con resumen de métricas del dashboard.
+        
+        """
+        graficas_dir = os.path.join(self.output_dir, "graficas")
+        return build_all_plots(df, target_col, evidencias, recomendaciones, output_dir=graficas_dir)
+
     def _salida_notebook(
         self,
         recomendaciones: list[dict],
-        fig,
     ):
-        """plt.show() + guarda .png y .csv en disco (consola)."""
-        os.makedirs(f"{self.output_dir}/graficas", exist_ok=True)
+        """Guarda CSV de recomendaciones en disco.
+        
+        Args:
+            recomendaciones: Lista de diccionarios con las recomendaciones para cada variable.
+            
+        Returns:
+            None. Guarda el archivo CSV en el directorio de salida especificado.
+        
+        """
         os.makedirs(f"{self.output_dir}/metricas", exist_ok=True)
-
-        plt.show()
-
-        png_path = f"{self.output_dir}/graficas/eda_completo.png"
-        fig.savefig(png_path, dpi=150, bbox_inches="tight", facecolor="white")
-        print("Dashboard guardado en: %s" % png_path)
-
         csv_path = f"{self.output_dir}/metricas/recomendaciones_eva.csv"
         pl.DataFrame(recomendaciones).write_csv(csv_path)
         print("Recomendaciones guardadas (%d vars) en: %s" % (len(recomendaciones), csv_path))
@@ -375,11 +280,26 @@ class Pipeline:
         target_col: str,
         recomendaciones: list[dict],
         evidencias: dict,
-        fig,
+        image_paths: list[str],
         run_name: str | None,
         dashboard_summary: dict | None = None,
+        detale_path: str | None = None,
     ):
-        """Log a MLflow si el tracking URI esta configurado. Dual output: consola + MLflow."""
+        """Log a MLflow: params, metrics, plots individuales y artefactos.
+        
+        Args:
+            df: DataFrame de entrada con todas las variables.
+            target_col: nombre de la columna objetivo (target) para correlación y análisis.
+            recomendaciones: Lista de diccionarios con las recomendaciones para cada variable.
+            evidencias: Diccionario con evidencias del análisis, incluyendo VIF si se calculó.
+            image_paths: Lista de rutas de los plots generados.
+            run_name: Nombre de la ejecución de MLflow.
+            dashboard_summary: Diccionario con resumen de métricas del dashboard.
+            detale_path: Ruta al archivo JSON con detalles adicionales.
+            
+        Returns:
+            None. Loggea los artefactos y métricas en MLflow.
+        """
         try:
             if not mlflow.get_tracking_uri():
                 return
@@ -388,9 +308,7 @@ class Pipeline:
 
         active_run = mlflow.active_run()
         run_ctx = (
-            mlflow.start_run(run_name=run_name)
-            if active_run is None
-            else nullcontext(active_run)
+            mlflow.start_run(run_name=run_name) if active_run is None else nullcontext(active_run)
         )
 
         with run_ctx as run:
@@ -400,6 +318,7 @@ class Pipeline:
             else:
                 print("MLflow Run activo reutilizado: %s" % run_id)
 
+            # Parametros
             mlflow.log_params(
                 {
                     "total_registros": len(df),
@@ -408,6 +327,7 @@ class Pipeline:
                 }
             )
 
+            # Metricas
             resumen = pl.DataFrame(recomendaciones)
             counts = resumen["recomendacion"].value_counts()
             for row in counts.iter_rows(named=True):
@@ -436,10 +356,19 @@ class Pipeline:
                     if isinstance(vif_mean, (int, float)):
                         mlflow.log_metric("eva_vif_mean", float(vif_mean))
 
-            mlflow.log_figure(fig, "eva_dashboard.png")
+            # Plots individuales Graficos 
+            for img_path in image_paths:
+                mlflow.log_artifact(img_path, "plots")
+
+            # Detalle JSON
+            if detale_path and os.path.exists(detale_path):
+                mlflow.log_artifact(detale_path)
+
+            # Sube el dashboard_summary como un artefacto JSON si está disponible, EXITO!!
             if dashboard_summary is not None:
                 mlflow.log_dict(dashboard_summary, "eva_dashboard_summary.json")
-                
+
+            # Crea la recomendaciones como CSV y lo sube como artefacto
             with tempfile.TemporaryDirectory() as tmpdir:
                 csv_path = os.path.join(tmpdir, "recomendaciones_eva.csv")
                 pl.DataFrame(recomendaciones).write_csv(csv_path)
@@ -457,11 +386,10 @@ class Pipeline:
                         f,
                         indent=2,
                         ensure_ascii=False,
-                        default=str,
+                        default=_serialize_for_json,
                     )
-                mlflow.log_artifact(reporte_path)
 
-            print(f"MLflow: artefactos registrados — Run: {run_id}")
+            print(f"MLflow: {len(image_paths)} plots + artefactos registrados — Run: {run_id}")
 
     def run(
         self,
@@ -484,27 +412,45 @@ class Pipeline:
         print("EVA — ANÁLISIS EXPLORATORIO DE VARIABLES")
         print("📊 Registros: (%s)" % len(df))
 
+        # Se lanzan el analisis riguroso de las variables.
         eva = AnalisisRiguroso(df, target_col=target_col)
 
         reporte_numericas = self._analizar_variables_numericas(eva)
         reporte_categoricas = self._analizar_variables_categoricas(eva)
         reporte_completo = reporte_numericas + reporte_categoricas
-
         evidencias = self._analizar_vif(eva)
         recomendaciones = self._generar_recomendaciones(eva, reporte_completo)
 
-        fig, dashboard_summary = self._plot_dashboard(df, target_col, evidencias, recomendaciones)
+        image_paths, dashboard_summary = self._plot_dashboard(
+            df, target_col, evidencias, recomendaciones
+        )
 
-        self._salida_notebook(recomendaciones, fig)
+        # Guardar detail JSON
+        detale_path = os.path.join(self.output_dir, "evidencia_eva", "eva_dashboard_detail.json")
+        os.makedirs(os.path.dirname(detale_path), exist_ok=True)
+        with open(detale_path, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "recomendaciones": recomendaciones,
+                    "reporte": reporte_completo,
+                    "evidencias": evidencias,
+                    "dashboard_summary": dashboard_summary,
+                },
+                f,
+                indent=2,
+                ensure_ascii=False, # Error caracteres Unicode en el JSON problemas con mis "emojis"
+                default=_serialize_for_json,
+            )
+
         self._log_mlflow(
             df,
             target_col,
             recomendaciones,
             evidencias,
-            fig,
+            image_paths,
             run_name=run_name,
             dashboard_summary=dashboard_summary,
+            detale_path=detale_path,
         )
 
-        plt.close(fig)
         return recomendaciones, evidencias
