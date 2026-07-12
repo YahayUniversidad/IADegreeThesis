@@ -17,6 +17,7 @@ from airflow.models import Variable
 from airflow.models.param import Param
 from airflow.operators.python import PythonOperator
 from src.sql import capturar_datos_csv, crear_tablas_estructura
+from src.datamart import ejecutar as ejecutar_datamart
 
 ## Agrega la raiz de Desarrollo al PYTHONPATH para importar src.sql
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -41,6 +42,10 @@ def cargar_csv_task(**context):
     path_carpeta_csv = context["params"]["path_carpeta_csv"]
     capturar_datos_csv(string_conexion, path_carpeta_csv)
 
+def datamart_task(**context):
+    string_conexion = context["params"]["string_conexion"]
+    ejecutar_datamart(string_conexion)
+    
 dag_etl = DAG(
     dag_id="DAG-ETL-CSV",
     description="Carga ETL de archivos CSV desde carpeta local hacia base de datos",
@@ -80,4 +85,10 @@ t2_cargar_csv = PythonOperator(
     dag=dag_etl,
 )
 
-t1_crear_estructura >> t2_cargar_csv # type: ignore
+t3_datamart = PythonOperator(
+    task_id="ejecutar_datamart",
+    python_callable=datamart_task,
+    dag=dag_etl,
+)
+
+t1_crear_estructura >> t2_cargar_csv >> t3_datamart # type: ignore
