@@ -13,8 +13,17 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false' ## si pone true se cargan los ejemplos
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+
+    ## Configuracion de src de programacion
     PYTHONPATH: /opt/airflow:/opt/airflow/src
     _PIP_ADDITIONAL_REQUIREMENTS: ''
+
+    ## Configuracion de correos
+    AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
+    AIRFLOW__SMTP__SMTP_USER: omargo33@gmail.com
+    AIRFLOW__SMTP__SMTP_PASSWORD: 'jqnn imwa oczw ibgx'
+    AIRFLOW__SMTP__SMTP_PORT: 587
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: omargo33@gmail.com
   volumes:
     - ./dags:/opt/airflow/dags
     - ./src:/opt/airflow/src

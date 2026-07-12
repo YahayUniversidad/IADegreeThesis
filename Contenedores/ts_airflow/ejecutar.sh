@@ -9,7 +9,7 @@ fi
 
 ## ejecuta el docker con el producto.
 
-if ! docker compose build > /dev/null; then
+if ! docker compose build --progress plain; then
   echo "[ERROR] Build Erroneo revisa configuracion!"
   exit 1
 fi 
