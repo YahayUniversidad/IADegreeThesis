@@ -39,7 +39,7 @@ style: |-
     color: #1f2d3d;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(3px);
-    max-width: 82%;
+    max-width: 90%;
   }
   section.slide--negocio .negocio-card h2,
   section.slide--negocio .negocio-card h3,
@@ -58,7 +58,8 @@ style: |-
     color: #1f2d3d;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(3px);
-    max-width: 82%;
+    min-height: 77%;
+    max-width: 90%;
   }
   section.slide--intro .negocio-card h2,
   section.slide--intro .negocio-card h3,
@@ -66,16 +67,10 @@ style: |-
   section.slide--intro .negocio-card strong {
     color: inherit;
   }
-
-
-
-
-
-
-
-
   section.slide--warning {
     background: linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)), url("warning.jpg") no-repeat center center / cover !important;
+
+    padding-top: 90px;
   }
   section.slide--warning .negocio-card {
     background: rgba(255, 255, 255, 0.8);
@@ -85,7 +80,7 @@ style: |-
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(3px);
     min-height: 77%;
-    max-width: 82%;
+    max-width: 90%;
   }
   section.slide--warning .negocio-card h2,
   section.slide--warning .negocio-card h3,
@@ -93,14 +88,6 @@ style: |-
   section.slide--warning .negocio-card strong {
     color: inherit;
   }
-
-
-
-
-
-
-
-
   section::after {
     content: "";
     position: absolute;
@@ -129,6 +116,7 @@ Maestría en Inteligencia Artificial
 Julio 2026
 
 ---
+
 <!-- _class: slide--intro -->
 <div class="negocio-card">
 
@@ -147,13 +135,14 @@ Ya que un valor superior a este porcentaje puede afectar la liquidez de la insti
 <!-- _class: slide--warning -->
 <div class="negocio-card">
 
-## DATA 
+## DATA
 
 La data fue proporcionada por la **Cooperativa de Ahorro y Crédito Jardín Azuayo** y contiene información de prestamos, amortizaciones y juicios desde el 2019 hasta el 2026.
 
 La misma ya fue entregada con un proceso previo de anodizado: sin datos de cuentas, ni información personal de los socios y clientes, en fiel cumplimiento con normas internas de seguridades y leyes vigentes.
 
 ### La media de registros es de 1.8 millones por año !!
+
 </div>
 
 ---
@@ -170,6 +159,7 @@ La misma ya fue entregada con un proceso previo de anodizado: sin datos de cuent
 > **Objetivo:** Crear un pipeline end-to-end que transforme datos crediticios crudos en predicciones accionables y dashboards para el control de la mora.
 
 ---
+
 ## Objetivos
 
 ### Objetivo General
@@ -185,9 +175,10 @@ Disenar e implementar un sistema integrado de inteligencia de negocio crediticio
 5. **Aprobacion humana** del modelo antes de produccion
 
 ---
+
 ## Arquitectura General
 
-``` bash
+```bash
 CSV (51 archivos) ──→ ETL ──→ PostgreSQL ──→ Datamart (Estrella)
                               │                    │
                               │                    ├──→ EVA (Analisis)
@@ -206,6 +197,7 @@ CSV (51 archivos) ──→ ETL ──→ PostgreSQL ──→ Datamart (Estrell
 **Stack tecnologico:** Airflow, PostgreSQL, MLflow, TensorFlow, LightGBM, `**Polars**`, Superset
 
 ---
+
 ## Componente ETL y Datamart 1-2
 
 ### ETL (Extraccion, Transformacion, Carga)
@@ -215,20 +207,22 @@ CSV (51 archivos) ──→ ETL ──→ PostgreSQL ──→ Datamart (Estrell
 - Proceso incremental con `ON CONFLICT DO UPDATE`
 
 ---
+
 ## Componente ETL y Datamart 2-2
 
 ### Datamart (Esquema Estrella)
 
-| Dimension                 | Contenido                        |
-| ------------------------- | -------------------------------- |
+| Dimension                 | Contenido                       |
+| ------------------------- | ------------------------------- |
 | dim_tiempo                | Mes, año, trimestre, nombre_mes |
-| dim_riesgo                | Codigo y descripcion de riesgo   |
-| dim_sector                | Codigo y descripcion de sector   |
-| dim_sucursal              | Sucursal y provincia             |
-| fact_creditos_mensual     | 27 metricas por bloque           |
-| fact_predicciones_mensual | Predicciones multi-horizonte     |
+| dim_riesgo                | Codigo y descripcion de riesgo  |
+| dim_sector                | Codigo y descripcion de sector  |
+| dim_sucursal              | Sucursal y provincia            |
+| fact_creditos_mensual     | 27 metricas por bloque          |
+| fact_predicciones_mensual | Predicciones multi-horizonte    |
 
 ---
+
 ## Analisis EVA (Evaluacion de Variables Analiticas)
 
 ### Modulo Python Reutilizable
@@ -326,6 +320,7 @@ for bloque_id in bloques:
 ```
 
 ---
+
 ### Dashboard (Superset)
 
 - Visualizacion por dimensiones: tiempo, riesgo, sector, sucursal
@@ -385,24 +380,22 @@ Dado que el proyecto tiene un enfoque de **inteligencia de negocio crediticio**,
 <!-- _class: slide--negocio invert -->
 <div class="negocio-card">
 
-
 ### Otros nichos de mercado
 
 Y como un producto comercial, se espera que el mismo pueda ser licenciado a almacenes de electrodomésticos, tiendas de muebles, tiendas departamentales y otros comercios que **otorguen crédito directo** a sus clientes.
 
-Ya que el sistema crediticio y el manejo de la mora es un 
+Ya que el sistema crediticio y el manejo de la mora es un
 problema común en este tipo de negocios.
 
 </div>
 
---- 
+---
 
 <!-- _class: lead -->
 
 # Preguntas
 
-Gracias por su atención. 
-
+Gracias por su atención.
 
 ![icon](yachayCuadrado.jpg)
 **Omar Velez**  
