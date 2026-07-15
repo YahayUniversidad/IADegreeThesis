@@ -23,8 +23,8 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src.datamart import ejecutar as ejecutar_datamart
-from src.sql import capturar_datos_csv, crear_tablas_estructura
+from src.datamart import ejecutar_datamart
+from src.csv import capturar_datos_csv, crear_tablas_estructura
 
 dag_args = {
     "depends_on_past": False,
@@ -35,29 +35,23 @@ dag_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-
 def crear_estructura_task(**context):
     string_conexion = context["params"]["string_conexion"]
     crear_tablas_estructura(string_conexion)
-
 
 def cargar_csv_task(**context):
     string_conexion = context["params"]["string_conexion"]
     path_carpeta_csv = context["params"]["path_carpeta_csv"]
     capturar_datos_csv(string_conexion, path_carpeta_csv)
 
-
 def datamart_task(**context):
-    import psycopg2
     string_conexion = context["params"]["string_conexion"]
-    conn = psycopg2.connect(string_conexion)
-    conn.autocommit = True
     try:
-        ejecutar_datamart(conn)
-    finally:
-        conn.close()
-
-
+        ejecutar_datamart(string_conexion)
+    except Exception as e:
+        print(f"Error al ejecutar datamart: {e}")
+        raise RuntimeError(f"Error al ejecutar datamart: {e}") from e
+    
 def prediccion_task(**context):
     import psycopg2
     import mlflow

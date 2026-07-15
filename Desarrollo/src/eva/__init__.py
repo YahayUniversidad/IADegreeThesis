@@ -9,14 +9,12 @@
 
 from .analisis_riguroso import AnalisisRiguroso
 from .pipeline import Pipeline
-from .utilidades import (
-    get_columnas_numericas,
-    get_columnas_string,
-)
+from .utilidades import espacio_tiempo, get_columnas_numericas, get_columnas_string
 
 __all__ = [
     "AnalisisRiguroso",
     "Pipeline",
     "get_columnas_numericas",
     "get_columnas_string",
+    "espacio_tiempo",
 ]

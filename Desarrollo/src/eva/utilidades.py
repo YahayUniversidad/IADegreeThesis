@@ -7,6 +7,7 @@
 ## @version julio 2026
 ##
 import math
+from datetime import date
 
 import polars as pl
 
@@ -58,3 +59,36 @@ def informar_razon(logger, razon):
     # por un salto de línea '|'
     for linea in str(razon).replace(";", "|-").split("|"):
         print(f"   {linea.strip()}")
+
+def _agregar_meses(d: date, months: int) -> date:
+    """Sumando meses a una fecha determinada.
+
+    Args:
+        d (date): Fecha inicial.
+        months (int): Número de meses a sumar.
+
+    Returns:
+        date: Fecha resultante después de sumar los meses.
+    """
+    year = d.year + (d.month - 1 + months) // 12
+    month = (d.month - 1 + months) % 12 + 1
+    return date(year, month, 1)
+
+def espacio_tiempo(fecha_inicio: date, fecha_fin: date, espacio_meses: int = 1):
+    """Genera ventanas de tiempo entre dos fechas.
+
+    Args:
+        fecha_inicio (date): Fecha de inicio.
+        fecha_fin  (date): Fecha de fin.
+        espacio_meses (int, optional): Número de meses por ventana. Defaults to 1.
+
+    Yields:
+        tuple: Tupla con la fecha de inicio y fin de cada ventana.
+    """
+    current = fecha_inicio
+    while current < fecha_fin:
+        nxt = _agregar_meses(current, espacio_meses)
+        if nxt > fecha_fin:
+            nxt = fecha_fin
+        yield current, nxt
+        current = nxt

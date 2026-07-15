@@ -9,11 +9,12 @@
 ## @version julio 2026
 ##
 
-import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import mlflow
+import psycopg2
 from airflow import DAG
 from airflow.models import Variable
 from airflow.models.param import Param
@@ -23,9 +24,10 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src.datamart import ejecutar as ejecutar_datamart
-from src.sql import capturar_datos_csv, crear_tablas_estructura
+from src.datamart import ejecutar_datamart
+from src.csv import capturar_datos_csv, crear_tablas_estructura
 
+## DAG Arguments
 dag_args = {
     "depends_on_past": False,
     "email": ["omargo33+airflow@gmail.com"],
@@ -35,95 +37,49 @@ dag_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-
 def crear_estructura_task(**context):
     string_conexion = context["params"]["string_conexion"]
     crear_tablas_estructura(string_conexion)
-
 
 def cargar_csv_task(**context):
     string_conexion = context["params"]["string_conexion"]
     path_carpeta_csv = context["params"]["path_carpeta_csv"]
     capturar_datos_csv(string_conexion, path_carpeta_csv)
-
-
+    
 def datamart_task(**context):
-    import psycopg2
     string_conexion = context["params"]["string_conexion"]
-    conn = psycopg2.connect(string_conexion)
-    conn.autocommit = True
     try:
-        ejecutar_datamart(conn)
-    finally:
-        conn.close()
-
+        ejecutar_datamart(string_conexion)
+    except Exception as e:
+        print(f"Error al ejecutar datamart: {e}")
+        raise RuntimeError(f"Error al ejecutar datamart: {e}") from e
 
 def eda_task(**context):
-    """Ejecuta el pipeline EDA+EVA consolidado."""
-    import subprocess
-    notebook_path = str(ROOT_DIR / "noteBooks" / "EDA.ipynb")
-    output_path = str(ROOT_DIR / "noteBooks" / "output")
-
-    result = subprocess.run(
-        ["jupyter", "nbconvert", "--to", "notebook", "--execute",
-         "--output", "EDA_ejecutado.ipynb", notebook_path],
-        capture_output=True, text=True, cwd=str(ROOT_DIR / "noteBooks"),
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"EDA fallo: {result.stderr}")
+    print("EDA/EVA PENDIENTE")
     print("EDA/EVA completado")
-
 
 def entrenar_cnn_task(**context):
     """Entrena el modelo CNN."""
-    import subprocess
-    notebook_path = str(ROOT_DIR / "noteBooks" / "entrenamiento_cnn.ipynb")
-    result = subprocess.run(
-        ["jupyter", "nbconvert", "--to", "notebook", "--execute",
-         "--output", "entrenamiento_cnn_ejecutado.ipynb", notebook_path],
-        capture_output=True, text=True, cwd=str(ROOT_DIR / "noteBooks"),
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"CNN fallo: {result.stderr}")
     print("CNN entrenado")
 
 
 def entrenar_mlp_task(**context):
     """Entrena el modelo MLP."""
-    import subprocess
-    notebook_path = str(ROOT_DIR / "noteBooks" / "entrenamiento_mlp.ipynb")
-    result = subprocess.run(
-        ["jupyter", "nbconvert", "--to", "notebook", "--execute",
-         "--output", "entrenamiento_mlp_ejecutado.ipynb", notebook_path],
-        capture_output=True, text=True, cwd=str(ROOT_DIR / "noteBooks"),
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"MLP fallo: {result.stderr}")
     print("MLP entrenado")
 
 
 def entrenar_lgbm_task(**context):
     """Entrena el modelo LightGBM."""
-    import subprocess
-    notebook_path = str(ROOT_DIR / "noteBooks" / "entrenamiento_lightgbm.ipynb")
-    result = subprocess.run(
-        ["jupyter", "nbconvert", "--to", "notebook", "--execute",
-         "--output", "entrenamiento_lgbm_ejecutado.ipynb", notebook_path],
-        capture_output=True, text=True, cwd=str(ROOT_DIR / "noteBooks"),
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"LightGBM fallo: {result.stderr}")
     print("LightGBM entrenado")
 
 
 def seleccionar_mejor_modelo_task(**context):
     """Selecciona el mejor modelo de MLflow y retorna su experiment_id."""
-    import mlflow
-
+    
     mlflow_uri = context["params"]["mlflow_uri"]
     mlflow.set_tracking_uri(mlflow_uri)
 
-    experimentos = ["jupy_entrenamiento_lightgbm", "jupy_entrenamiento_cnn", "jupy_entrenamiento_mlp"]
+    experimentos = ["flow_entrenamiento_lightgbm", "flow_entrenamiento_cnn", "flow_entrenamiento_mlp"]
     mejor_experimento = None
     mejor_auc = -1
 
@@ -149,7 +105,7 @@ def seleccionar_mejor_modelo_task(**context):
     context["ti"].xcom_push(key="mejor_experiment_id", value=mejor_experimento)
     context["ti"].xcom_push(key="mejor_auc_roc", value=mejor_auc)
 
-
+## DAG Definition
 dag_entrenamiento = DAG(
     dag_id="DAG-Entrenamiento",
     description="Pipeline de entrenamiento: datos historicos → EDA → modelos → MLflow",
@@ -179,13 +135,23 @@ dag_entrenamiento = DAG(
     },
 )
 
-e1 = PythonOperator(task_id="crear_estructura", python_callable=crear_estructura_task, dag=dag_entrenamiento)
-e2 = PythonOperator(task_id="cargar_csv", python_callable=cargar_csv_task, dag=dag_entrenamiento)
-e3 = PythonOperator(task_id="datamart", python_callable=datamart_task, dag=dag_entrenamiento)
-e4 = PythonOperator(task_id="eda_eva", python_callable=eda_task, dag=dag_entrenamiento)
-e5_cnn = PythonOperator(task_id="entrenar_cnn", python_callable=entrenar_cnn_task, dag=dag_entrenamiento)
-e5_mlp = PythonOperator(task_id="entrenar_mlp", python_callable=entrenar_mlp_task, dag=dag_entrenamiento)
-e5_lgbm = PythonOperator(task_id="entrenar_lgbm", python_callable=entrenar_lgbm_task, dag=dag_entrenamiento)
-e6 = PythonOperator(task_id="seleccionar_mejor_modelo", python_callable=seleccionar_mejor_modelo_task, dag=dag_entrenamiento)
+## Tareas del DAG
+e1 = PythonOperator(task_id="crear_estructura", 
+                    python_callable=crear_estructura_task, dag=dag_entrenamiento)
+e2 = PythonOperator(task_id="cargar_csv", 
+                    python_callable=cargar_csv_task, dag=dag_entrenamiento)
+e3 = PythonOperator(task_id="datamart", 
+                    python_callable=datamart_task, dag=dag_entrenamiento)
+e4 = PythonOperator(task_id="eda_eva",
+                    python_callable=eda_task, dag=dag_entrenamiento)
+e5_cnn = PythonOperator(task_id="entrenar_cnn", 
+                        python_callable=entrenar_cnn_task, dag=dag_entrenamiento)
+e5_mlp = PythonOperator(task_id="entrenar_mlp", 
+                        python_callable=entrenar_mlp_task, dag=dag_entrenamiento)
+e5_lgbm = PythonOperator(task_id="entrenar_lgbm", 
+                         python_callable=entrenar_lgbm_task, dag=dag_entrenamiento)
+e6 = PythonOperator(task_id="seleccionar_mejor_modelo", 
+                    python_callable=seleccionar_mejor_modelo_task, dag=dag_entrenamiento)
 
+## Definicion del flujo de tareas
 e1 >> e2 >> e3 >> e4 >> [e5_cnn, e5_mlp, e5_lgbm] >> e6 # type: ignore

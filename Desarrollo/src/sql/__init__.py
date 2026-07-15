@@ -7,7 +7,6 @@
 ## @version julio 2026
 ##
 
-from .csv import capturar_datos_csv, crear_tablas_estructura
 from .queries import (
     SCRIPT_CREATE_TABLE_TEMPORAL_CSV,
     SQL_CREA_DIM_RIESGO,
@@ -31,8 +30,6 @@ from .utilidades import ejeucta_script_generico
 
 __all__ = [
     "ejeucta_script_generico",
-    "crear_tablas_estructura",
-    "capturar_datos_csv",
     "SQL_CREATE_TABLE_CREDITOS",
     "SQL_CREATE_TABLE_AMORTIZACION",
     "SQL_CREATE_TABLE_JUICIOS",

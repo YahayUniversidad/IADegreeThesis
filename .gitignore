@@ -11,6 +11,9 @@ wandb/
 *output/
 *__pycache__/
 
+*tesis/
+*DocumentosBase/
+
 Contenedores/ts_airflow/config/
 Contenedores/ts_airflow/dags/
 Contenedores/ts_airflow/data/

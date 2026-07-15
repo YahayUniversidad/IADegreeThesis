@@ -87,7 +87,6 @@ def _pobrar_dim_generico(conn, nombre_dim, sql_insert):
         conn: Conexion a la base de datos.
         nombre_dim: Nombre de la dimension.
         sql_insert: Sentencia SQL para insertar los datos.
-    
 
     """
     cur = conn.cursor()
@@ -103,7 +102,7 @@ def _poblar_dims(conn):
         conn: Conexion a la base de datos.
     
     """
-    _pobrar_dim_generico(conn, "dim_riesgo", SQL_INSERT_DIM_TIEMPO)
+    _pobrar_dim_generico(conn, "dim_tiempo", SQL_INSERT_DIM_TIEMPO)
     _pobrar_dim_generico(conn, "dim_riesgo", SQL_INSERT_DIM_RIESGO)
     _pobrar_dim_generico(conn, "dim_sector", SQL_INSERT_DIM_SECTOR)
     _pobrar_dim_generico(conn, "dim_sucursal", SQL_INSERT_DIM_SUCURSAL)
@@ -167,12 +166,14 @@ def _validar(conn):
     print("Validacion exitosa")
 
 
-def ejecutar(string_conexion):
+def ejecutar_datamart(string_conexion):
     """Ejecuta el pipeline completo: refresh MV -> dims -> fact -> validar.
     
     Args:
         string_conexion: Cadena de conexion a la base de datos.
     
+    Raises:
+        ValueError: Si hay errores de integridad en el datamart.    
     """
 
     conn = psycopg2.connect(string_conexion)
@@ -187,7 +188,6 @@ def ejecutar(string_conexion):
         conn.commit()
     except Exception as e:
         conn.rollback()
-        print(f"Error al ejecutar pipeline: {e}")
-        raise
+        raise e
     finally:
         conn.close()

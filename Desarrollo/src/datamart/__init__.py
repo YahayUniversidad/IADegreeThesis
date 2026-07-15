@@ -8,9 +8,9 @@
 ##
 
 from .pipeline import (
-    ejecutar,
+    ejecutar_datamart,
 )
 
 __all__ = [
-    "ejecutar",
+    "ejecutar_datamart",
 ]

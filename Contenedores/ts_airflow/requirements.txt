@@ -7,19 +7,21 @@ psycopg2-binary
 sqlalchemy
 
 # ML / Entrenamiento
-tensorflow
 lightgbm
-scikit-learn
 numpy
 pandas
+scikit-learn
+tensorflow
 
 # Visualizacion / EVA
+joblib
 matplotlib
 seaborn
-joblib
 
 # MLflow
 mlflow
 
 # Superset MCP
 requests
+
+papermill

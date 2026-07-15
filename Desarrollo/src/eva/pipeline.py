@@ -28,16 +28,16 @@ import polars as pl
 
 def _serialize_for_json(obj):
     """Convierte objetos Polars/numpy a tipos serializables en JSON.
-    
+
     Se toma el valor de polars que son Series o DataFrames y se convierten a listas, hay un JSON
     tiene problemas que ponia los datos continuos.
-    
+
     Args:
         obj: Objeto a serializar (puede ser polars Series, DataFrame, numpy types, dict, list, etc.)
-    
+
     Returns:
         Objeto serializable en JSON (list, dict, int, float, etc.)
-    
+
     """
     if isinstance(obj, pl.Series):
         return obj.to_list()
@@ -240,17 +240,17 @@ class Pipeline:
         recomendaciones: list[dict],
     ) -> tuple[Any, dict]:
         """Genera los plots individuales del EVA.
-        
+
         Args:
             df: DataFrame de entrada con todas las variables.
             target_col: nombre de la columna objetivo (target) para correlación y análisis.
             evidencias: Diccionario con evidencias del análisis, incluyendo VIF si se calculó.
             recomendaciones: Lista de diccionarios con las recomendaciones para cada variable.
-            
+
         Returns:
             image_paths: Lista de rutas de los plots generados.
             dashboard_summary: Diccionario con resumen de métricas del dashboard.
-        
+
         """
         graficas_dir = os.path.join(self.output_dir, "graficas")
         return build_all_plots(df, target_col, evidencias, recomendaciones, output_dir=graficas_dir)
@@ -260,13 +260,13 @@ class Pipeline:
         recomendaciones: list[dict],
     ):
         """Guarda CSV de recomendaciones en disco.
-        
+
         Args:
             recomendaciones: Lista de diccionarios con las recomendaciones para cada variable.
-            
+
         Returns:
             None. Guarda el archivo CSV en el directorio de salida especificado.
-        
+
         """
         os.makedirs(f"{self.output_dir}/metricas", exist_ok=True)
         csv_path = f"{self.output_dir}/metricas/recomendaciones_eva.csv"
@@ -286,7 +286,7 @@ class Pipeline:
         detale_path: str | None = None,
     ):
         """Log a MLflow: params, metrics, plots individuales y artefactos.
-        
+
         Args:
             df: DataFrame de entrada con todas las variables.
             target_col: nombre de la columna objetivo (target) para correlación y análisis.
@@ -296,7 +296,7 @@ class Pipeline:
             run_name: Nombre de la ejecución de MLflow.
             dashboard_summary: Diccionario con resumen de métricas del dashboard.
             detale_path: Ruta al archivo JSON con detalles adicionales.
-            
+
         Returns:
             None. Loggea los artefactos y métricas en MLflow.
         """
@@ -356,7 +356,7 @@ class Pipeline:
                     if isinstance(vif_mean, (int, float)):
                         mlflow.log_metric("eva_vif_mean", float(vif_mean))
 
-            # Plots individuales Graficos 
+            # Plots individuales Graficos
             for img_path in image_paths:
                 mlflow.log_artifact(img_path, "plots")
 
@@ -438,7 +438,7 @@ class Pipeline:
                 },
                 f,
                 indent=2,
-                ensure_ascii=False, # Error caracteres Unicode en el JSON problemas con mis "emojis"
+                ensure_ascii=False,  # Error caracteres Unicode en el JSON problemas con mis "emojis"
                 default=_serialize_for_json,
             )
 

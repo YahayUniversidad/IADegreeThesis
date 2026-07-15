@@ -1,5 +1,5 @@
 ##
-## @file csv.py
+## @file pipeline.py
 ##
 ## Contiene funciones para capturar y procesar archivos CSV en la base de datos.
 ##
@@ -7,21 +7,18 @@
 ## @version julio 2026
 ##
 
-import sys
 from pathlib import Path
-
-sys.path.insert(0, "..")
 
 import polars as pl
 import psycopg2
 from psycopg2 import sql
-from src.sql.queries import (
+from src.sql import (
     SCRIPT_CREATE_TABLE_TEMPORAL_CSV,
     SQL_CREATE_TABLE_AMORTIZACION,
     SQL_CREATE_TABLE_CREDITOS,
     SQL_CREATE_TABLE_JUICIOS,
+    ejeucta_script_generico,
 )
-from src.sql.utilidades import ejeucta_script_generico
 
 
 def crear_tablas_estructura(string_conexion):
