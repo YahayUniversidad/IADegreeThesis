@@ -12,7 +12,7 @@ from pathlib import Path
 import polars as pl
 import psycopg2
 from psycopg2 import sql
-from src.sql import (
+from src.ts_sql import (
     SCRIPT_CREATE_TABLE_TEMPORAL_CSV,
     SQL_CREATE_TABLE_AMORTIZACION,
     SQL_CREATE_TABLE_CREDITOS,

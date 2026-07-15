@@ -7,6 +7,8 @@
 ## @version julio 2026
 ##
 
+from datetime import date
+
 SQL_CREATE_TABLE_CREDITOS = """
     CREATE TABLE IF NOT EXISTS creditos (
         numero_credito INTEGER NOT NULL,
@@ -619,3 +621,34 @@ SQL_CREA_FACT_PREDICCIONES = """
         UNIQUE (id_tiempo, id_riesgo, id_sector, id_sucursal)
     );
     """
+
+
+def consultar_creditos_mensuales(fecha_inicio: date, fecha_fin: date) -> str:
+    """ Consultas en espacio del tiempo para obtener los créditos mensuales.
+    
+    Se hace las consultas en lotes para manejar la memoria y no saturar el sistema.
+    
+    Args:
+        fecha_inicio (date): Fecha de inicio del rango.
+        fecha_fin (date): Fecha de fin del rango.
+    Returns:
+        str: Consulta SQL para obtener los créditos mensuales en el rango de fechas especificado.
+    
+    """
+    return f"""
+        SELECT
+            mes, riesgo, sector, codigo_sucursal,
+            bloque_id,
+            num_creditos, monto_total, monto_promedio,
+            plazo_promedio, tasa_interes_promedio, saldo_promedio,
+            total_costo_judicial, total_gestion_cobro, total_notificaciones,
+            tot_dias_mora_promedio, tot_num_moras_promedio, mora_promedio,
+            creditos_judiciales, creditos_cerrados, num_clientes_unicos,
+            tasa_judicial, tasa_cierre, tasa_mora_90,
+            desviacion_montos, coef_variacion_montos, creditos_por_cliente,
+            tasa_crecimiento_creditos, tasa_crecimiento_monto,
+            crisis_flag
+        FROM mv_creditos_mensuales
+        WHERE mes >= '{fecha_inicio.isoformat()}'
+          AND mes < '{fecha_fin.isoformat()}'
+        """

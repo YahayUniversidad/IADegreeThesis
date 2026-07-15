@@ -25,11 +25,13 @@ from .queries import (
     SQL_INSERT_DIM_SUCURSAL,
     SQL_INSERT_DIM_TIEMPO,
     SQL_UPSERT_FACT_CREDITOS,
+    consultar_creditos_mensuales,
 )
 from .utilidades import ejeucta_script_generico
 
 __all__ = [
     "ejeucta_script_generico",
+    "consultar_creditos_mensuales",
     "SQL_CREATE_TABLE_CREDITOS",
     "SQL_CREATE_TABLE_AMORTIZACION",
     "SQL_CREATE_TABLE_JUICIOS",

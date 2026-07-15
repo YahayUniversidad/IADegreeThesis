@@ -14,7 +14,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import mlflow
-import psycopg2
 from airflow import DAG
 from airflow.models import Variable
 from airflow.models.param import Param
@@ -24,9 +23,10 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src.datamart import ejecutar_datamart
-from src.csv import capturar_datos_csv, crear_tablas_estructura
+from src.ts_csv import capturar_datos_csv, crear_tablas_estructura
+from src.ts_datamart import ejecutar_datamart
 
+##
 ## DAG Arguments
 dag_args = {
     "depends_on_past": False,
@@ -54,8 +54,9 @@ def datamart_task(**context):
         print(f"Error al ejecutar datamart: {e}")
         raise RuntimeError(f"Error al ejecutar datamart: {e}") from e
 
+
 def eda_task(**context):
-    print("EDA/EVA PENDIENTE")
+    
     print("EDA/EVA completado")
 
 def entrenar_cnn_task(**context):
@@ -105,6 +106,7 @@ def seleccionar_mejor_modelo_task(**context):
     context["ti"].xcom_push(key="mejor_experiment_id", value=mejor_experimento)
     context["ti"].xcom_push(key="mejor_auc_roc", value=mejor_auc)
 
+##
 ## DAG Definition
 dag_entrenamiento = DAG(
     dag_id="DAG-Entrenamiento",
@@ -135,6 +137,7 @@ dag_entrenamiento = DAG(
     },
 )
 
+##
 ## Tareas del DAG
 e1 = PythonOperator(task_id="crear_estructura", 
                     python_callable=crear_estructura_task, dag=dag_entrenamiento)
@@ -153,5 +156,6 @@ e5_lgbm = PythonOperator(task_id="entrenar_lgbm",
 e6 = PythonOperator(task_id="seleccionar_mejor_modelo", 
                     python_callable=seleccionar_mejor_modelo_task, dag=dag_entrenamiento)
 
+##
 ## Definicion del flujo de tareas
 e1 >> e2 >> e3 >> e4 >> [e5_cnn, e5_mlp, e5_lgbm] >> e6 # type: ignore

@@ -9,7 +9,7 @@
 ##
 
 import psycopg2
-from src.sql import (
+from src.ts_sql import (
     SQL_CREA_DIM_RIESGO,
     SQL_CREA_DIM_SECTOR,
     SQL_CREA_DIM_SUCURSAL,

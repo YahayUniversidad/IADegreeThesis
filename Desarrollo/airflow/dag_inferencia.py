@@ -14,6 +14,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import mlflow
+import psycopg2
 from airflow import DAG
 from airflow.models import Variable
 from airflow.models.param import Param
@@ -23,9 +25,11 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src.datamart import ejecutar_datamart
-from src.csv import capturar_datos_csv, crear_tablas_estructura
+from src.ts_datamart import ejecutar_datamart
+from src.ts_csv import capturar_datos_csv, crear_tablas_estructura
 
+##
+## DAG Arguments
 dag_args = {
     "depends_on_past": False,
     "email": ["omargo33+airflow@gmail.com"],
@@ -53,8 +57,6 @@ def datamart_task(**context):
         raise RuntimeError(f"Error al ejecutar datamart: {e}") from e
     
 def prediccion_task(**context):
-    import psycopg2
-    import mlflow
 
     string_conexion = context["params"]["string_conexion"]
     experiment_id = context["params"]["experiment_id"]
@@ -91,12 +93,12 @@ def prediccion_task(**context):
     finally:
         conn.close()
 
-
 def superset_task(**context):
     # TODO: integrar con MCP de Superset para refrescar dashboards
     print("Superset: refresh pendiente de implementar")
 
-
+##
+## DAG Definition
 dag_inferencia = DAG(
     dag_id="DAG-Inferencia",
     description="Pipeline de inferencia: datos recientes → datamart → prediccion → superset",
@@ -138,10 +140,14 @@ dag_inferencia = DAG(
     },
 )
 
+##
+## Tareas del DAG
 t1 = PythonOperator(task_id="crear_estructura", python_callable=crear_estructura_task, dag=dag_inferencia)
 t2 = PythonOperator(task_id="cargar_csv", python_callable=cargar_csv_task, dag=dag_inferencia)
 t3 = PythonOperator(task_id="datamart", python_callable=datamart_task, dag=dag_inferencia)
 t4 = PythonOperator(task_id="prediccion", python_callable=prediccion_task, dag=dag_inferencia)
 t5 = PythonOperator(task_id="superset", python_callable=superset_task, dag=dag_inferencia)
 
-t1 >> t2 >> t3 >> t4 >> t5
+##
+## Definicion del flujo de tareas
+t1 >> t2 >> t3 >> t4 >> t5 # type: ignore

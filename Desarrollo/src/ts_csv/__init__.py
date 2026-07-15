@@ -7,7 +7,7 @@
 ## @version julio 2026
 ##
 
-from ..csv.pipeline import capturar_datos_csv, crear_tablas_estructura
+from ..ts_csv.pipeline import capturar_datos_csv, crear_tablas_estructura
     
 __all__ = [
     "crear_tablas_estructura",
