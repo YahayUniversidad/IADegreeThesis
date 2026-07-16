@@ -63,6 +63,7 @@ def _serialize_for_json(obj):
         return [_serialize_for_json(v) for v in obj]
     return obj
 
+
 class Pipeline:
     """Clase para ejecutar el analisis riguroso y generar el dashboard de EVA.
 
@@ -79,9 +80,7 @@ class Pipeline:
 
     def __init__(
         self,
-        mlflow_experiment_name: str,
         output_dir: str,
-        mlflow_tracking_uri: str,
     ):
         """Constructor de la clase Pipeline.
 
@@ -95,33 +94,7 @@ class Pipeline:
             output_dir:
                 Directorio donde se guardarán los resultados del análisis, por defecto "resultados".
         """
-        self.mlflow_tracking_uri = mlflow_tracking_uri
-        self.mlflow_experiment_name = mlflow_experiment_name
         self.output_dir = output_dir
-
-        if self.mlflow_tracking_uri is not None:
-            self._init_mlflow()
-
-    def _init_mlflow(self):
-        """Inicializa la configuración de MLflow para el seguimiento de experimentos.
-
-        Configura la URI de tracking y el experimento de MLflow.
-        Si el experimento no existe, lo crea.
-
-        Raises:
-            Exception: Si ocurre un error al configurar MLflow.
-        """
-
-        mlflow.set_tracking_uri(self.mlflow_tracking_uri)
-        try:
-            mlflow.set_experiment(self.mlflow_experiment_name)
-        except Exception:
-            mlflow.create_experiment(self.mlflow_experiment_name)
-            mlflow.set_experiment(self.mlflow_experiment_name)
-        print(
-            f"MLflow configurado — tracking: {self.mlflow_tracking_uri},\n"
-            f"            experimento: {self.mlflow_experiment_name}"
-        )
 
     def _analizar_variables_numericas(self, eva: AnalisisRiguroso) -> list[dict]:
         """Analisis de variables numericas: distribucion, correlacion, completitud.
@@ -259,7 +232,6 @@ class Pipeline:
         os.makedirs(f"{self.output_dir}/metricas", exist_ok=True)
         csv_path = f"{self.output_dir}/metricas/recomendaciones_eva.csv"
         pl.DataFrame(recomendaciones).write_csv(csv_path)
-        print("Recomendaciones guardadas (%d vars) en: %s" % (len(recomendaciones), csv_path))
 
     def _log_mlflow(
         self,
@@ -362,15 +334,17 @@ class Pipeline:
                 mlflow.log_artifact(csv_path)
 
                 reporte_path = os.path.join(tmpdir, "reporte_eva.json")
-                reporte_serializable = _serialize_for_json({
-                    "recomendaciones": recomendaciones,
-                    "evidencias": evidencias,
-                    "vars_incluir": vars_incluir,
-                    "vars_excluir": vars_excluir,
-                })
+                reporte_serializable = _serialize_for_json(
+                    {
+                        "recomendaciones": recomendaciones,
+                        "evidencias": evidencias,
+                        "vars_incluir": vars_incluir,
+                        "vars_excluir": vars_excluir,
+                    }
+                )
                 with open(reporte_path, "w", encoding="utf-8") as f:
                     json.dump(reporte_serializable, f, indent=2, ensure_ascii=False)
-
+                    
             print(f"MLflow: {len(image_paths)} plots + artefactos registrados — Run: {run_id}")
 
     def run(
@@ -408,12 +382,14 @@ class Pipeline:
         # Guardar detail JSON
         detale_path = os.path.join(self.output_dir, "evidencia_eva", "eva_dashboard_detail.json")
         os.makedirs(os.path.dirname(detale_path), exist_ok=True)
-        serializable_data = _serialize_for_json({
-            "recomendaciones": recomendaciones,
-            "reporte": reporte_completo,
-            "evidencias": evidencias,
-            "dashboard_summary": dashboard_summary,
-        })
+        serializable_data = _serialize_for_json(
+            {
+                "recomendaciones": recomendaciones,
+                "reporte": reporte_completo,
+                "evidencias": evidencias,
+                "dashboard_summary": dashboard_summary,
+            }
+        )
         with open(detale_path, "w", encoding="utf-8") as f:
             json.dump(serializable_data, f, indent=2, ensure_ascii=False)
 
@@ -430,14 +406,15 @@ class Pipeline:
 
         return recomendaciones, evidencias
 
+
 def _preprocesar_datos(df_raw):
-    """ Recibe datos de la MV. Ajusta tipos y ordena.
-    
+    """Recibe datos de la MV. Ajusta tipos y ordena.
+
     La MV ya calcula: agregacion, tasas, 21 features y crisis_flag.
-    
+
     Args:
         df_raw: DataFrame crudo de la MV (polars)
-        
+
     Returns:
         df: DataFrame preprocesado, listo para EVA.
     """
@@ -448,19 +425,21 @@ def _preprocesar_datos(df_raw):
         if df[col].dtype == pl.Decimal:
             df = df.with_columns(pl.col(col).cast(pl.Float64))
 
-    df = df.with_columns(pl.col('mes').cast(pl.Date))
+    df = df.with_columns(pl.col("mes").cast(pl.Date))
 
-    return df.sort(['bloque_id', 'mes'])
+    return df.sort(["bloque_id", "mes"])
+
 
 def _ejecutar_pipeline(
-    df_features, 
-    archivos_lotes, 
-    total_raw, 
-    run_key, 
-    anio_inicio, 
-    anio_fin, 
-    meses_por_lote, 
-    path_salida):
+    df_features,
+    archivos_lotes,
+    total_raw,
+    run_key,
+    anio_inicio,
+    anio_fin,
+    meses_por_lote,
+    path_salida,
+):
     """Ejecuta el pipeline consolidado de EDA + EVA.
 
     Args:
@@ -471,12 +450,12 @@ def _ejecutar_pipeline(
         anio_inicio: Año de inicio del análisis
         anio_fin: Año de fin del análisis
         meses_por_lote: Número de meses por lote
-        path_salida: Ruta de salida para resultados y artefactos        
+        path_salida: Ruta de salida para resultados y artefactos
 
     Returns:
         tuple: DataFrame de features y recomendaciones generadas por el pipeline.
     """
-    
+
     if run_key is None:
         run_key = f"{anio_inicio}_{anio_fin}_{meses_por_lote}m"
 
@@ -487,59 +466,66 @@ def _ejecutar_pipeline(
     with mlflow.start_run(run_name=run_name):
         mlflow.set_tag("eva_key", run_key)
         mlflow.set_tag("pipeline", "eda_eva_consolidado")
-        mlflow.log_params({
-            "anio_inicio": anio_inicio,
-            "anio_fin": anio_fin,
-            "meses_por_lote": meses_por_lote,
-            "run_key": run_key,
-        })
+        mlflow.log_params(
+            {
+                "anio_inicio": anio_inicio,
+                "anio_fin": anio_fin,
+                "meses_por_lote": meses_por_lote,
+                "run_key": run_key,
+            }
+        )
 
-        pipeline = Pipeline(output_dir=path_salida, 
-                            mlflow_experiment_name="air_eda", 
-                            mlflow_tracking_uri=mlflow.get_tracking_uri())
+        pipeline = Pipeline(output_dir = path_salida)
         recomendaciones, evidencias = pipeline.run(
             df_features,
-            target_col='crisis_flag',
+            target_col="crisis_flag",
             run_name=run_name,
         )
 
-        crisis_ratio = float(df_features["crisis_flag"].mean()) # type: ignore
+        crisis_ratio = float(df_features["crisis_flag"].mean())  # type: ignore
         filas_dataset = len(df_features)
         columnas_dataset = len(df_features.columns)
         lotes_procesados = len(archivos_lotes)
 
         with open(evidencias_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "recomendaciones": recomendaciones,
-                "evidencias": evidencias,
-                "filas_dataset": filas_dataset,
-                "columnas_dataset": columnas_dataset,
-                "registros_raw_total": total_raw,
-                "lotes_procesados": lotes_procesados,
-                "crisis_ratio": crisis_ratio,
-                "run_name": run_name,
-                "run_key": run_key,
-            }, f, indent=2, ensure_ascii=False, default=str)
+            json.dump(
+                {
+                    "recomendaciones": recomendaciones,
+                    "evidencias": evidencias,
+                    "filas_dataset": filas_dataset,
+                    "columnas_dataset": columnas_dataset,
+                    "registros_raw_total": total_raw,
+                    "lotes_procesados": lotes_procesados,
+                    "crisis_ratio": crisis_ratio,
+                    "run_name": run_name,
+                    "run_key": run_key,
+                },
+                f,
+                indent=2,
+                ensure_ascii=False,
+                default=str,
+            )
 
-        mlflow.log_metrics({
-            "filas_dataset": float(filas_dataset),
-            "columnas_dataset": float(columnas_dataset),
-            "registros_raw_total": float(total_raw),
-            "lotes_procesados": float(lotes_procesados),
-            "crisis_ratio": crisis_ratio,
-        })
+        mlflow.log_metrics(
+            {
+                "filas_dataset": float(filas_dataset),
+                "columnas_dataset": float(columnas_dataset),
+                "registros_raw_total": float(total_raw),
+                "lotes_procesados": float(lotes_procesados),
+                "crisis_ratio": crisis_ratio,
+            }
+        )
         if os.path.exists(evidencias_path):
             mlflow.log_artifact(evidencias_path)
         if os.path.exists(recomendaciones_path):
             mlflow.log_artifact(recomendaciones_path)
-
-    print(f"run_name unificado en MLflow: {run_name}")
-    print(f"crisis_ratio registrado en MLflow: {crisis_ratio:.6f}")
+    print(f"run_name unificado en MLflow: {run_name}," + 
+          f" crisis_ratio registrado en MLflow: {crisis_ratio:.6f}")
 
     return df_features, recomendaciones
 
 def _procesar_eva(run_key, path_lotes, engine, anio_inicio, anio_fin, meses_por_lote):
-    """ Procesa los datos de la MV, genera features y ejecuta el pipeline consolidado de EDA + EVA.
+    """Procesa los datos de la MV, genera features y ejecuta el pipeline consolidado de EDA + EVA.
 
     Args:
         run_key: Clave de ejecución para MLflow
@@ -555,10 +541,10 @@ def _procesar_eva(run_key, path_lotes, engine, anio_inicio, anio_fin, meses_por_
     Returns:
         tuple: DataFrame de features y recomendaciones generadas por el pipeline.
     """
-    
+
     for f in glob.glob(f"{path_lotes}/features_*.parquet"):
         os.remove(f)
-    
+
     archivos_lotes = []
     total_raw = 0
 
@@ -590,44 +576,60 @@ def _procesar_eva(run_key, path_lotes, engine, anio_inicio, anio_fin, meses_por_
         raise ValueError("No se generaron lotes con datos.")
 
     df_features = pl.scan_parquet(f"{path_lotes}/features_*.parquet").collect()
-    df_features = df_features.sort(['bloque_id', 'mes'])
+    df_features = df_features.sort(["bloque_id", "mes"])
     dataset_path = f"{path_lotes}/datasets/datos_preprocesados.csv"
     df_features.write_csv(dataset_path)
-    ##dist = df_features['crisis_flag'].value_counts().sort('crisis_flag')
     print(f"Dataset: {len(df_features):,} registros, {len(df_features.columns)} columnas")
-        
-    ##for row in dist.iter_rows(named=True):
-    ##    print(f"  crisis_flag={row['crisis_flag']}: {row['count']:,}")
 
-    return _ejecutar_pipeline(df_features, archivos_lotes=archivos_lotes, total_raw=total_raw, 
-                              run_key=run_key, anio_inicio=anio_inicio, anio_fin=anio_fin, 
-                              meses_por_lote=meses_por_lote, path_salida=path_lotes)
+    return _ejecutar_pipeline(
+        df_features,
+        archivos_lotes=archivos_lotes,
+        total_raw=total_raw,
+        run_key=run_key,
+        anio_inicio=anio_inicio,
+        anio_fin=anio_fin,
+        meses_por_lote=meses_por_lote,
+        path_salida=path_lotes,
+    )
 
-def analizar_eda_eva(string_conexion, mlflow_tracking_uri, path_salida, 
-                     anio_inicio=2015, anio_fin=2026, meses_por_lote=1, run_key=None):
-    """ Ejecuta el pipeline consolidado de EDA + EVA.
+def analizar_eda_eva(
+    string_conexion,
+    mlflow_tracking_uri,
+    mlflow_experiment_name,
+    path_salida,
+    anio_inicio=2015,
+    anio_fin=2026,
+    meses_por_lote=1,
+    run_key=None,
+):
+    """Ejecuta el pipeline consolidado de EDA + EVA.
 
     Args:
-        string_conexion (str): Cadena de conexión a la base de datos.
+        string_conexion (str): Cadena de conexion a la base de datos.
+        mlflow_tracking_uri (str): URI de tracking de MLflow.
+        mlflow_experiment_name (str): Nombre del experimento en MLflow.
         path_salida (str): Ruta de salida para resultados y artefactos.
-        anio_inicio (int): Año de inicio del análisis (por defecto 2015).
-        anio_fin (int): Año de fin del análisis (por defecto 2026).
-        meses_por_lote (int): Número de meses por lote (por defecto 1).
-        run_key (str, optional): Clave de ejecución para MLflow.
+        anio_inicio (int): Ano de inicio del analisis (por defecto 2015).
+        anio_fin (int): Ano de fin del analisis (por defecto 2026).
+        meses_por_lote (int): Numero de meses por lote (por defecto 1).
+        run_key (str, optional): Clave de ejecucion para MLflow.
     """
     path_lotes = f"{path_salida}/lotes"
-
-    mlflow.set_tracking_uri(mlflow_tracking_uri)
-    mlflow.set_experiment("air_eda")
 
     for d in ["evidencia_eva", "datasets", "graficas", "metricas", "logs", "lotes"]:
         os.makedirs(f"{path_salida}/{d}", exist_ok=True)
 
     engine = create_engine(string_conexion)
 
-    df_features, recomendaciones = _procesar_eva(run_key, 
-                                                 path_lotes, 
-                                                 engine, 
-                                                 anio_inicio, 
-                                                 anio_fin, 
-                                                 meses_por_lote)
+    mlflow.set_tracking_uri(mlflow_tracking_uri)
+    try:
+        mlflow.set_experiment(mlflow_experiment_name)
+    except Exception:
+        mlflow.create_experiment(mlflow_experiment_name)
+        mlflow.set_experiment(mlflow_experiment_name)
+    print(f"MLflow configurado — tracking: {mlflow_tracking_uri},"+
+          f" experiment: {mlflow_experiment_name}")
+
+    df_features, recomendaciones = _procesar_eva(
+        run_key, path_lotes, engine, anio_inicio, anio_fin, meses_por_lote
+    )

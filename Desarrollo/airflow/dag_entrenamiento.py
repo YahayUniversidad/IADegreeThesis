@@ -55,21 +55,23 @@ def datamart_task(**context):
     try:
         ejecutar_datamart(string_conexion)
     except Exception as e:
-        print(f"Error al ejecutar datamart: {e}")
         raise RuntimeError(f"Error al ejecutar datamart: {e}") from e
 
 
 def eda_task(**context):
-    analizar_eda_eva(
-        string_conexion=context["params"]["string_conexion"],
-        mlflow_tracking_uri=context["params"]["mlflow_uri"],
-        path_salida=context["params"]["path_salida"],
-        anio_inicio=2015,
-        anio_fin=2026,
-        meses_por_lote=1,
-        run_key=None,
-    )
-    print("EDA/EVA completado")
+    try:
+        analizar_eda_eva(
+            string_conexion=context["params"]["string_conexion"],
+            mlflow_tracking_uri=context["params"]["mlflow_uri"],
+            mlflow_experiment_name=context["params"].get("mlflow_experiment", "air_eda"),
+            path_salida=context["params"]["path_salida"],
+            anio_inicio=context["params"]["anio_inicio"],
+            anio_fin=context["params"]["anio_fin"],
+            meses_por_lote=context["params"]["meses_por_lote"],
+            run_key=None,
+        )
+    except Exception as e:
+        raise RuntimeError(f"Error al ejecutar EDA/EVA: {e}") from e
 
 
 def entrenar_cnn_task(**context):
@@ -156,6 +158,27 @@ dag_entrenamiento = DAG(
             default=Variable.get("mlflow_uri", default_var="http://192.168.0.97:5000"),
             type="string",
             title="MLflow Tracking URI",
+        ),
+        "mlflow_experiment": Param(
+            default="air_eda",
+            type="string",
+            title="MLflow Experiment Name",
+            description="Nombre del experimento en MLflow para el EDA/EVA",
+        ),
+        "anio_inicio": Param(
+            default=2015,
+            type="integer",
+            title="Año de inicio para EDA/EVA",
+        ),
+        "anio_fin": Param(
+            default=2025,
+            type="integer",
+            title="Año de fin para EDA/EVA",
+        ),
+        "meses_por_lote": Param(
+            default=1,
+            type="integer",
+            title="Meses por lote para EDA/EVA",
         ),
     },
 )
