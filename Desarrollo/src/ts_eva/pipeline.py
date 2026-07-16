@@ -17,20 +17,19 @@ import glob
 import json
 import os
 import re
-import sys
 import tempfile
 from contextlib import nullcontext
 from datetime import date
-from pathlib import Path
 from typing import Any
 
 import mlflow
 import numpy as np
 import polars as pl
 from sqlalchemy import create_engine
-
-from Desarrollo.src.ts_eva.utilidades import espacio_tiempo
-from Desarrollo.src.ts_sql.queries import consultar_creditos_mensuales
+from src.ts_eva.analisis_riguroso import AnalisisRiguroso
+from src.ts_eva.dashboard import build_all_plots
+from src.ts_eva.utilidades import espacio_tiempo, get_columnas_numericas, get_columnas_string
+from src.ts_sql.queries import consultar_creditos_mensuales
 
 
 def _serialize_for_json(obj):
@@ -54,6 +53,8 @@ def _serialize_for_json(obj):
         return int(obj)
     if isinstance(obj, (np.floating,)):
         return float(obj)
+    if isinstance(obj, (np.bool_,)):
+        return bool(obj)
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     if isinstance(obj, dict):
@@ -61,26 +62,6 @@ def _serialize_for_json(obj):
     if isinstance(obj, list):
         return [_serialize_for_json(v) for v in obj]
     return obj
-
-
-## El paquete eva se puede ejecutar como script independiente o como módulo.
-## Toco codificar esta lógica para que funcione en ambos casos, Notebook y MLflow.
-if __package__ is None or __package__ == "":
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    from ts_eva.analisis_riguroso import AnalisisRiguroso
-    from ts_eva.dashboard import build_all_plots
-    from ts_eva.utilidades import (
-        get_columnas_numericas,
-        get_columnas_string,
-    )
-else:
-    from .analisis_riguroso import AnalisisRiguroso
-    from .dashboard import build_all_plots
-    from .utilidades import (
-        get_columnas_numericas,
-        get_columnas_string,
-    )
-
 
 class Pipeline:
     """Clase para ejecutar el analisis riguroso y generar el dashboard de EVA.
@@ -100,7 +81,7 @@ class Pipeline:
         self,
         mlflow_experiment_name: str,
         output_dir: str,
-        mlflow_tracking_uri: str = "http://localhost:5000",
+        mlflow_tracking_uri: str,
     ):
         """Constructor de la clase Pipeline.
 
@@ -381,19 +362,14 @@ class Pipeline:
                 mlflow.log_artifact(csv_path)
 
                 reporte_path = os.path.join(tmpdir, "reporte_eva.json")
+                reporte_serializable = _serialize_for_json({
+                    "recomendaciones": recomendaciones,
+                    "evidencias": evidencias,
+                    "vars_incluir": vars_incluir,
+                    "vars_excluir": vars_excluir,
+                })
                 with open(reporte_path, "w", encoding="utf-8") as f:
-                    json.dump(
-                        {
-                            "recomendaciones": recomendaciones,
-                            "evidencias": evidencias,
-                            "vars_incluir": vars_incluir,
-                            "vars_excluir": vars_excluir,
-                        },
-                        f,
-                        indent=2,
-                        ensure_ascii=False,
-                        default=_serialize_for_json,
-                    )
+                    json.dump(reporte_serializable, f, indent=2, ensure_ascii=False)
 
             print(f"MLflow: {len(image_paths)} plots + artefactos registrados — Run: {run_id}")
 
@@ -432,19 +408,14 @@ class Pipeline:
         # Guardar detail JSON
         detale_path = os.path.join(self.output_dir, "evidencia_eva", "eva_dashboard_detail.json")
         os.makedirs(os.path.dirname(detale_path), exist_ok=True)
+        serializable_data = _serialize_for_json({
+            "recomendaciones": recomendaciones,
+            "reporte": reporte_completo,
+            "evidencias": evidencias,
+            "dashboard_summary": dashboard_summary,
+        })
         with open(detale_path, "w", encoding="utf-8") as f:
-            json.dump(
-                {
-                    "recomendaciones": recomendaciones,
-                    "reporte": reporte_completo,
-                    "evidencias": evidencias,
-                    "dashboard_summary": dashboard_summary,
-                },
-                f,
-                indent=2,
-                ensure_ascii=False, # Error caracteres Unicode en el JSON problemas con mis "emojis"
-                default=_serialize_for_json,
-            )
+            json.dump(serializable_data, f, indent=2, ensure_ascii=False)
 
         self._log_mlflow(
             df,
@@ -523,7 +494,9 @@ def _ejecutar_pipeline(
             "run_key": run_key,
         })
 
-        pipeline = Pipeline(output_dir=path_salida, mlflow_experiment_name="jupy_eda")
+        pipeline = Pipeline(output_dir=path_salida, 
+                            mlflow_experiment_name="air_eda", 
+                            mlflow_tracking_uri=mlflow.get_tracking_uri())
         recomendaciones, evidencias = pipeline.run(
             df_features,
             target_col='crisis_flag',
@@ -630,7 +603,8 @@ def _procesar_eva(run_key, path_lotes, engine, anio_inicio, anio_fin, meses_por_
                               run_key=run_key, anio_inicio=anio_inicio, anio_fin=anio_fin, 
                               meses_por_lote=meses_por_lote, path_salida=path_lotes)
 
-def analizar_eda_eva(string_conexion, mlflow_traking_uri, path_salida, anio_inicio=2015, anio_fin=2026, meses_por_lote=1, run_key=None):
+def analizar_eda_eva(string_conexion, mlflow_tracking_uri, path_salida, 
+                     anio_inicio=2015, anio_fin=2026, meses_por_lote=1, run_key=None):
     """ Ejecuta el pipeline consolidado de EDA + EVA.
 
     Args:
@@ -641,13 +615,9 @@ def analizar_eda_eva(string_conexion, mlflow_traking_uri, path_salida, anio_inic
         meses_por_lote (int): Número de meses por lote (por defecto 1).
         run_key (str, optional): Clave de ejecución para MLflow.
     """
-    
     path_lotes = f"{path_salida}/lotes"
-    anio_inicio = 2015
-    anio_fin = 2026
-    meses_por_lote = 1
 
-    mlflow.set_tracking_uri(mlflow_traking_uri)
+    mlflow.set_tracking_uri(mlflow_tracking_uri)
     mlflow.set_experiment("air_eda")
 
     for d in ["evidencia_eva", "datasets", "graficas", "metricas", "logs", "lotes"]:

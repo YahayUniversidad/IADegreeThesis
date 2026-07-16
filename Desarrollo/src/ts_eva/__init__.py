@@ -8,7 +8,7 @@
 ##
 
 from .analisis_riguroso import AnalisisRiguroso
-from .pipeline import Pipeline
+from .pipeline import Pipeline, analizar_eda_eva
 from .utilidades import espacio_tiempo, get_columnas_numericas, get_columnas_string
 
 __all__ = [
@@ -17,4 +17,5 @@ __all__ = [
     "get_columnas_numericas",
     "get_columnas_string",
     "espacio_tiempo",
+    "analizar_eda_eva"
 ]

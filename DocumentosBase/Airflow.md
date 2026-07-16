@@ -6,7 +6,7 @@ https://www.youtube.com/watch?v=PJzIzytxJ2M
 
 Al momento se encuentra las variable 
 
-Ubicación en el Path de airflow el respaldo se encuentra en el archivo `variablesConfiguracion.json`
+Ubicación en el Path de airflow el respaldo se encuentra en el archivo `variables.json`
 
 | Nombre           | Descripcion                                                                                          |
 | ---------------- | ---------------------------------------------------------------------------------------------------- |

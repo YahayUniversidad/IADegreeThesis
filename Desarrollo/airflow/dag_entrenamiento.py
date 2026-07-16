@@ -25,6 +25,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from src.ts_csv import capturar_datos_csv, crear_tablas_estructura
 from src.ts_datamart import ejecutar_datamart
+from src.ts_eva import analizar_eda_eva
 
 ##
 ## DAG Arguments
@@ -37,15 +38,18 @@ dag_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
+
 def crear_estructura_task(**context):
     string_conexion = context["params"]["string_conexion"]
     crear_tablas_estructura(string_conexion)
+
 
 def cargar_csv_task(**context):
     string_conexion = context["params"]["string_conexion"]
     path_carpeta_csv = context["params"]["path_carpeta_csv"]
     capturar_datos_csv(string_conexion, path_carpeta_csv)
-    
+
+
 def datamart_task(**context):
     string_conexion = context["params"]["string_conexion"]
     try:
@@ -56,8 +60,17 @@ def datamart_task(**context):
 
 
 def eda_task(**context):
-    
+    analizar_eda_eva(
+        string_conexion=context["params"]["string_conexion"],
+        mlflow_tracking_uri=context["params"]["mlflow_uri"],
+        path_salida=context["params"]["path_salida"],
+        anio_inicio=2015,
+        anio_fin=2026,
+        meses_por_lote=1,
+        run_key=None,
+    )
     print("EDA/EVA completado")
+
 
 def entrenar_cnn_task(**context):
     """Entrena el modelo CNN."""
@@ -76,11 +89,15 @@ def entrenar_lgbm_task(**context):
 
 def seleccionar_mejor_modelo_task(**context):
     """Selecciona el mejor modelo de MLflow y retorna su experiment_id."""
-    
+
     mlflow_uri = context["params"]["mlflow_uri"]
     mlflow.set_tracking_uri(mlflow_uri)
 
-    experimentos = ["flow_entrenamiento_lightgbm", "flow_entrenamiento_cnn", "flow_entrenamiento_mlp"]
+    experimentos = [
+        "flow_entrenamiento_lightgbm",
+        "flow_entrenamiento_cnn",
+        "flow_entrenamiento_mlp",
+    ]
     mejor_experimento = None
     mejor_auc = -1
 
@@ -106,6 +123,7 @@ def seleccionar_mejor_modelo_task(**context):
     context["ti"].xcom_push(key="mejor_experiment_id", value=mejor_experimento)
     context["ti"].xcom_push(key="mejor_auc_roc", value=mejor_auc)
 
+
 ##
 ## DAG Definition
 dag_entrenamiento = DAG(
@@ -129,8 +147,13 @@ dag_entrenamiento = DAG(
             type="string",
             title="Ruta carpeta CSV",
         ),
+        "path_salida": Param(
+            default="/opt/airflow/data/salida",
+            type="string",
+            title="Ruta carpeta de salida",
+        ),
         "mlflow_uri": Param(
-            default="http://localhost:5000",
+            default=Variable.get("mlflow_uri", default_var="http://192.168.0.97:5000"),
             type="string",
             title="MLflow Tracking URI",
         ),
@@ -139,23 +162,27 @@ dag_entrenamiento = DAG(
 
 ##
 ## Tareas del DAG
-e1 = PythonOperator(task_id="crear_estructura", 
-                    python_callable=crear_estructura_task, dag=dag_entrenamiento)
-e2 = PythonOperator(task_id="cargar_csv", 
-                    python_callable=cargar_csv_task, dag=dag_entrenamiento)
-e3 = PythonOperator(task_id="datamart", 
-                    python_callable=datamart_task, dag=dag_entrenamiento)
-e4 = PythonOperator(task_id="eda_eva",
-                    python_callable=eda_task, dag=dag_entrenamiento)
-e5_cnn = PythonOperator(task_id="entrenar_cnn", 
-                        python_callable=entrenar_cnn_task, dag=dag_entrenamiento)
-e5_mlp = PythonOperator(task_id="entrenar_mlp", 
-                        python_callable=entrenar_mlp_task, dag=dag_entrenamiento)
-e5_lgbm = PythonOperator(task_id="entrenar_lgbm", 
-                         python_callable=entrenar_lgbm_task, dag=dag_entrenamiento)
-e6 = PythonOperator(task_id="seleccionar_mejor_modelo", 
-                    python_callable=seleccionar_mejor_modelo_task, dag=dag_entrenamiento)
+e1 = PythonOperator(
+    task_id="crear_estructura", python_callable=crear_estructura_task, dag=dag_entrenamiento
+)
+e2 = PythonOperator(task_id="cargar_csv", python_callable=cargar_csv_task, dag=dag_entrenamiento)
+e3 = PythonOperator(task_id="datamart", python_callable=datamart_task, dag=dag_entrenamiento)
+e4 = PythonOperator(task_id="eda_eva", python_callable=eda_task, dag=dag_entrenamiento)
+e5_cnn = PythonOperator(
+    task_id="entrenar_cnn", python_callable=entrenar_cnn_task, dag=dag_entrenamiento
+)
+e5_mlp = PythonOperator(
+    task_id="entrenar_mlp", python_callable=entrenar_mlp_task, dag=dag_entrenamiento
+)
+e5_lgbm = PythonOperator(
+    task_id="entrenar_lgbm", python_callable=entrenar_lgbm_task, dag=dag_entrenamiento
+)
+e6 = PythonOperator(
+    task_id="seleccionar_mejor_modelo",
+    python_callable=seleccionar_mejor_modelo_task,
+    dag=dag_entrenamiento,
+)
 
 ##
 ## Definicion del flujo de tareas
-e1 >> e2 >> e3 >> e4 >> [e5_cnn, e5_mlp, e5_lgbm] >> e6 # type: ignore
+e1 >> e2 >> e3 >> e4 >> [e5_cnn, e5_mlp, e5_lgbm] >> e6  # type: ignore

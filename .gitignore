@@ -6,6 +6,7 @@ wandb/
 .venv/
 *logs/
 *.zip
+*.log
 *.db
 *.mimocode/
 *output/

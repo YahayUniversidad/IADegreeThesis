@@ -127,7 +127,7 @@ dag_inferencia = DAG(
             description="ID del experimento MLflow con el mejor modelo",
         ),
         "mlflow_uri": Param(
-            default="http://localhost:5000",
+            default=Variable.get("mlflow_uri", default_var="http://192.168.0.97:5000"),
             type="string",
             title="MLflow Tracking URI",
         ),
