@@ -8,38 +8,13 @@
 ## @version julio 2026
 ##
 
-import os
-import tempfile
 from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import seaborn as sns
-
-from .utilidades import as_float, get_columnas_numericas
-
-
-def _save_fig(fig, name, output_dir=None):
-    """Guarda figura en disco y retorna el path.
-    
-    Args:
-        fig: matplotlib figure object
-        name: nombre base del archivo (sin extension)
-        output_dir: directorio de salida (si None, usa temp dir)
-        
-    Returns:
-        str: path completo del archivo guardado
-    
-    """
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
-        path = os.path.join(output_dir, f"{name}.png")
-    else:
-        path = os.path.join(tempfile.gettempdir(), f"{name}.png")
-    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-    return path
+from src.common.utilidades import as_float, get_columnas_numericas, save_figura
 
 
 def _plot_heatmap_correlaciones(df, numeric_cols):
@@ -465,7 +440,7 @@ def build_all_plots(
             summary.update(plot_summary)
         else:
             fig = result
-        image_paths.append(_save_fig(fig, name, output_dir))
+        image_paths.append(save_figura(fig, name, output_dir))
 
     print(f"Generadas {len(image_paths)} imagenes individuales")
     return image_paths, summary

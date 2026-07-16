@@ -63,7 +63,7 @@ def eda_task(**context):
         analizar_eda_eva(
             string_conexion=context["params"]["string_conexion"],
             mlflow_tracking_uri=context["params"]["mlflow_uri"],
-            mlflow_experiment_name=context["params"].get("mlflow_experiment", "air_eda"),
+            mlflow_experiment_name=context["params"].get("mlflow_experiment", "air") + "_eda",
             path_salida=context["params"]["path_salida"],
             anio_inicio=context["params"]["anio_inicio"],
             anio_fin=context["params"]["anio_fin"],
@@ -160,7 +160,7 @@ dag_entrenamiento = DAG(
             title="MLflow Tracking URI",
         ),
         "mlflow_experiment": Param(
-            default="air_eda",
+            default="air",
             type="string",
             title="MLflow Experiment Name",
             description="Nombre del experimento en MLflow para el EDA/EVA",

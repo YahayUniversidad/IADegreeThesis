@@ -26,9 +26,10 @@ import mlflow
 import numpy as np
 import polars as pl
 from sqlalchemy import create_engine
+from src.common.utilidades import get_columnas_numericas, get_columnas_string
 from src.ts_eva.analisis_riguroso import AnalisisRiguroso
 from src.ts_eva.dashboard import build_all_plots
-from src.ts_eva.utilidades import espacio_tiempo, get_columnas_numericas, get_columnas_string
+from src.ts_eva.utilidades import espacio_tiempo
 from src.ts_sql.queries import consultar_creditos_mensuales
 
 

@@ -20,8 +20,7 @@ from scipy.stats import (
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import roc_auc_score
-
-from .utilidades import as_float
+from src.common.utilidades import as_float
 
 
 class AnalisisRiguroso:
