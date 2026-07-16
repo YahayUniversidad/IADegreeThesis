@@ -8,14 +8,12 @@
 ##
 
 from .analisis_riguroso import AnalisisRiguroso
-from .pipeline import Pipeline, analizar_eda_eva
-from .utilidades import espacio_tiempo, get_columnas_numericas, get_columnas_string
+from .pipelineEVA import PipelineEVA, analizar_eda_eva
+from .utilidades import espacio_tiempo
 
 __all__ = [
     "AnalisisRiguroso",
-    "Pipeline",
-    "get_columnas_numericas",
-    "get_columnas_string",
+    "PipelineEVA",
     "espacio_tiempo",
     "analizar_eda_eva"
 ]

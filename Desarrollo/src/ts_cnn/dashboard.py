@@ -38,7 +38,6 @@ def _plot_accuracy(historia):
 
     return fig
 
-
 def build_all_plots(
     historia: Any,
     output_dir: str | None = None,

@@ -8,7 +8,7 @@
 ##
 
     
-from ..ts_csv.pipeline import capturar_datos_csv, crear_tablas_estructura
+from ..ts_csv.pipelineCSV import capturar_datos_csv, crear_tablas_estructura
     
 __all__ = [
     "crear_tablas_estructura",

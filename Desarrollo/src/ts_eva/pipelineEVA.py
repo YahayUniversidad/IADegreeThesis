@@ -65,7 +65,7 @@ def _serialize_for_json(obj):
     return obj
 
 
-class Pipeline:
+class PipelineEVA:
     """Clase para ejecutar el analisis riguroso y generar el dashboard de EVA.
 
     La clase permite escribir log para notebook o entradas a MLflow 3.x, y generar un
@@ -193,29 +193,6 @@ class Pipeline:
             )
 
         return recomendaciones
-
-    def _plot_dashboard(
-        self,
-        df: pl.DataFrame,
-        target_col: str,
-        evidencias: dict,
-        recomendaciones: list[dict],
-    ) -> tuple[Any, dict]:
-        """Genera los plots individuales del EVA.
-
-        Args:
-            df: DataFrame de entrada con todas las variables.
-            target_col: nombre de la columna objetivo (target) para correlación y análisis.
-            evidencias: Diccionario con evidencias del análisis, incluyendo VIF si se calculó.
-            recomendaciones: Lista de diccionarios con las recomendaciones para cada variable.
-
-        Returns:
-            image_paths: Lista de rutas de los plots generados.
-            dashboard_summary: Diccionario con resumen de métricas del dashboard.
-
-        """
-        graficas_dir = os.path.join(self.output_dir, "graficas")
-        return build_all_plots(df, target_col, evidencias, recomendaciones, output_dir=graficas_dir)
 
     def _salida_notebook(
         self,
@@ -376,8 +353,9 @@ class Pipeline:
         evidencias = self._analizar_vif(eva)
         recomendaciones = self._generar_recomendaciones(eva, reporte_completo)
 
-        image_paths, dashboard_summary = self._plot_dashboard(
-            df, target_col, evidencias, recomendaciones
+        graficas_dir = os.path.join(self.output_dir, "graficas")
+        image_paths, dashboard_summary = build_all_plots(
+            df, target_col, evidencias, recomendaciones, output_dir=graficas_dir
         )
 
         # Guardar detail JSON
@@ -476,7 +454,7 @@ def _ejecutar_pipeline(
             }
         )
 
-        pipeline = Pipeline(output_dir = path_salida)
+        pipeline = PipelineEVA(output_dir = path_salida)
         recomendaciones, evidencias = pipeline.run(
             df_features,
             target_col="crisis_flag",

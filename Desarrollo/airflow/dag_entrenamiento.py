@@ -75,7 +75,13 @@ def eda_task(**context):
 
 
 def entrenar_cnn_task(**context):
-    """Entrena el modelo CNN."""
+    from src.ts_cnn.pipelineCNN import analizar_cnn
+    analizar_cnn(
+        mlflow_tracking_uri=context["params"]["mlflow_uri"],
+        mlflow_experiment_name=(context["params"].get("mlflow_experiment", "air") 
+                                + "_entrenamiento_cnn"),
+        path_salida=context["params"]["path_salida"],
+    )
     print("CNN entrenado")
 
 
