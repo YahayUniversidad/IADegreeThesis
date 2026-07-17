@@ -20,7 +20,7 @@ import pandas as pd
 import src.ts_cnn as ts_cnn
 import src.ts_cnn.mlflowCustom as mlflowCustom
 import tensorflow as tf
-from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras import Model, layers
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -34,7 +34,6 @@ class PipelineCNN:
         output_dir: str,
         mlflow_tracking_uri: str,
         mlflow_experiment_name: str,
-        run_name: str,
     ):
         """Constructor de la clase PipelineCNN.
 
@@ -44,9 +43,10 @@ class PipelineCNN:
             mlflow_experiment_name (str): Nombre del experimento en MLflow.
         """
         self.output_dir = output_dir
-        
+        self.run_name = f"cnn_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
         self.mlflow_custom = mlflowCustom.MLflowCustom(
-            mlflow_tracking_uri, mlflow_experiment_name, run_name=run_name, output_dir=output_dir
+            mlflow_tracking_uri, mlflow_experiment_name, output_dir=output_dir
         )
 
         os.makedirs(self.output_dir, exist_ok=True)
@@ -254,7 +254,7 @@ class PipelineCNN:
 
     def _evaluar_horizonte_1(
         self, modelo: Model, X_test: np.ndarray, y_test_list: list[np.ndarray]
-    ) -> tuple[float, float, float]:
+    ) -> tuple[float, float, float, float]:
         """Evalúa el modelo en el horizonte 1 y calcula métricas de desempeño.
 
         Args:
@@ -263,7 +263,8 @@ class PipelineCNN:
             y_test_list (list[np.ndarray]): Lista etiquetas verdaderas para el conjunto de prueba.
 
         Returns:
-            tuple[float, float, float]: Accuracy, precision y recall en el horizonte 1.
+            tuple[float, float, float, float]: Accuracy, precision, recall y F1-score
+                en el horizonte 1.
         """
         y_pred_proba = modelo.predict(X_test, verbose=0)
         y_pred_1m = (y_pred_proba[0] > 0.5).astype(int).flatten()
@@ -271,7 +272,8 @@ class PipelineCNN:
         test_acc = accuracy_score(y_test_1m, y_pred_1m)
         test_prec = precision_score(y_test_1m, y_pred_1m, zero_division=0)
         test_recall = recall_score(y_test_1m, y_pred_1m, zero_division=0)
-        return float(test_acc), float(test_prec), float(test_recall)
+        test_f1 = f1_score(y_test_1m, y_pred_1m, zero_division=0)
+        return float(test_acc), float(test_prec), float(test_recall), float(test_f1)
 
     def _preparar_splits(
         self, X_scaled: np.ndarray, y_cnn: np.ndarray, fechas_cnn: np.ndarray
@@ -315,7 +317,7 @@ class PipelineCNN:
 
         return X_train_final, X_val, X_test, y_train_final, y_val, y_test_list
 
-    def run(self, input_path: str, run_name: str | None = None) -> tuple[Model, MinMaxScaler, Any]:
+    def run(self, input_path: str) -> tuple[Model, MinMaxScaler, Any]:
         """Ejecuta el pipeline completo de CNN.
 
         Args:
@@ -371,10 +373,7 @@ class PipelineCNN:
             ),
         ]
 
-        if run_name is None:
-            run_name = f"cnn_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
-        with self.mlflow_custom.get_mlflow().start_run(run_name=run_name):
+        with self.mlflow_custom.get_mlflow().start_run(run_name=self.run_name):
             self.mlflow_custom.loggear_parametros_mlflow(
                 features_numericas=features_numericas,
                 bloques_validos=bloques_validos,
@@ -396,7 +395,7 @@ class PipelineCNN:
                 verbose=1,
             )
 
-            test_acc, test_prec, test_recall = self._evaluar_horizonte_1(
+            test_acc, test_prec, test_recall, test_f1 = self._evaluar_horizonte_1(
                 modelo, X_test, y_test_list
             )
 
@@ -407,12 +406,13 @@ class PipelineCNN:
                 test_acc=test_acc,
                 test_prec=test_prec,
                 test_recall=test_recall,
+                test_f1=test_f1,
                 features_numericas=features_numericas,
                 bloques_validos=bloques_validos,
             )
 
             print(
-                f"MLflow: run={run_name}, accuracy={test_acc:.4f}, "
+                f"MLflow: run={self.run_name}, accuracy={test_acc:.4f}, "
                 f"precision={test_prec:.4f}, recall={test_recall:.4f}"
             )
 
@@ -422,35 +422,32 @@ class PipelineCNN:
 def analizar_cnn(
     mlflow_tracking_uri,
     mlflow_experiment_name,
-    path_salida,
+    path_trabajo,
 ):
     """Entry point para DAGs de Airflow.
 
     Args:
         mlflow_tracking_uri (str): URI de seguimiento de MLflow.
         mlflow_experiment_name (str): Nombre del experimento en MLflow.
-        path_salida (str): Ruta de salida para los artefactos del modelo.
+        path_trabajo (str): Ruta de trabajo para los artefactos del modelo.
         run_key (str | None): Clave de ejecución para MLflow.
             Si es None, se genera un nombre basado en la fecha y hora actual.
     Returns:
         tuple[Model, MinMaxScaler]: Modelo entrenado y escalador.
 
     """
-    path_input = f"{path_salida}/lotes/datasets/datos_preprocesados.csv"
+    path_input = f"{path_trabajo}/lotes/datasets/datos_preprocesados.csv"
 
     if not os.path.exists(path_input):
         raise FileNotFoundError(f"Dataset no encontrado: {path_input}")
 
-    run_name = f"cnn_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
     pipeline = PipelineCNN(
-        output_dir=f"{path_salida}/modelos_cnn",
+        output_dir=f"{path_trabajo}/modelos_cnn",
         mlflow_tracking_uri=mlflow_tracking_uri,
         mlflow_experiment_name=mlflow_experiment_name,
-        run_name=run_name,
     )
 
-    modelo, scaler, historia = pipeline.run(path_input, run_name=run_name)
+    modelo, scaler, historia = pipeline.run(path_input)
 
     print("CNN completado.")
     return modelo, scaler

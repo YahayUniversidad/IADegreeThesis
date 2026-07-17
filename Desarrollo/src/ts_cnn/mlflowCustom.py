@@ -42,10 +42,8 @@ class MLflowCustom:
         self,
         mlflow_tracking_uri: str,
         mlflow_experiment_name: str,
-        run_name: str,
         output_dir: str,
     ) -> None:
-        self.run_name = run_name
         self.output_dir = output_dir
         self.mlflow = configurar_mlflow(mlflow_tracking_uri, mlflow_experiment_name)
         print("MLflowCustom initialized.")
@@ -89,6 +87,7 @@ class MLflowCustom:
         historia: Any,
         test_acc: float,
         test_prec: float,
+        test_f1: float,
         test_recall: float,
         features_numericas: list[str],
         bloques_validos: list[int],
@@ -96,23 +95,21 @@ class MLflowCustom:
         """Loggea métricas, modelo, scaler y artefactos en MLflow.
 
         Args:
-            run_name (str): Nombre de la corrida en MLflow.
-            output_dir (str): Directorio de salida para los artefactos del modelo.
             modelo (Model): Modelo entrenado.
-            scaler (MinMaxScaler): Escalador utilizado para los datos.
-            historia (Any): Historia del entrenamiento del modelo.
-            test_acc (float): Accuracy en el conjunto de prueba.
-            test_prec (float): Precision en el conjunto de prueba.
-            test_recall (float): Recall en el conjunto de prueba.
-            features_numericas (list[str]): Lista de características numéricas.
-            bloques_validos (list[int]): Lista de bloques válidos.
-            ventana_cnn (int): Tamaño de la ventana para las secuencias.
-            max_horizonte (int): Horizonte máximo de predicción.
-            epochs (int): Número de épocas de entrenamiento.
-            batch_size (int): Tamaño del batch.
+            scaler (MinMaxScaler): Escalador utilizado para normalizar los datos.
+            historia (Any): Objeto de historia del entrenamiento del modelo.
+            test_acc (float): Precisión del modelo en el conjunto de prueba.
+            test_f1 (float): F1-score del modelo en el conjunto de prueba.
+            test_prec (float): Precisión del modelo en el conjunto de prueba.
+            test_recall (float): Recall del modelo en el conjunto de prueba.
+            features_numericas (list[str]): Lista de características numéricas utilizadas
+                en el modelo.
+            bloques_validos (list[int]): Lista de bloques válidos utilizados en el modelo.
+
         """
 
         self.mlflow.log_metric("final_accuracy", test_acc)
+        self.mlflow.log_metric("final_f1", test_f1)
         self.mlflow.log_metric("final_precision", test_prec)
         self.mlflow.log_metric("final_recall", test_recall)
 
@@ -153,10 +150,10 @@ class MLflowCustom:
         self.mlflow.log_artifact(detail_path)
 
         print(
-            f"MLflow: run={self.run_name}, accuracy={test_acc:.4f},"
-            + f" precision={test_prec:.4f}, recall={test_recall:.4f}"
+            f"MLflow: accuracy={test_acc:.4f}, f1={test_f1:.4f}, "
+            + " precision={test_prec:.4f}, recall={test_recall:.4f}"
         )
-    
+
     def get_mlflow(self):
         """Devuelve el objeto mlflow configurado.
 
