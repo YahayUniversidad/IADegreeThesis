@@ -556,7 +556,9 @@ def _procesar_eva(run_key, path_lotes, engine, anio_inicio, anio_fin, meses_por_
 
     df_features = pl.scan_parquet(f"{path_lotes}/features_*.parquet").collect()
     df_features = df_features.sort(["bloque_id", "mes"])
-    dataset_path = f"{path_lotes}/datasets/datos_preprocesados.csv"
+    datasets_dir = f"{path_lotes}/datasets"
+    os.makedirs(datasets_dir, exist_ok=True)
+    dataset_path = f"{datasets_dir}/datos_preprocesados.csv"
     df_features.write_csv(dataset_path)
     print(f"Dataset: {len(df_features):,} registros, {len(df_features.columns)} columnas")
 

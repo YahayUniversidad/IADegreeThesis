@@ -25,7 +25,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from src.ts_cnn.pipelineCNN import analizar_cnn
 from src.ts_mlp.pipelineMLP import analizar_mlp
-from src.ts_lightgbm.pipelineLightGBM import analizar_lgbm
+from src.ts_lightgbm.pipelineLightGBM import analizar_lightgbm
 from src.ts_csv import capturar_datos_csv, crear_tablas_estructura
 from src.ts_datamart import ejecutar_datamart
 from src.ts_eva import analizar_eda_eva
@@ -107,7 +107,7 @@ def entrenar_mlp_task(**context):
 def entrenar_lgbm_task(**context):
     """Entrena el modelo LightGBM."""
     try:
-        analizar_lgbm(
+        analizar_lightgbm(
             mlflow_tracking_uri=context["params"]["mlflow_uri"],
             mlflow_experiment_name=(context["params"].get("mlflow_experiment", "air") 
                                     + "_entrenamiento_lightgbm"),

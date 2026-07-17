@@ -5,6 +5,11 @@
 ## 
 
 FROM apache/airflow:2.10.4
+
+USER root
+RUN apt-get update && apt-get install -y libgomp1
+USER airflow
+
 COPY requirements.txt /tmp/requirements.txt
 ## Tengo timeouts
 RUN pip install --no-cache-dir --progress-bar off --default-timeout=180 --retries=10 -r /tmp/requirements.txt
