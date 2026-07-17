@@ -309,7 +309,8 @@ datos_enriquecidos AS (
         ROUND((creditos_cerrados::NUMERIC / NULLIF(num_creditos, 0)) * 100, 2) AS tasa_cierre,
         ROUND((creditos_mora_90::NUMERIC / NULLIF(num_creditos, 0)) * 100, 2) AS tasa_mora_90,
         ROUND(COALESCE(desviacion_montos, 0)::NUMERIC, 2) AS desviacion_montos,
-        ROUND((COALESCE(desviacion_montos, 0)::NUMERIC / NULLIF(monto_promedio, 0)) * 100, 2) AS coef_variacion_montos,
+        ROUND((COALESCE(desviacion_montos, 0)::NUMERIC / NULLIF(monto_promedio, 0)) * 100, 2) 
+            AS coef_variacion_montos,
         ROUND(num_creditos::NUMERIC / NULLIF(num_clientes_unicos, 0), 2) AS creditos_por_cliente,
         ROUND(
             ((num_creditos::NUMERIC - COALESCE(LAG(num_creditos, 1) OVER (
@@ -329,8 +330,10 @@ datos_enriquecidos AS (
         ) AS tasa_crecimiento_monto,
         CASE
             WHEN (
-                CASE WHEN (creditos_judiciales::NUMERIC / NULLIF(num_creditos, 0)) * 100 > 5 THEN 3 ELSE 0 END +
-                CASE WHEN (creditos_judiciales::NUMERIC / NULLIF(num_creditos, 0)) * 100 > 2 THEN 1 ELSE 0 END +
+                CASE WHEN (creditos_judiciales::NUMERIC / NULLIF(num_creditos, 0)) * 100 > 5 THEN 3 
+                    ELSE 0 END +
+                CASE WHEN (creditos_judiciales::NUMERIC / NULLIF(num_creditos, 0)) * 100 > 2 THEN 1 
+                    ELSE 0 END +
                 CASE WHEN total_costo_judicial > 0
                      AND (total_costo_judicial / NULLIF(num_creditos, 0)) > (monto_promedio * 0.1)
                      THEN 2 ELSE 0 END +

@@ -11,6 +11,7 @@ import os
 import tempfile
 
 import matplotlib.pyplot as plt
+import mlflow
 import polars as pl
 
 
@@ -69,3 +70,24 @@ def as_float(value):
         return 0.0 if math.isnan(n) else n
     except (TypeError, ValueError):
         return 0.0
+    
+    
+def configurar_mlflow(mlflow_tracking_uri: str, mlflow_experiment_name: str) -> mlflow: # type: ignore
+    """ Configura MLflow para el seguimiento de experimentos.
+
+    Args:
+        mlflow_tracking_uri (str): URI de seguimiento de MLflow.
+        mlflow_experiment_name (str): Nombre del experimento en MLflow.
+
+    Returns:
+        mlflow: Objeto mlflow configurado.
+    """
+    mlflow.set_tracking_uri(mlflow_tracking_uri)
+    try:
+        mlflow.set_experiment(mlflow_experiment_name)
+    except Exception:
+        mlflow.create_experiment(mlflow_experiment_name)
+        mlflow.set_experiment(mlflow_experiment_name)
+        
+    return mlflow
+

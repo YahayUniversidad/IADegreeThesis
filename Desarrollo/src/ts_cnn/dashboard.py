@@ -14,6 +14,14 @@ from src.common.utilidades import save_figura
 
 
 def _plot_loss(historia):
+    """Grafica la pérdida (loss) del modelo durante el entrenamiento y validación.
+
+    Args:
+        historia (Any): Objeto de la historia del entrenamiento del modelo.
+
+    Returns:
+        matplotlib.figure.Figure: Figura generada con la gráfica de pérdida.
+    """
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.plot(historia.history["loss"], label="Train")
     ax.plot(historia.history["val_loss"], label="Validation")
@@ -27,6 +35,14 @@ def _plot_loss(historia):
 
 
 def _plot_accuracy(historia):
+    """Grafica la precisión (accuracy) del modelo durante el entrenamiento y validación.
+
+    Args:
+        historia (Any): Objeto de la historia del entrenamiento del modelo.
+
+    Returns:
+        matplotlib.figure.Figure: Figura generada con la gráfica de precisión.
+    """
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.plot(historia.history["horizonte_1_accuracy"], label="Train")
     ax.plot(historia.history["val_horizonte_1_accuracy"], label="Validation")
@@ -38,10 +54,20 @@ def _plot_accuracy(historia):
 
     return fig
 
+
 def build_all_plots(
     historia: Any,
     output_dir: str | None = None,
 ) -> list[str]:
+    """Genera todos los plots individuales del modelo CNN y los guarda.
+
+    Args:
+        historia (Any): Objeto de la historia del entrenamiento del modelo.
+        output_dir (str | None): Directorio donde se guardarán las imágenes generadas.
+
+    Returns:
+        list[str]: Lista con las rutas de las imágenes generadas.
+    """
 
     print("GENERANDO PLOTS INDIVIDUALES DEL MODELO CNN")
     image_paths = []

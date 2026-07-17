@@ -11,55 +11,30 @@
 ## @version julio 2026
 ##
 
-import json
 import os
-from contextlib import nullcontext
 from datetime import datetime
 from typing import Any
 
-import joblib
-import mlflow
 import numpy as np
 import pandas as pd
+import src.ts_cnn as ts_cnn
+import src.ts_cnn.mlflowCustom as mlflowCustom
 import tensorflow as tf
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.preprocessing import MinMaxScaler
-from src.ts_cnn.dashboard import build_all_plots
 from tensorflow.keras import Model, layers
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
-def _serialize_for_json(obj):
-    """Convierte objetos numpy a tipos serializables en JSON."""
-    if isinstance(obj, (np.integer,)):
-        return int(obj)
-    if isinstance(obj, (np.floating,)):
-        return float(obj)
-    if isinstance(obj, (np.bool_,)):
-        return bool(obj)
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    if isinstance(obj, dict):
-        return {k: _serialize_for_json(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_serialize_for_json(v) for v in obj]
-    return obj
-
-
 class PipelineCNN:
     """Orquestador del modelo CNN multi-horizonte."""
-
-    VENTANA_CNN = 6
-    MAX_HORIZONTE = 18
-    EPOCHS = 100
-    BATCH_SIZE = 32
-    PATIENCE = 10
 
     def __init__(
         self,
         output_dir: str,
         mlflow_tracking_uri: str,
         mlflow_experiment_name: str,
+        run_name: str,
     ):
         """Constructor de la clase PipelineCNN.
 
@@ -69,17 +44,12 @@ class PipelineCNN:
             mlflow_experiment_name (str): Nombre del experimento en MLflow.
         """
         self.output_dir = output_dir
-        self.mlflow_tracking_uri = mlflow_tracking_uri
-        self.mlflow_experiment_name = mlflow_experiment_name
-        os.makedirs(self.output_dir, exist_ok=True)
+        
+        self.mlflow_custom = mlflowCustom.MLflowCustom(
+            mlflow_tracking_uri, mlflow_experiment_name, run_name=run_name, output_dir=output_dir
+        )
 
-    def _configurar_mlflow(self) -> None:
-        mlflow.set_tracking_uri(self.mlflow_tracking_uri)
-        try:
-            mlflow.set_experiment(self.mlflow_experiment_name)
-        except Exception:
-            mlflow.create_experiment(self.mlflow_experiment_name)
-            mlflow.set_experiment(self.mlflow_experiment_name)
+        os.makedirs(self.output_dir, exist_ok=True)
 
     def _preprocesar_datos(self, df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
         """Preprocesa los datos del DataFrame.
@@ -171,7 +141,12 @@ class PipelineCNN:
         X_all, y_all, fechas_all, bloques_validos = [], [], [], []
         for bloque in df["bloque_id"].unique():
             X_seq, y_seq, fechas_seq = self._crear_secuencias(
-                df, bloque, features_numericas, "crisis_flag", self.VENTANA_CNN, self.MAX_HORIZONTE
+                df,
+                bloque,
+                features_numericas,
+                "crisis_flag",
+                ts_cnn.VENTANA_CNN,
+                ts_cnn.MAX_HORIZONTE,
             )
             if X_seq is not None and len(X_seq) > 0:
                 X_all.extend(X_seq)
@@ -243,8 +218,10 @@ class PipelineCNN:
         n_pos_v: número de positivos (1) en validación
         n_neg_v: número de negativos (0) en validación
         total_v: total de muestras en validación (n_pos_v + n_neg_v)
-        w_0v: peso para clase 0 en validación, si n_neg_v>0, se genera como total_v/(2*n_neg_v), de lo contrario 1.0
-        w_1v: peso para clase 1 en validación, si n_pos_v>0, se genera como total_v/(2*n_pos_v), de lo contrario 1.0
+        w_0v: peso para clase 0 en validación, si n_neg_v>0, se genera como total_v/(2*n_neg_v),
+            caso contrario 1.0
+        w_1v: peso para clase 1 en validación, si n_pos_v>0, se genera como total_v/(2*n_pos_v),
+            caso contrario 1.0
 
         Args:
             y_train (list[np.ndarray]): Lista de arrays de etiquetas de entrenamiento por horizonte.
@@ -255,7 +232,7 @@ class PipelineCNN:
                 entrenamiento y validación.
         """
         sw_train, sw_val = [], []
-        for h in range(self.MAX_HORIZONTE):
+        for h in range(ts_cnn.MAX_HORIZONTE):
             y_ht = y_train[h]
             n_pos = int(np.sum(y_ht == 1))
             n_neg = int(np.sum(y_ht == 0))
@@ -275,49 +252,19 @@ class PipelineCNN:
             sw_val.append(np.where(y_hv == 1, w_1v, w_0v).astype(np.float32))
         return sw_train, sw_val
 
-    def _entrenar_modelo(
-        self,
-        modelo: Model,
-        X_train_final: np.ndarray,
-        y_train_final: list[np.ndarray],
-        X_val: np.ndarray,
-        y_val: list[np.ndarray],
-        sw_train: list[np.ndarray],
-        sw_val: list[np.ndarray],
-        callbacks: list,
-    ) -> Any:
-        return modelo.fit(
-            X_train_final,
-            y_train_final,
-            validation_data=(X_val, y_val, sw_val),
-            sample_weight=sw_train,
-            epochs=self.EPOCHS,
-            batch_size=self.BATCH_SIZE,
-            callbacks=callbacks,
-            verbose=1,
-        )
-
-    def _loggear_parametros_mlflow(
-        self,
-        features_numericas: list[str],
-        bloques_validos: list[int],
-        X_train_final: np.ndarray,
-        X_val: np.ndarray,
-        X_test: np.ndarray,
-    ) -> None:
-        mlflow.log_param("ventana_cnn", self.VENTANA_CNN)
-        mlflow.log_param("max_horizonte", self.MAX_HORIZONTE)
-        mlflow.log_param("epochs", self.EPOCHS)
-        mlflow.log_param("batch_size", self.BATCH_SIZE)
-        mlflow.log_param("num_features", len(features_numericas))
-        mlflow.log_param("num_bloques", len(bloques_validos))
-        mlflow.log_param("num_muestras_train", X_train_final.shape[0])
-        mlflow.log_param("num_muestras_val", X_val.shape[0])
-        mlflow.log_param("num_muestras_test", X_test.shape[0])
-
     def _evaluar_horizonte_1(
         self, modelo: Model, X_test: np.ndarray, y_test_list: list[np.ndarray]
     ) -> tuple[float, float, float]:
+        """Evalúa el modelo en el horizonte 1 y calcula métricas de desempeño.
+
+        Args:
+            modelo (Model): Modelo entrenado.
+            X_test (np.ndarray): Conjunto de datos de prueba.
+            y_test_list (list[np.ndarray]): Lista etiquetas verdaderas para el conjunto de prueba.
+
+        Returns:
+            tuple[float, float, float]: Accuracy, precision y recall en el horizonte 1.
+        """
         y_pred_proba = modelo.predict(X_test, verbose=0)
         y_pred_1m = (y_pred_proba[0] > 0.5).astype(int).flatten()
         y_test_1m = y_test_list[0]
@@ -326,77 +273,30 @@ class PipelineCNN:
         test_recall = recall_score(y_test_1m, y_pred_1m, zero_division=0)
         return float(test_acc), float(test_prec), float(test_recall)
 
-    def _loggear_resultados_y_artefactos_mlflow(
-        self,
-        run_name: str,
-        modelo: Model,
-        scaler: MinMaxScaler,
-        historia: Any,
-        test_acc: float,
-        test_prec: float,
-        test_recall: float,
-        features_numericas: list[str],
-        bloques_validos: list[int],
-    ) -> None:
-        mlflow.log_metric("final_accuracy", test_acc)
-        mlflow.log_metric("final_precision", test_prec)
-        mlflow.log_metric("final_recall", test_recall)
-
-        mlflow.tensorflow.log_model(modelo, "modelo")
-
-        modelo_path = os.path.join(self.output_dir, "modelo_cnn_multi_18m.keras")
-        modelo.save(modelo_path)
-        mlflow.log_artifact(modelo_path)
-
-        scaler_path = os.path.join(self.output_dir, "scaler_multi_18m.pkl")
-        joblib.dump(scaler, scaler_path)
-        mlflow.log_artifact(scaler_path)
-
-        image_paths = build_all_plots(historia, output_dir=self.output_dir)
-        for img_path in image_paths:
-            mlflow.log_artifact(img_path, "plots")
-
-        detail_data = _serialize_for_json(
-            {
-                "metricas": {
-                    "accuracy": test_acc,
-                    "precision": test_prec,
-                    "recall": test_recall,
-                },
-                "config": {
-                    "ventana_cnn": self.VENTANA_CNN,
-                    "max_horizonte": self.MAX_HORIZONTE,
-                    "epochs": self.EPOCHS,
-                    "batch_size": self.BATCH_SIZE,
-                    "num_features": len(features_numericas),
-                    "num_bloques": len(bloques_validos),
-                },
-            }
-        )
-        detail_path = os.path.join(self.output_dir, "cnn_detail.json")
-        with open(detail_path, "w") as f:
-            json.dump(detail_data, f, indent=2, ensure_ascii=False)
-        mlflow.log_artifact(detail_path)
-
-        print(
-            f"MLflow: run={run_name}, accuracy={test_acc:.4f},"
-            + " precision={test_prec:.4f}, recall={test_recall:.4f}"
-        )
-
     def _preparar_splits(
         self, X_scaled: np.ndarray, y_cnn: np.ndarray, fechas_cnn: np.ndarray
     ) -> tuple[
         np.ndarray, np.ndarray, np.ndarray, list[np.ndarray], list[np.ndarray], list[np.ndarray]
     ]:
-        """Ordena temporalmente y divide en train/val/test."""
+        """Ordena temporalmente y divide en train/val/test.
+
+        Args:
+            X_scaled (np.ndarray): Secuencias de características escaladas.
+            y_cnn (np.ndarray): Secuencias de objetivos.
+            fechas_cnn (np.ndarray): Fechas correspondientes a las secuencias.
+
+        Returns:
+            tuple: Contiene los splits de entrenamiento, validación y prueba para X e y.
+
+        """
         sort_idx = np.argsort(fechas_cnn)
         X_scaled = X_scaled[sort_idx]
         y_cnn = y_cnn[sort_idx]
 
         split_idx = int(len(X_scaled) * 0.7)
         X_train, X_test = X_scaled[:split_idx], X_scaled[split_idx:]
-        y_train_list = [y_cnn[:split_idx, i] for i in range(self.MAX_HORIZONTE)]
-        y_test_list = [y_cnn[split_idx:, i] for i in range(self.MAX_HORIZONTE)]
+        y_train_list = [y_cnn[:split_idx, i] for i in range(ts_cnn.MAX_HORIZONTE)]
+        y_test_list = [y_cnn[split_idx:, i] for i in range(ts_cnn.MAX_HORIZONTE)]
 
         for i in range(len(y_train_list)):
             y_train_list[i] = np.asarray(y_train_list[i]).reshape(-1)
@@ -414,23 +314,6 @@ class PipelineCNN:
         y_val = [arr[train_end:] for arr in y_train_list]
 
         return X_train_final, X_val, X_test, y_train_final, y_val, y_test_list
-
-    def _crear_callbacks(self) -> list:
-        """Crea callbacks de entrenamiento."""
-        return [
-            EarlyStopping(
-                monitor="val_loss",
-                patience=self.PATIENCE,
-                restore_best_weights=True,
-                verbose=1,
-            ),
-            ModelCheckpoint(
-                os.path.join(self.output_dir, "best_model_cnn.keras"),
-                monitor="val_loss",
-                save_best_only=True,
-                verbose=1,
-            ),
-        ]
 
     def run(self, input_path: str, run_name: str | None = None) -> tuple[Model, MinMaxScaler, Any]:
         """Ejecuta el pipeline completo de CNN.
@@ -469,18 +352,30 @@ class PipelineCNN:
 
         print(f"Train: {X_train_final.shape[0]}, Val: {X_val.shape[0]}, Test: {X_test.shape[0]}")
 
-        modelo = self._crear_modelo(X_train_final.shape[1:], self.MAX_HORIZONTE)
+        modelo = self._crear_modelo(X_train_final.shape[1:], ts_cnn.MAX_HORIZONTE)
         modelo.summary()
 
         sw_train, sw_val = self._calcular_pesos_muestra(y_train_final, y_val)
-        callbacks = self._crear_callbacks()
+        callbacks = [
+            EarlyStopping(
+                monitor="val_loss",
+                patience=ts_cnn.PATIENCE,
+                restore_best_weights=True,
+                verbose=1,
+            ),
+            ModelCheckpoint(
+                os.path.join(self.output_dir, "best_model_cnn.keras"),
+                monitor="val_loss",
+                save_best_only=True,
+                verbose=1,
+            ),
+        ]
 
-        self._configurar_mlflow()
         if run_name is None:
             run_name = f"cnn_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-        with mlflow.start_run(run_name=run_name):
-            self._loggear_parametros_mlflow(
+        with self.mlflow_custom.get_mlflow().start_run(run_name=run_name):
+            self.mlflow_custom.loggear_parametros_mlflow(
                 features_numericas=features_numericas,
                 bloques_validos=bloques_validos,
                 X_train_final=X_train_final,
@@ -489,23 +384,23 @@ class PipelineCNN:
             )
 
             print("Entrenando...")
-            historia = self._entrenar_modelo(
-                modelo=modelo,
-                X_train_final=X_train_final,
-                y_train_final=y_train_final,
-                X_val=X_val,
-                y_val=y_val,
-                sw_train=sw_train,
-                sw_val=sw_val,
+
+            historia = modelo.fit(
+                X_train_final,
+                y_train_final,
+                validation_data=(X_val, y_val, sw_val),
+                sample_weight=sw_train,  # type: ignore
+                epochs=ts_cnn.EPOCHS,
+                batch_size=ts_cnn.BATCH_SIZE,
                 callbacks=callbacks,
+                verbose=1,
             )
 
             test_acc, test_prec, test_recall = self._evaluar_horizonte_1(
                 modelo, X_test, y_test_list
             )
 
-            self._loggear_resultados_y_artefactos_mlflow(
-                run_name=run_name,
+            self.mlflow_custom.loggear_resultados_artefactos_mlflow(
                 modelo=modelo,
                 scaler=scaler,
                 historia=historia,
@@ -528,21 +423,33 @@ def analizar_cnn(
     mlflow_tracking_uri,
     mlflow_experiment_name,
     path_salida,
-    run_key=None,
 ):
-    """Entry point para DAGs de Airflow."""
+    """Entry point para DAGs de Airflow.
+
+    Args:
+        mlflow_tracking_uri (str): URI de seguimiento de MLflow.
+        mlflow_experiment_name (str): Nombre del experimento en MLflow.
+        path_salida (str): Ruta de salida para los artefactos del modelo.
+        run_key (str | None): Clave de ejecución para MLflow.
+            Si es None, se genera un nombre basado en la fecha y hora actual.
+    Returns:
+        tuple[Model, MinMaxScaler]: Modelo entrenado y escalador.
+
+    """
     path_input = f"{path_salida}/lotes/datasets/datos_preprocesados.csv"
 
     if not os.path.exists(path_input):
         raise FileNotFoundError(f"Dataset no encontrado: {path_input}")
 
+    run_name = f"cnn_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
     pipeline = PipelineCNN(
         output_dir=f"{path_salida}/modelos_cnn",
         mlflow_tracking_uri=mlflow_tracking_uri,
         mlflow_experiment_name=mlflow_experiment_name,
+        run_name=run_name,
     )
 
-    run_name = run_key or f"cnn_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     modelo, scaler, historia = pipeline.run(path_input, run_name=run_name)
 
     print("CNN completado.")
