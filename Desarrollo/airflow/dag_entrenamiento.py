@@ -23,6 +23,9 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+from src.ts_cnn.pipelineCNN import analizar_cnn
+from src.ts_mlp.pipelineMLP import analizar_mlp
+from src.ts_lightgbm.pipelineLightGBM import analizar_lgbm
 from src.ts_csv import capturar_datos_csv, crear_tablas_estructura
 from src.ts_datamart import ejecutar_datamart
 from src.ts_eva import analizar_eda_eva
@@ -75,24 +78,44 @@ def eda_task(**context):
 
 
 def entrenar_cnn_task(**context):
-    from src.ts_cnn.pipelineCNN import analizar_cnn
-    analizar_cnn(
-        mlflow_tracking_uri=context["params"]["mlflow_uri"],
-        mlflow_experiment_name=(context["params"].get("mlflow_experiment", "air") 
-                                + "_entrenamiento_cnn"),
-        path_trabajo=context["params"]["path_salida"],
-    )
-    print("CNN entrenado")
+    try:
+        analizar_cnn(
+            mlflow_tracking_uri=context["params"]["mlflow_uri"],
+            mlflow_experiment_name=(context["params"].get("mlflow_experiment", "air") 
+                                    + "_entrenamiento_cnn"),
+            path_trabajo=context["params"]["path_salida"],
+        )
+        print("CNN entrenado")
+    except Exception as e:
+        raise RuntimeError(f"Error al entrenar CNN: {e}") from e
 
 
 def entrenar_mlp_task(**context):
     """Entrena el modelo MLP."""
-    print("MLP entrenado")
+    try:
+        analizar_mlp(
+            mlflow_tracking_uri=context["params"]["mlflow_uri"],
+            mlflow_experiment_name=(context["params"].get("mlflow_experiment", "air") 
+                                    + "_entrenamiento_mlp"),
+            path_trabajo=context["params"]["path_salida"],
+        )
+        print("MLP entrenado")
+    except Exception as e:
+        raise RuntimeError(f"Error al entrenar MLP: {e}") from e
 
 
 def entrenar_lgbm_task(**context):
     """Entrena el modelo LightGBM."""
-    print("LightGBM entrenado")
+    try:
+        analizar_lgbm(
+            mlflow_tracking_uri=context["params"]["mlflow_uri"],
+            mlflow_experiment_name=(context["params"].get("mlflow_experiment", "air") 
+                                    + "_entrenamiento_lightgbm"),
+            path_trabajo=context["params"]["path_salida"],
+        )
+        print("LightGBM entrenado")
+    except Exception as e:
+        raise RuntimeError(f"Error al entrenar LightGBM: {e}") from e
 
 
 def seleccionar_mejor_modelo_task(**context):
