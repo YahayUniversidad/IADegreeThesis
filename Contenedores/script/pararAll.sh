@@ -15,3 +15,13 @@ cd ts_mlflow
 ./parar.sh
 cd ..
 echo "Contenedores de mlflow detenidos."
+
+cd ts_superset
+./parar.sh
+cd ..
+echo "Contenedores de superset detenidos."
+
+cd ts_mcp
+./parar.sh
+cd ..
+echo "Contenedores de mcp detenidos."

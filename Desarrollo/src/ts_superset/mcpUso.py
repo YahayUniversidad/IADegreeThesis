@@ -218,16 +218,22 @@ def main():
         print(f"❌ Error llamando a la herramienta: {e}")
         return
 
-    user_question = input("\n¿Pregunta sobre el estado de Superset? ")
-    if not user_question.strip():
-        user_question = "Resume el estado actual de Superset."
+    print("\nEscribe \\q para salir.\n")
+    while True:
+        user_question = input("Pregunta sobre Superset (\\q para salir): ")
+        if user_question.strip() == "\\q":
+            print("Saliendo...")
+            break
+        if not user_question.strip():
+            user_question = "Resume el estado actual de Superset."
 
-    try:
-        deepseek_response = ask_deepseek(user_question, state_text)
-        print("\nRespuesta de DeepSeek:")
-        print(deepseek_response['choices'][0]['message']['content'])
-    except Exception as e:
-        print(f"❌ Error consultando DeepSeek: {e}")
+        try:
+            deepseek_response = ask_deepseek(user_question, state_text)
+            print("\nRespuesta de DeepSeek:")
+            print(deepseek_response['choices'][0]['message']['content'])
+        except Exception as e:
+            print(f"Error consultando DeepSeek: {e}")
+        print()
 
 if __name__ == "__main__":
     main()

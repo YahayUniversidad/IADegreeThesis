@@ -9,13 +9,10 @@
 ## @version julio 2026
 ##
 
-import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import mlflow
-import psycopg2
 from airflow import DAG
 from airflow.models import Variable
 from airflow.models.param import Param
@@ -25,8 +22,9 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src.ts_datamart import ejecutar_datamart
 from src.ts_csv import capturar_datos_csv, crear_tablas_estructura
+from src.ts_datamart import ejecutar_datamart
+from src.ts_predicciones import ejecutar_predicciones
 
 ##
 ## DAG Arguments
@@ -35,6 +33,7 @@ dag_args = {
     "email": ["omargo33+airflow@gmail.com"],
     "email_on_failure": True,
     "email_on_retry": True,
+    "email_on_success": True,
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
@@ -57,41 +56,17 @@ def datamart_task(**context):
         raise RuntimeError(f"Error al ejecutar datamart: {e}") from e
     
 def prediccion_task(**context):
-
     string_conexion = context["params"]["string_conexion"]
-    experiment_id = context["params"]["experiment_id"]
-    periodo = context["params"]["periodo"]
-
-    mlflow.set_tracking_uri(context["params"]["mlflow_uri"])
-
-    # Obtener el mejor run del experimento
-    experiment = mlflow.get_experiment(experiment_id)
-    runs = mlflow.search_runs(
-        experiment_ids=[experiment_id],
-        order_by=["metrics.auc_roc DESC"],
-        max_results=1,
-    )
-    if runs.empty:
-        raise ValueError(f"No hay runs en el experimento {experiment_id}")
-
-    best_run_id = runs.iloc[0]["run_id"]
-    model_uri = f"runs:/{best_run_id}/modelo"
-    print(f"Mejor modelo: run_id={best_run_id}")
-
-    # Cargar modelo y ejecutar predicciones
-    modelo = mlflow.pyfunc.load_model(model_uri)
-
-    conn = psycopg2.connect(string_conexion)
-    conn.autocommit = True
+    path_trabajo = context["params"].get("path_trabajo", "/opt/airflow/data/salida")
+    
     try:
-        # TODO: implementar logica de prediccion con el modelo cargado
-        # modelo.predict(...)
-
-        # Por ahora, registrar que se ejecuto
-        print(f"Prediccion ejecutada para periodo: {periodo}")
-        print(f"Modelo utilizado: {best_run_id}")
-    finally:
-        conn.close()
+        ejecutar_predicciones(
+            string_conexion=string_conexion,
+            path_trabajo=path_trabajo
+        )
+    except Exception as e:
+        print(f"Error al ejecutar predicciones: {e}")
+        raise RuntimeError(f"Error al ejecutar predicciones: {e}") from e
 
 def superset_task(**context):
     # TODO: integrar con MCP de Superset para refrescar dashboards
@@ -120,6 +95,12 @@ dag_inferencia = DAG(
             type="string",
             title="Ruta carpeta CSV",
         ),
+        "path_trabajo": Param(
+            default="/opt/airflow/data/salida",
+            type="string",
+            title="Ruta de salida",
+            description="Directorio base para artefactos del modelo",
+        ),
         "experiment_id": Param(
             default="",
             type="string",
@@ -130,6 +111,12 @@ dag_inferencia = DAG(
             default=Variable.get("mlflow_uri", default_var="http://192.168.0.97:5000"),
             type="string",
             title="MLflow Tracking URI",
+        ),
+        "mlflow_experiment": Param(
+            default="jupy_predicciones",
+            type="string",
+            title="MLflow Experiment Name",
+            description="Nombre del experimento MLflow para predicciones",
         ),
         "periodo": Param(
             default="mes",
@@ -142,7 +129,8 @@ dag_inferencia = DAG(
 
 ##
 ## Tareas del DAG
-t1 = PythonOperator(task_id="crear_estructura", python_callable=crear_estructura_task, dag=dag_inferencia)
+t1 = PythonOperator(task_id="crear_estructura", python_callable=crear_estructura_task, 
+                    dag=dag_inferencia)
 t2 = PythonOperator(task_id="cargar_csv", python_callable=cargar_csv_task, dag=dag_inferencia)
 t3 = PythonOperator(task_id="datamart", python_callable=datamart_task, dag=dag_inferencia)
 t4 = PythonOperator(task_id="prediccion", python_callable=prediccion_task, dag=dag_inferencia)

@@ -24,11 +24,11 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.ts_cnn.pipelineCNN import analizar_cnn
-from src.ts_mlp.pipelineMLP import analizar_mlp
-from src.ts_lightgbm.pipelineLightGBM import analizar_lightgbm
 from src.ts_csv import capturar_datos_csv, crear_tablas_estructura
 from src.ts_datamart import ejecutar_datamart
 from src.ts_eva import analizar_eda_eva
+from src.ts_lightgbm.pipelineLightGBM import analizar_lightgbm
+from src.ts_mlp.pipelineMLP import analizar_mlp
 
 ##
 ## DAG Arguments
@@ -37,6 +37,7 @@ dag_args = {
     "email": ["omargo33+airflow@gmail.com"],
     "email_on_failure": True,
     "email_on_retry": True,
+    "email_on_success": True,
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
@@ -81,8 +82,9 @@ def entrenar_cnn_task(**context):
     try:
         analizar_cnn(
             mlflow_tracking_uri=context["params"]["mlflow_uri"],
-            mlflow_experiment_name=(context["params"].get("mlflow_experiment", "air") 
-                                    + "_entrenamiento_cnn"),
+            mlflow_experiment_name=(
+                context["params"].get("mlflow_experiment", "air") + "_entrenamiento_cnn"
+            ),
             path_trabajo=context["params"]["path_salida"],
         )
         print("CNN entrenado")
@@ -95,8 +97,9 @@ def entrenar_mlp_task(**context):
     try:
         analizar_mlp(
             mlflow_tracking_uri=context["params"]["mlflow_uri"],
-            mlflow_experiment_name=(context["params"].get("mlflow_experiment", "air") 
-                                    + "_entrenamiento_mlp"),
+            mlflow_experiment_name=(
+                context["params"].get("mlflow_experiment", "air") + "_entrenamiento_mlp"
+            ),
             path_trabajo=context["params"]["path_salida"],
         )
         print("MLP entrenado")
@@ -109,8 +112,9 @@ def entrenar_lgbm_task(**context):
     try:
         analizar_lightgbm(
             mlflow_tracking_uri=context["params"]["mlflow_uri"],
-            mlflow_experiment_name=(context["params"].get("mlflow_experiment", "air") 
-                                    + "_entrenamiento_lightgbm"),
+            mlflow_experiment_name=(
+                context["params"].get("mlflow_experiment", "air") + "_entrenamiento_lightgbm"
+            ),
             path_trabajo=context["params"]["path_salida"],
         )
         print("LightGBM entrenado")
@@ -125,12 +129,13 @@ def seleccionar_mejor_modelo_task(**context):
     mlflow.set_tracking_uri(mlflow_uri)
 
     experimentos = [
-        "flow_entrenamiento_lightgbm",
-        "flow_entrenamiento_cnn",
-        "flow_entrenamiento_mlp",
+        "air_entrenamiento_lightgbm",
+        "air_entrenamiento_cnn",
+        "air_entrenamiento_mlp",
     ]
     mejor_experimento = None
     mejor_auc = -1
+    nombre_mejor_modelo = None
 
     for nombre in experimentos:
         exp = mlflow.get_experiment_by_name(nombre)
@@ -146,13 +151,18 @@ def seleccionar_mejor_modelo_task(**context):
             if auc > mejor_auc:
                 mejor_auc = auc
                 mejor_experimento = exp.experiment_id
+                nombre_mejor_modelo = nombre
 
     if mejor_experimento is None:
         raise ValueError("No se encontro ningun experimento con runs validos")
 
-    print(f"Mejor modelo: experiment_id={mejor_experimento}, auc_roc={mejor_auc:.4f}")
+    print(
+        f"Mejor modelo: experiment_id={mejor_experimento}, "
+        + f"auc_roc={mejor_auc:.4f}, nombre={nombre_mejor_modelo}"
+    )
     context["ti"].xcom_push(key="mejor_experiment_id", value=mejor_experimento)
     context["ti"].xcom_push(key="mejor_auc_roc", value=mejor_auc)
+    context["ti"].xcom_push(key="nombre_mejor_modelo", value=nombre_mejor_modelo)
 
 
 ##

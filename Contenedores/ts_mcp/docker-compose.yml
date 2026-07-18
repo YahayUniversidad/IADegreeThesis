@@ -36,7 +36,7 @@ services:
     ports:
       - "5011:5011"
     environment:
-      SUPERSET_BASE_URL: "http://host.docker.internal:8088"
+      SUPERSET_BASE_URL: "http://192.168.0.97:8088"
       SUPERSET_USERNAME: "admin"
       SUPERSET_PASSWORD: "${SUPERSET_ADMIN_PASSWORD:-admin123}"
     command:
