@@ -502,7 +502,8 @@ def _validar_predicciones(conn):
         "WHERE dt.mes > (SELECT MAX(mes) FROM dim_tiempo WHERE mes < '2026-01-01')"
     )
     # Simple count of future rows
-    cur.execute("SELECT COUNT(*) FROM fact_predicciones")
+    cur.execute("SELECT COUNT(*) FROM fact_predicciones")    
+    print (f"Predicciones Validadas: {cur.fetchone()[0]:,}")
     cur.close()
 
 

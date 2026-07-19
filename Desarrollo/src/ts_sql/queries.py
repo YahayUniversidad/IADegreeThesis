@@ -52,10 +52,7 @@ SQL_CREATE_TABLE_CREDITOS = """
         saldo_capital NUMERIC(18, 2),
         PRIMARY KEY (numero_credito)                
     );
-
-    -- Comentarios para documentar los campos
     COMMENT ON TABLE creditos IS 'Tabla de créditos';
-
     COMMENT ON COLUMN creditos.numero_credito IS 'Número único del crédito';
     COMMENT ON COLUMN creditos.codigo_act_financiera IS 'Código de la actividad financiera';
     COMMENT ON COLUMN creditos.codigo_producto IS 'Código del producto';
@@ -117,8 +114,6 @@ SQL_CREATE_TABLE_AMORTIZACION = """
         estado VARCHAR(10),
         PRIMARY KEY (numero_credito, ordencal)
     );
-
-    -- Comentarios para documentar los campos
     COMMENT ON TABLE amortizacion IS 'Tabla de amortización de créditos';
     COMMENT ON COLUMN amortizacion.numero_credito IS 'Número del crédito asociado';
     COMMENT ON COLUMN amortizacion.ordencal IS 'Orden de cálculo';
@@ -151,10 +146,7 @@ SQL_CREATE_TABLE_JUICIOS = """
     estado VARCHAR(10),
     PRIMARY KEY (numero_credito)
     );
-
-    -- Comentarios para documentar los campos
     COMMENT ON TABLE juicios IS 'Tabla de juicios asociados a créditos';
-
     COMMENT ON COLUMN juicios.numero_credito IS 'Número del crédito asociado';
     COMMENT ON COLUMN juicios.codigo_tipo_juicio IS 'Código del tipo de juicio';
     COMMENT ON COLUMN juicios.tipo_operacion IS 'Tipo de operación';
@@ -169,12 +161,10 @@ SQL_CREATE_TABLE_JUICIOS = """
 SCRIPT_CREATE_TABLE_TEMPORAL_CSV = """
     DROP TABLE IF EXISTS pivot_amortizacion;
     CREATE UNLOGGED TABLE pivot_amortizacion AS 
-    SELECT * FROM amortizacion; 
-   
+    SELECT * FROM amortizacion;   
     DROP TABLE IF EXISTS pivot_creditos;
     CREATE UNLOGGED TABLE pivot_creditos AS 
-    SELECT * FROM creditos; 
-    
+    SELECT * FROM creditos;    
     DROP TABLE IF EXISTS  pivot_juicios;
     CREATE UNLOGGED TABLE pivot_juicios AS 
     SELECT * FROM juicios;
@@ -214,9 +204,7 @@ SQL_CREA_DIM_SUCURSAL = """
 
 SCRIPT_CREATE_MV_CREDITOS_MENSUALES = """
 DROP MATERIALIZED VIEW IF EXISTS mv_creditos_mensuales;
-
 CREATE MATERIALIZED VIEW mv_creditos_mensuales AS
-
 WITH datos_crudos AS (
     SELECT
         c.numero_credito,
@@ -382,7 +370,6 @@ SELECT
     crisis_flag,
     riesgo || '_' || sector || '_' || codigo_sucursal::TEXT AS bloque_id
 FROM datos_enriquecidos;
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_creditos_mensuales_pk
     ON mv_creditos_mensuales(mes, riesgo, sector, codigo_sucursal);
 """
@@ -625,7 +612,6 @@ SCRIPT_CREA_FACT_PREDICCIONES = """
 
 SCRIPT_CREATE_MV_CREDITOS = """
 DROP MATERIALIZED VIEW IF EXISTS mv_creditos;
-
 CREATE MATERIALIZED VIEW mv_creditos AS
 SELECT
     f.id_tiempo, f.id_riesgo, f.id_sector, f.id_sucursal,
@@ -648,14 +634,12 @@ JOIN dim_tiempo t ON f.id_tiempo = t.id_tiempo
 JOIN dim_riesgo r ON f.id_riesgo = r.id_riesgo
 JOIN dim_sector s ON f.id_sector = s.id_sector
 JOIN dim_sucursal su ON f.id_sucursal = su.id_sucursal;
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_creditos_pk
     ON mv_creditos(id_tiempo, id_riesgo, id_sector, id_sucursal);
 """
 
 SCRIPT_CREATE_MV_PREDICCIONES = """
 DROP MATERIALIZED VIEW IF EXISTS mv_predicciones;
-
 CREATE MATERIALIZED VIEW mv_predicciones AS
 SELECT
     p.id_prediccion, p.id_tiempo, p.id_riesgo, p.id_sector, p.id_sucursal,
@@ -680,7 +664,6 @@ JOIN dim_tiempo t ON p.id_tiempo = t.id_tiempo
 JOIN dim_riesgo r ON p.id_riesgo = r.id_riesgo
 JOIN dim_sector s ON p.id_sector = s.id_sector
 JOIN dim_sucursal su ON p.id_sucursal = su.id_sucursal;
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_predicciones_pk
     ON mv_predicciones(id_prediccion);
 """
