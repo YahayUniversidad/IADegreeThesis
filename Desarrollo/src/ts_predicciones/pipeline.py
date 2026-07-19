@@ -22,6 +22,7 @@ import psycopg2
 import src.ts_predicciones as ts_predi
 from src.ts_sql import (
     SCRIPT_CREA_FACT_PREDICCIONES,
+    SCRIPT_CREATE_MV_PREDICCIONES,
     SQL_INSERT_PREDICCIONES,
     SQL_REFRESH_DIM_RIESGO,
     SQL_REFRESH_DIM_SECTOR,
@@ -584,16 +585,21 @@ def ejecutar_predicciones(
         print("Creando fact_predicciones...")
         ejeucta_script_generico(string_conexion, SCRIPT_CREA_FACT_PREDICCIONES, "fact_predicciones")
         
+        # 8. Crear tabla y poblar
+        print("Creando mv_predicciones...")
+        ejeucta_script_generico(string_conexion, SCRIPT_CREATE_MV_PREDICCIONES, "mv_predicciones")
+                
+        
         # Combinar historico + futuro
         df_total = pd.concat([df_hist, df_fut], ignore_index=True)
 
         print("Poblando fact_predicciones...")
         _poblar_fact_predicciones(conn, df_total, ts_predi.MAX_HORIZONTE)
 
-        # 8. Validar
+        # 9. Validar
         _validar_predicciones(conn)
 
-        # 9. Refrescar MV de predicciones
+        # 10. Refrescar MV de predicciones
         print("Refrescando mv_predicciones...")
         cur = conn.cursor()
         cur.execute(SQL_REFRESH_MV_PREDICCIONES)
@@ -601,7 +607,7 @@ def ejecutar_predicciones(
         cur.close()
         print("mv_predicciones refrescada.")
 
-        # 10. Guardar CSV
+        # 11. Guardar CSV
         csv_path = os.path.join(path_predicciones, "predicciones.csv")
         df_total.to_csv(csv_path, index=False)
         print(f"CSV guardado: {csv_path}")
