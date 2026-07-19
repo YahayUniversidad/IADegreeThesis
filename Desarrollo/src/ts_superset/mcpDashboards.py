@@ -59,7 +59,8 @@ def limpiar_superset():
     session = _get_session()
 
     # Eliminar charts
-    resp = session.get(f"{SUPERSET_URL}/api/v1/chart/", params={"q": json.dumps({"page_size": 200})})
+    resp = session.get(f"{SUPERSET_URL}/api/v1/chart/", 
+                       params={"q": json.dumps({"page_size": 200})})
     if resp.ok:
         charts = resp.json().get("result", [])
         for c in charts:
@@ -67,7 +68,8 @@ def limpiar_superset():
         print(f"  Charts eliminados: {len(charts)}")
 
     # Eliminar dashboards
-    resp = session.get(f"{SUPERSET_URL}/api/v1/dashboard/", params={"q": json.dumps({"page_size": 200})})
+    resp = session.get(f"{SUPERSET_URL}/api/v1/dashboard/", 
+                       params={"q": json.dumps({"page_size": 200})})
     if resp.ok:
         dashboards = resp.json().get("result", [])
         for d in dashboards:
@@ -76,11 +78,13 @@ def limpiar_superset():
 
 
 def crear_vistas(conn):
-    """Crea vistas SQL que hacen JOIN entre fact y dimensiones."""
+    """Crea vistas materializadas que hacen JOIN entre fact y dimensiones."""
     cur = conn.cursor()
 
+    # MV de creditos
+    cur.execute("DROP MATERIALIZED VIEW IF EXISTS mv_creditos CASCADE;")
     cur.execute("""
-        CREATE OR REPLACE VIEW v_creditos AS
+        CREATE MATERIALIZED VIEW mv_creditos AS
         SELECT
             f.id_tiempo, f.id_riesgo, f.id_sector, f.id_sucursal,
             t.mes, t.anio, t.trimestre, t.nombre_mes,
@@ -103,12 +107,16 @@ def crear_vistas(conn):
         JOIN dim_sector s ON f.id_sector = s.id_sector
         JOIN dim_sucursal su ON f.id_sucursal = su.id_sucursal
     """)
-    print("  Vista v_creditos creada.")
+    cur.execute("""CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_creditos_pk 
+                ON mv_creditos(id_tiempo, id_riesgo, id_sector, id_sucursal);""")
+    print("  MV mv_creditos creada.")
 
+    # MV de predicciones
+    cur.execute("DROP MATERIALIZED VIEW IF EXISTS mv_predicciones CASCADE;")
     cur.execute("""
-        CREATE OR REPLACE VIEW v_predicciones AS
+        CREATE MATERIALIZED VIEW mv_predicciones AS
         SELECT
-            p.id_tiempo, p.id_riesgo, p.id_sector, p.id_sucursal,
+            p.id_prediccion, p.id_tiempo, p.id_riesgo, p.id_sector, p.id_sucursal,
             t.mes AS mes_prediccion, t.anio,
             r.codigo_riesgo, r.descripcion AS riesgo,
             s.codigo_sector, s.descripcion AS sector,
@@ -131,7 +139,9 @@ def crear_vistas(conn):
         JOIN dim_sector s ON p.id_sector = s.id_sector
         JOIN dim_sucursal su ON p.id_sucursal = su.id_sucursal
     """)
-    print("  Vista v_predicciones creada.")
+    cur.execute("""CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_predicciones_pk 
+                ON mv_predicciones(id_prediccion);""")
+    print("  MV mv_predicciones creada.")
 
     conn.commit()
     cur.close()
@@ -141,7 +151,8 @@ def buscar_dataset_id(nombre):
     """Busca el ID de un dataset por nombre."""
     resp = _get_session().get(
         f"{SUPERSET_URL}/api/v1/dataset/",
-        params={"q": json.dumps({"filters": [{"col": "table_name", "opr": "eq", "value": nombre}]})},
+        params={"q": json.dumps({"filters": [{"col": "table_name", "opr": "eq", 
+                                              "value": nombre}]})},
     )
     resp.raise_for_status()
     result = resp.json().get("result", [])
@@ -327,30 +338,36 @@ def crear_dashboard_historico_credidos(ds_id):
         ("Evolución de Créditos", "line", {
             "x_axis": "mes", "time_grain_sqla": "P1M",
             "groupby": [],
-            "metrics": [{"label": "total_creditos", "expressionType": "SQL", "sqlExpression": "SUM(num_creditos)"}],
+            "metrics": [{"label": "total_creditos", "expressionType": "SQL", "sqlExpression": 
+                "SUM(num_creditos)"}],
         }),
         ("Monto Total Promedio", "line", {
             "x_axis": "mes", "time_grain_sqla": "P1M",
             "groupby": [],
-            "metrics": [{"label": "monto_avg", "expressionType": "SQL", "sqlExpression": "AVG(monto_total)"}],
+            "metrics": [{"label": "monto_avg", "expressionType": "SQL", "sqlExpression": 
+                "AVG(monto_total)"}],
         }),
         ("Tasa de Mora 90+", "line", {
             "x_axis": "mes", "time_grain_sqla": "P1M",
             "groupby": [],
-            "metrics": [{"label": "mora_avg", "expressionType": "SQL", "sqlExpression": "AVG(tasa_mora_90)"}],
+            "metrics": [{"label": "mora_avg", "expressionType": "SQL", "sqlExpression": 
+                "AVG(tasa_mora_90)"}],
         }),
         ("Crisis por Mes", "bar", {
             "x_axis": "mes", "time_grain_sqla": "P1M",
             "groupby": [],
-            "metrics": [{"label": "crisis_count", "expressionType": "SQL", "sqlExpression": "SUM(crisis_flag)"}],
+            "metrics": [{"label": "crisis_count", "expressionType": "SQL", "sqlExpression": 
+                "SUM(crisis_flag)"}],
         }),
         ("Créditos por Sector", "pie", {
             "groupby": ["sector"],
-            "metric": {"label": "total_creditos", "expressionType": "SQL", "sqlExpression": "SUM(num_creditos)"},
+            "metric": {"label": "total_creditos", "expressionType": "SQL", "sqlExpression": 
+                "SUM(num_creditos)"},
         }),
         ("Top Sucursales por Monto", "table", {
             "groupby": ["codigo_sucursal"],
-            "metrics": [{"label": "monto_total", "expressionType": "SQL", "sqlExpression": "SUM(monto_total)"}],
+            "metrics": [{"label": "monto_total", "expressionType": "SQL", "sqlExpression": 
+                "SUM(monto_total)"}],
             "row_limit": 10,
             "order_desc": True,
         }),
@@ -374,16 +391,19 @@ def crear_dashboard_predicciones(ds_id):
         ("Probabilidad Promedio de Crisis", "line", {
             "x_axis": "mes_prediccion", "time_grain_sqla": "P1M",
             "groupby": [],
-            "metrics": [{"label": "prob_avg", "expressionType": "SQL", "sqlExpression": "AVG(prob_media)"}],
+            "metrics": [{"label": "prob_avg", "expressionType": "SQL", "sqlExpression": 
+                "AVG(prob_media)"}],
         }),
         ("Predicciones de Crisis por Mes", "bar", {
             "x_axis": "mes_prediccion", "time_grain_sqla": "P1M",
             "groupby": [],
-            "metrics": [{"label": "n_crisis", "expressionType": "SQL", "sqlExpression": "SUM(pred_media)"}],
+            "metrics": [{"label": "n_crisis", "expressionType": "SQL", "sqlExpression": 
+                "SUM(pred_media)"}],
         }),
         ("Top Bloques en Riesgo", "table", {
             "columns": ["bloque_id"],
-            "metrics": [{"label": "prob_avg", "expressionType": "SQL", "sqlExpression": "AVG(prob_media)"}],
+            "metrics": [{"label": "prob_avg", "expressionType": "SQL", "sqlExpression": 
+                "AVG(prob_media)"}],
             "row_limit": 20,
         }),
     ]
@@ -407,7 +427,8 @@ def crear_dashboard_kpis(ds_credito_id, ds_pred_id):
             "metric": {"label": "total", "expressionType": "SQL", "sqlExpression": "COUNT(*)"},
         }),
         (ds_credito_id, "Créditos con Crisis", "big_number_total", {
-            "metric": {"label": "crisis", "expressionType": "SQL", "sqlExpression": "SUM(crisis_flag)"},
+            "metric": {"label": "crisis", "expressionType": "SQL", "sqlExpression": 
+                "SUM(crisis_flag)"},
         }),
         (ds_pred_id, "Total Predicciones", "big_number_total", {
             "metric": {"label": "total", "expressionType": "SQL", "sqlExpression": "COUNT(*)"},
@@ -435,18 +456,21 @@ def crear_dashboard_analisis_dimensional(ds_id):
     charts = [
         ("Créditos por Riesgo", "table", {
             "groupby": ["riesgo"],
-            "metrics": [{"label": "total_creditos", "expressionType": "SQL", "sqlExpression": "SUM(num_creditos)"}],
+            "metrics": [{"label": "total_creditos", "expressionType": "SQL", "sqlExpression": 
+                "SUM(num_creditos)"}],
             "order_desc": True,
         }),
         ("Mora por Sector", "table", {
             "groupby": ["sector"],
-            "metrics": [{"label": "mora_avg", "expressionType": "SQL", "sqlExpression": "AVG(tasa_mora_90)"}],
+            "metrics": [{"label": "mora_avg", "expressionType": "SQL", "sqlExpression":
+                "AVG(tasa_mora_90)"}],
             "order_desc": True,
         }),
         ("Evolución por Riesgo", "line", {
             "x_axis": "mes", "time_grain_sqla": "P1M",
             "groupby": ["riesgo"],
-            "metrics": [{"label": "total_creditos", "expressionType": "SQL", "sqlExpression": "SUM(num_creditos)"}],
+            "metrics": [{"label": "total_creditos", "expressionType": "SQL", "sqlExpression": 
+                "SUM(num_creditos)"}],
         }),
     ]
 
@@ -469,7 +493,7 @@ def main():
     print("\n--- Limpiando Superset ---")
     limpiar_superset()
 
-    # 1. Crear vistas SQL (v_creditos, v_predicciones)
+    # 1. Crear vistas SQL (mv_creditos, mv_predicciones)
     print("\n--- Creando vistas SQL ---")
     conn = psycopg2.connect(
         host="192.168.0.97", port=5432,
@@ -481,19 +505,19 @@ def main():
 
     # 2. Buscar/crear datasets para las vistas
     print("\n--- Configurando datasets ---")
-    ds_creditos = buscar_dataset_id("v_creditos")
+    ds_creditos = buscar_dataset_id("mv_creditos")
     if not ds_creditos:
-        ds_creditos = crear_dataset_view("v_creditos")
+        ds_creditos = crear_dataset_view("mv_creditos")
     if ds_creditos:
         refrescar_dataset(ds_creditos)
-        print(f"  v_creditos → ID: {ds_creditos}")
+        print(f"  mv_creditos → ID: {ds_creditos}")
 
-    ds_predicciones = buscar_dataset_id("v_predicciones")
+    ds_predicciones = buscar_dataset_id("mv_predicciones")
     if not ds_predicciones:
-        ds_predicciones = crear_dataset_view("v_predicciones")
+        ds_predicciones = crear_dataset_view("mv_predicciones")
     if ds_predicciones:
         refrescar_dataset(ds_predicciones)
-        print(f"  v_predicciones → ID: {ds_predicciones}")
+        print(f"  mv_predicciones → ID: {ds_predicciones}")
 
     if not ds_creditos or not ds_predicciones:
         print("\nNo se pudieron configurar los datasets.")

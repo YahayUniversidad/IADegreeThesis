@@ -19,7 +19,14 @@ def ejeucta_script_generico(string_conexion, script, paso):
 
     try:
         print(f"Paso: {paso}")
-        cursor.execute(script)
+        sentencias = [
+            f"{sentencia.strip()};" for sentencia in script.split(";") if sentencia.strip()
+        ]
+
+        for sentencia in sentencias:
+            cursor.execute(sentencia)
+            print(f"   Sentencia ejecutada: {sentencia[:25]}...")
+
         conn.commit()
     except Exception as e:
         conn.rollback()

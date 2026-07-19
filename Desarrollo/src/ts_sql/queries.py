@@ -205,17 +205,16 @@ SQL_CREA_DIM_SECTOR = """
     );
     """
 SQL_CREA_DIM_SUCURSAL = """
-    DROP TABLE IF EXISTS dim_sucursal CASCADE;
-    CREATE TABLE dim_sucursal (
+    CREATE TABLE IF NOT EXISTS dim_sucursal (
         id_sucursal SERIAL PRIMARY KEY,
         codigo_sucursal INTEGER NOT NULL UNIQUE,
         codigo_provincia INTEGER DEFAULT 0
     );
     """
 
-SQL_DROP_MV = "DROP MATERIALIZED VIEW IF EXISTS mv_creditos_mensuales;"
+SCRIPT_CREATE_MV_CREDITOS_MENSUALES = """
+DROP MATERIALIZED VIEW IF EXISTS mv_creditos_mensuales;
 
-SQL_CREATE_MV = """
 CREATE MATERIALIZED VIEW mv_creditos_mensuales AS
 
 WITH datos_crudos AS (
@@ -383,9 +382,7 @@ SELECT
     crisis_flag,
     riesgo || '_' || sector || '_' || codigo_sucursal::TEXT AS bloque_id
 FROM datos_enriquecidos;
-"""
 
-SQL_CREATE_IDX_MV = """
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_creditos_mensuales_pk
     ON mv_creditos_mensuales(mes, riesgo, sector, codigo_sucursal);
 """
@@ -494,8 +491,9 @@ ON CONFLICT (id_tiempo, id_riesgo, id_sector, id_sucursal) DO UPDATE SET
     bloque_id                  = EXCLUDED.bloque_id;
 """
 
-SQL_CREA_FACT_CREDITOS = """
+SCRIPT_CREA_FACT_CREDITOS = """
     DROP TABLE IF EXISTS fact_creditos_mensual CASCADE;
+    
     CREATE TABLE fact_creditos_mensual (
         id_tiempo INTEGER NOT NULL,
         id_riesgo INTEGER NOT NULL,
@@ -596,7 +594,7 @@ DO UPDATE SET
     fecha_ejecucion = EXCLUDED.fecha_ejecucion;
 """
 
-SQL_CREA_FACT_PREDICCIONES = """
+SCRIPT_CREA_FACT_PREDICCIONES = """
     DROP TABLE IF EXISTS fact_predicciones CASCADE;
     CREATE TABLE fact_predicciones (
         id_prediccion    SERIAL PRIMARY KEY,
@@ -625,18 +623,85 @@ SQL_CREA_FACT_PREDICCIONES = """
     );
     """
 
+SCRIPT_CREATE_MV_CREDITOS = """
+DROP MATERIALIZED VIEW IF EXISTS mv_creditos;
+
+CREATE MATERIALIZED VIEW mv_creditos AS
+SELECT
+    f.id_tiempo, f.id_riesgo, f.id_sector, f.id_sucursal,
+    t.mes, t.anio, t.trimestre, t.nombre_mes,
+    r.codigo_riesgo, r.descripcion AS riesgo_desc,
+    s.codigo_sector, s.descripcion AS sector_desc,
+    su.codigo_sucursal,
+    f.num_creditos, f.monto_total, f.monto_promedio,
+    f.tot_dias_mora_promedio, f.tot_num_moras_promedio,
+    f.tasa_mora_90, f.tasa_judicial, f.tasa_cierre,
+    f.total_gestion_cobro, f.total_costo_judicial,
+    f.tasa_interes_promedio, f.saldo_promedio,
+    f.creditos_cerrados, f.num_clientes_unicos,
+    f.creditos_por_cliente, f.plazo_promedio,
+    f.desviacion_montos, f.coef_variacion_montos,
+    f.tasa_crecimiento_creditos, f.tasa_crecimiento_monto,
+    f.crisis_flag, f.bloque_id
+FROM fact_creditos_mensual f
+JOIN dim_tiempo t ON f.id_tiempo = t.id_tiempo
+JOIN dim_riesgo r ON f.id_riesgo = r.id_riesgo
+JOIN dim_sector s ON f.id_sector = s.id_sector
+JOIN dim_sucursal su ON f.id_sucursal = su.id_sucursal;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_creditos_pk
+    ON mv_creditos(id_tiempo, id_riesgo, id_sector, id_sucursal);
+"""
+
+SCRIPT_CREATE_MV_PREDICCIONES = """
+DROP MATERIALIZED VIEW IF EXISTS mv_predicciones;
+
+CREATE MATERIALIZED VIEW mv_predicciones AS
+SELECT
+    p.id_prediccion, p.id_tiempo, p.id_riesgo, p.id_sector, p.id_sucursal,
+    t.mes AS mes_prediccion, t.anio,
+    r.codigo_riesgo, r.descripcion AS riesgo_desc,
+    s.codigo_sector, s.descripcion AS sector_desc,
+    su.codigo_sucursal,
+    p.bloque_id,
+    p.prob_h01, p.prob_h02, p.prob_h03, p.prob_h04,
+    p.prob_h05, p.prob_h06, p.prob_h07, p.prob_h08,
+    p.prob_h09, p.prob_h10, p.prob_h11, p.prob_h12,
+    p.prob_h13, p.prob_h14, p.prob_h15, p.prob_h16,
+    p.prob_h17, p.prob_h18,
+    p.pred_h01, p.pred_h02, p.pred_h03, p.pred_h04,
+    p.pred_h05, p.pred_h06, p.pred_h07, p.pred_h08,
+    p.pred_h09, p.pred_h10, p.pred_h11, p.pred_h12,
+    p.pred_h13, p.pred_h14, p.pred_h15, p.pred_h16,
+    p.pred_h17, p.pred_h18,
+    p.prob_media, p.pred_media, p.crisis_count, p.fecha_ejecucion
+FROM fact_predicciones p
+JOIN dim_tiempo t ON p.id_tiempo = t.id_tiempo
+JOIN dim_riesgo r ON p.id_riesgo = r.id_riesgo
+JOIN dim_sector s ON p.id_sector = s.id_sector
+JOIN dim_sucursal su ON p.id_sucursal = su.id_sucursal;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_predicciones_pk
+    ON mv_predicciones(id_prediccion);
+"""
+
+SQL_REFRESH_MV_PREDICCIONES = "REFRESH MATERIALIZED VIEW CONCURRENTLY mv_predicciones;"
+
+SQL_REFRESH_MV_CREDITOS = "REFRESH MATERIALIZED VIEW CONCURRENTLY mv_creditos;"
+
+SQL_REFRESH_MV_CREDITOS_MENSUALES = "REFRESH MATERIALIZED VIEW CONCURRENTLY mv_creditos_mensuales;"
 
 def consultar_creditos_mensuales(fecha_inicio: date, fecha_fin: date) -> str:
-    """ Consultas en espacio del tiempo para obtener los créditos mensuales.
-    
+    """Consultas en espacio del tiempo para obtener los créditos mensuales.
+
     Se hace las consultas en lotes para manejar la memoria y no saturar el sistema.
-    
+
     Args:
         fecha_inicio (date): Fecha de inicio del rango.
         fecha_fin (date): Fecha de fin del rango.
     Returns:
         str: Consulta SQL para obtener los créditos mensuales en el rango de fechas especificado.
-    
+
     """
     return f"""
         SELECT

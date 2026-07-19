@@ -38,14 +38,17 @@ dag_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
+
 def crear_estructura_task(**context):
     string_conexion = context["params"]["string_conexion"]
     crear_tablas_estructura(string_conexion)
+
 
 def cargar_csv_task(**context):
     string_conexion = context["params"]["string_conexion"]
     path_carpeta_csv = context["params"]["path_carpeta_csv"]
     capturar_datos_csv(string_conexion, path_carpeta_csv)
+
 
 def datamart_task(**context):
     string_conexion = context["params"]["string_conexion"]
@@ -54,23 +57,29 @@ def datamart_task(**context):
     except Exception as e:
         print(f"Error al ejecutar datamart: {e}")
         raise RuntimeError(f"Error al ejecutar datamart: {e}") from e
-    
+
+
 def prediccion_task(**context):
     string_conexion = context["params"]["string_conexion"]
     path_trabajo = context["params"].get("path_trabajo", "/opt/airflow/data/salida")
-    
+    mlflow_uri = context["params"].get("mlflow_uri", "")
+    mlflow_experiment_id = context["params"].get("mlflow_experiment", "")
     try:
         ejecutar_predicciones(
             string_conexion=string_conexion,
-            path_trabajo=path_trabajo
+            path_trabajo=path_trabajo,
+            mlflow_uri=mlflow_uri,
+            mlflow_experiment_id=mlflow_experiment_id,
         )
     except Exception as e:
         print(f"Error al ejecutar predicciones: {e}")
         raise RuntimeError(f"Error al ejecutar predicciones: {e}") from e
 
+
 def superset_task(**context):
     # TODO: integrar con MCP de Superset para refrescar dashboards
     print("Superset: refresh pendiente de implementar")
+
 
 ##
 ## DAG Definition
@@ -101,22 +110,16 @@ dag_inferencia = DAG(
             title="Ruta de salida",
             description="Directorio base para artefactos del modelo",
         ),
-        "experiment_id": Param(
-            default="",
-            type="string",
-            title="MLflow Experiment ID",
-            description="ID del experimento MLflow con el mejor modelo",
-        ),
         "mlflow_uri": Param(
             default=Variable.get("mlflow_uri", default_var="http://192.168.0.97:5000"),
             type="string",
             title="MLflow Tracking URI",
         ),
-        "mlflow_experiment": Param(
-            default="jupy_predicciones",
+        "mlflow_experiment_id": Param(
+            default="",
             type="string",
-            title="MLflow Experiment Name",
-            description="Nombre del experimento MLflow para predicciones",
+            title="MLflow Experiment ID",
+            description="ID del experimento MLflow con el mejor modelo",
         ),
         "periodo": Param(
             default="mes",
@@ -129,8 +132,9 @@ dag_inferencia = DAG(
 
 ##
 ## Tareas del DAG
-t1 = PythonOperator(task_id="crear_estructura", python_callable=crear_estructura_task, 
-                    dag=dag_inferencia)
+t1 = PythonOperator(
+    task_id="crear_estructura", python_callable=crear_estructura_task, dag=dag_inferencia
+)
 t2 = PythonOperator(task_id="cargar_csv", python_callable=cargar_csv_task, dag=dag_inferencia)
 t3 = PythonOperator(task_id="datamart", python_callable=datamart_task, dag=dag_inferencia)
 t4 = PythonOperator(task_id="prediccion", python_callable=prediccion_task, dag=dag_inferencia)
@@ -138,4 +142,4 @@ t5 = PythonOperator(task_id="superset", python_callable=superset_task, dag=dag_i
 
 ##
 ## Definicion del flujo de tareas
-t1 >> t2 >> t3 >> t4 >> t5 # type: ignore
+t1 >> t2 >> t3 >> t4 >> t5  # type: ignore

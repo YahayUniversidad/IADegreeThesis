@@ -10,110 +10,100 @@
 
 import psycopg2
 from src.ts_sql import (
+    SCRIPT_CREA_FACT_CREDITOS,
+    SCRIPT_CREA_FACT_PREDICCIONES,
+    SCRIPT_CREATE_MV_CREDITOS,
+    SCRIPT_CREATE_MV_CREDITOS_MENSUALES,
+    SCRIPT_CREATE_MV_PREDICCIONES,
     SQL_CREA_DIM_RIESGO,
     SQL_CREA_DIM_SECTOR,
     SQL_CREA_DIM_SUCURSAL,
     SQL_CREA_DIM_TIEMPO,
-    SQL_CREA_FACT_CREDITOS,
-    SQL_CREATE_IDX_MV,
-    SQL_CREATE_MV,
-    SQL_DROP_MV,
     SQL_INSERT_DIM_RIESGO,
     SQL_INSERT_DIM_SECTOR,
     SQL_INSERT_DIM_SUCURSAL,
     SQL_INSERT_DIM_TIEMPO,
+    SQL_REFRESH_MV_CREDITOS,
+    SQL_REFRESH_MV_CREDITOS_MENSUALES,
+    SQL_REFRESH_MV_PREDICCIONES,
     SQL_UPSERT_FACT_CREDITOS,
+    ejeucta_script_generico,
 )
 
 
-def _crear_ddl(conn):
+def _crear_ddl(string_conexion):
     """Crea dimensiones y tabla de hechos (DDL).
-    
+
     Args:
-        conn: Conexion a la base de datos.
-    
+        string_conexion: Cadena de conexión a la base de datos.
+
     """
     ddl_tablas = [
         ("dim_tiempo", SQL_CREA_DIM_TIEMPO),
         ("dim_riesgo", SQL_CREA_DIM_RIESGO),
         ("dim_sector", SQL_CREA_DIM_SECTOR),
         ("dim_sucursal", SQL_CREA_DIM_SUCURSAL),
-        ("fact_creditos_mensual", SQL_CREA_FACT_CREDITOS),
+        ("fact_creditos_mensual", SCRIPT_CREA_FACT_CREDITOS),
+        ("fact_predicciones", SCRIPT_CREA_FACT_PREDICCIONES),
+        ("mv_creditos_mensuales", SCRIPT_CREATE_MV_CREDITOS_MENSUALES),
+        ("mv_predicciones", SCRIPT_CREATE_MV_PREDICCIONES),
+        ("mv_creditos", SCRIPT_CREATE_MV_CREDITOS),
     ]
-    cur = conn.cursor()
-    for nombre, ddl in ddl_tablas:
-        cur.execute(ddl)
-        print("OK: %s" % nombre)
-    cur.close()
-
-
-def _crear_mv(conn):
-    """DROP + CREATE + INDEX de la vista materializada.
-    
-    Args:
-        conn: Conexion a la base de datos.
-    
-    """
-    cur = conn.cursor()
-    print("Eliminando vista materializada anterior...")
-    cur.execute(SQL_DROP_MV)
-    print("Creando vista materializada...")
-    cur.execute(SQL_CREATE_MV)
-    print("Creando indice unico...")
-    cur.execute(SQL_CREATE_IDX_MV)
-    cur.close()
-    print("Vista materializada mv_creditos_mensuales creada.")
+    for nombre, script in ddl_tablas:
+        ejeucta_script_generico(string_conexion, script, nombre)
 
 
 def _refresh_mv(conn):
-    """REFRESH MATERIALIZED VIEW CONCURRENTLY.
-    
+    """Refresca las materialized views para el trabajo del datamart.
+
     Args:
         conn: Conexion a la base de datos.
-    
-    """
-    cur = conn.cursor()
-    cur.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY mv_creditos_mensuales")
-    cur.execute("SELECT COUNT(*) FROM mv_creditos_mensuales")
-    count = cur.fetchone()[0]
-    cur.close()
-    print(f"MV refrescada: {count:,} registros")
-    return count
-
-def _pobrar_dim_generico(conn, nombre_dim, sql_insert):
-    """Inserta datos en una dimension generica desde la MV.
-    
-    Args:
-        conn: Conexion a la base de datos.
-        nombre_dim: Nombre de la dimension.
-        sql_insert: Sentencia SQL para insertar los datos.
 
     """
+    refreshed_vm = [
+        ("mv_creditos_mensuales", SQL_REFRESH_MV_CREDITOS_MENSUALES),
+        ("mv_predicciones", SQL_REFRESH_MV_PREDICCIONES),
+        ("mv_creditos", SQL_REFRESH_MV_CREDITOS),
+    ]
+
     cur = conn.cursor()
-    cur.execute(sql_insert)
-    print(f"{nombre_dim}: {cur.rowcount} filas insertadas")
+    for nombre, sql in refreshed_vm:
+        cur.execute(sql)
+        cur.execute(f"SELECT COUNT(*) FROM {nombre}")
+        count = cur.fetchone()[0]
+        print(f"MV {nombre} refrescada: {count:,} registros")
+
     cur.close()
 
 
 def _poblar_dims(conn):
     """Pobla todas las dimensiones.
-    
+
     Args:
         conn: Conexion a la base de datos.
-    
+
     """
-    _pobrar_dim_generico(conn, "dim_tiempo", SQL_INSERT_DIM_TIEMPO)
-    _pobrar_dim_generico(conn, "dim_riesgo", SQL_INSERT_DIM_RIESGO)
-    _pobrar_dim_generico(conn, "dim_sector", SQL_INSERT_DIM_SECTOR)
-    _pobrar_dim_generico(conn, "dim_sucursal", SQL_INSERT_DIM_SUCURSAL)
+
+    poblar_data = [
+        ("dim_tiempo", SQL_INSERT_DIM_TIEMPO),
+        ("dim_riesgo", SQL_INSERT_DIM_RIESGO),
+        ("dim_sector", SQL_INSERT_DIM_SECTOR),
+        ("dim_sucursal", SQL_INSERT_DIM_SUCURSAL),
+    ]
+
+    for nombre, sql in poblar_data:
+        cur = conn.cursor()
+        cur.execute(sql)
+        print(f"{nombre}: {cur.rowcount} filas insertadas")
+        cur.close()
 
 
 def _poblar_fact(conn):
     """UPSERT de fact_creditos_mensual desde la MV.
-    
+
     Args:
         conn: Conexion a la base de datos.
-    
+
     """
     cur = conn.cursor()
     cur.execute(SQL_UPSERT_FACT_CREDITOS)
@@ -125,10 +115,10 @@ def _poblar_fact(conn):
 
 def _validar(conn):
     """Verifica integridad del datamart: FKs nulas, duplicados, conteo.
-    
+
     Args:
         conn: Conexion a la base de datos.
-    
+
     """
     cur = conn.cursor()
 
@@ -168,21 +158,20 @@ def _validar(conn):
 
 def ejecutar_datamart(string_conexion):
     """Ejecuta el pipeline completo: refresh MV -> dims -> fact -> validar.
-    
+
     Args:
         string_conexion: Cadena de conexion a la base de datos.
-    
+
     Raises:
-        ValueError: Si hay errores de integridad en el datamart.    
+        ValueError: Si hay errores de integridad en el datamart.
     """
 
     conn = psycopg2.connect(string_conexion)
 
     try:
-        _crear_ddl(conn)
-        _crear_mv(conn)
-        _refresh_mv(conn)
+        _crear_ddl(string_conexion)
         _poblar_dims(conn)
+        _refresh_mv(conn)
         _poblar_fact(conn)
         _validar(conn)
         conn.commit()
