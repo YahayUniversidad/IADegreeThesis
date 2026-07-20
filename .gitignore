@@ -11,6 +11,7 @@ wandb/
 *.mimocode/
 *output/
 *__pycache__/
+*herramientasPersonales/
 
 *tesis/
 *DocumentosBase/
