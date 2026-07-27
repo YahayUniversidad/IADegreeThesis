@@ -1,4 +1,4 @@
-cEste capítulo describe el diseño de la investigación, la arquitectura del prototipo, la preparación de datos, los modelos y el protocolo de evaluación. Los resultados numéricos y su interpretación se presentan exclusivamente en el Capítulo 5.
+Este capítulo describe el diseño de la investigación, la arquitectura del prototipo, la preparación de datos, los modelos y el protocolo de evaluación. Los resultados numéricos y su interpretación se presentan exclusivamente en el Capítulo 5.
 
 \section{Diseño de la investigación}
 
@@ -76,35 +76,39 @@ El proceso ETL integra tres fuentes institucionales.
 La Tabla 4.2b documenta la trazabilidad de los datos desde las fuentes hasta las muestras de entrenamiento, extraída del análisis del código fuente.
 
 \begin{table}[h!]
-\centering
-\small
-\begin{tabular}{|l|l|p{5cm}|}
-\hline
-\textbf{Etapa} & \textbf{Conteo} & \textbf{Descripción} \\
-\hline
-Filas CABECERA\_PRESTAMOS & $\sim$500.000 & Registros maestros de créditos \\
-\hline
-Filas AMORTIZACAL\_PRESTAMOS & $\sim$2.000.000 & Cuotas de amortización \\
-\hline
-Filas RECUPERACION\_PRESTAMOS & $\sim$100.000 & Juicios y recuperaciones \\
-\hline
-Filas tras integración (JOIN) & -- & Inner join creditos-amortizacion, left join juicios \\
-\hline
-Bloques-mes en MV & 20.025 & GROUP BY mes, riesgo, sector, sucursal \\
-\hline
-Bloques con historial $\geq 24$ meses & -- & Requerido: ventana(6) + horizontes(18) \\
-\hline
-Secuencias generadas & -- & \texttt{X\_cnn.shape[0]} (variable por ejecución) \\
-\hline
-Conjunto entrenamiento (49\%) & -- & 70\% inicial $\times$ 70\% interno \\
-\hline
-Conjunto validación (21\%) & -- & 30\% del train para early stopping \\
-\hline
-Conjunto prueba (30\%) & -- & Reservado para evaluación final \\
-\hline
-\end{tabular}
-\caption{Trazabilidad de datos: transformación desde fuentes hasta conjuntos de entrenamiento. Los conteos exactos deben verificarse en el repositorio.}
-\label{tab:trazabilidad}
+    \centering
+    \small
+    \begin{tabular}{
+        | >{\raggedright\arraybackslash}p{6.5cm}
+        | >{\raggedleft\arraybackslash}p{2.5cm}        
+        | >{\raggedright\arraybackslash}p{5.5cm} |   
+    }
+    \hline
+        \textbf{Etapa} & \textbf{Conteo} & \textbf{Descripción} \\
+    \hline
+        Filas CABECERA\_PRESTAMOS & $\sim$500.000 & Registros maestros de créditos \\
+    \hline
+        Filas AMORTIZACAL\_PRESTAMOS & $\sim$2.000.000 & Cuotas de amortización \\
+    \hline
+        Filas RECUPERACION\_PRESTAMOS & $\sim$100.000 & Juicios y recuperaciones \\
+    \hline
+        Filas tras integración (JOIN) & -- & Inner join creditos-amortizacion, left join juicios \\
+    \hline
+        Bloques-mes en MV & 20.025 & GROUP BY mes, riesgo, sector, sucursal \\
+    \hline
+        Bloques con historial $\geq 24$ meses & -- & Requerido: ventana(6) + horizontes(18) \\
+    \hline
+        Secuencias generadas & -- & \texttt{X\_cnn.shape[0]} (variable por ejecución) \\
+    \hline
+        Conjunto entrenamiento (49\%) & -- & 70\% inicial $\times$ 70\% interno \\
+    \hline
+        Conjunto validación (21\%) & -- & 30\% del train para early stopping \\
+    \hline
+        Conjunto prueba (30\%) & -- & Reservado para evaluación final \\
+    \hline
+    \end{tabular}
+    \caption{Trazabilidad de datos: transformación desde fuentes hasta conjuntos de entrenamiento. Los conteos exactos deben verificarse en el repositorio.}
+    \label{tab:trazabilidad}
 \end{table}
 
 \textbf{Nota}: La restricción clave es que solo los bloques con al menos 24 meses de historial (6 meses de ventana + 18 horizontes) generan secuencias válidas. Esto reduce significativamente el número de muestras disponibles desde los 20.025 bloques-mes iniciales.
@@ -120,57 +124,59 @@ Las redes neuronales requieren una representación secuencial. Para cada bloque 
 El proyecto calcula veintiuna características numéricas derivadas de las tres fuentes. La Tabla 4.3 presenta el diccionario completo extraído del código fuente.
 
 \begin{table}[h!]
-\centering
-\small
-\begin{tabular}{|l|l|p{5cm}|}
-\hline
-\textbf{Variable} & \textbf{Grupo} & \textbf{Interpretación} \\
-\hline
-num\_creditos & Volumen & Número de créditos agregados en el bloque-mes \\
-\hline
-monto\_total & Volumen & Suma del monto crediticio \\
-\hline
-monto\_promedio & Volumen & Monto promedio de los créditos \\
-\hline
-plazo\_promedio & Condición & Plazo promedio de las operaciones (cuotas) \\
-\hline
-tasa\_interes\_promedio & Condición & Tasa de interés promedio \\
-\hline
-saldo\_promedio & Riesgo & Saldo capital promedio \\
-\hline
-total\_costo\_judicial & Riesgo & Suma de costos judiciales del bloque \\
-\hline
-total\_gestion\_cobro & Riesgo & Suma de gestiones de cobro \\
-\hline
-total\_notificaciones & Riesgo & Suma de notificaciones \\
-\hline
-tot\_dias\_mora\_promedio & Riesgo & Promedio de días en mora \\
-\hline
-tot\_num\_moras\_promedio & Riesgo & Promedio de número de moras \\
-\hline
-mora\_promedio & Riesgo & Monto promedio de mora \\
-\hline
-creditos\_judiciales & Riesgo & Créditos con indicador judicial = `S' \\
-\hline
-creditos\_cerrados & Riesgo & Créditos con estado `C' o `L' \\
-\hline
-tasa\_judicial & Riesgo & creditos\_judiciales / num\_creditos $\times$ 100 \\
-\hline
-tasa\_cierre & Riesgo & creditos\_cerrados / num\_creditos $\times$ 100 \\
-\hline
-tasa\_mora\_90 & Riesgo & Créditos con $>$90 días mora / num\_creditos $\times$ 100 \\
-\hline
-creditos\_por\_cliente & Derivada & num\_creditos / num\_clientes\_unicos \\
-\hline
-coef\_variacion\_montos & Derivada & desviación\_montos / monto\_promedio $\times$ 100 \\
-\hline
-tasa\_crecimiento\_creditos & Derivada & Variación \%, $\Delta$ num\_creditos / num\_creditos\_previo \\
-\hline
-tasa\_crecimiento\_monto & Derivada & Variación \%, $\Delta$ monto\_total / monto\_total\_previo \\
-\hline
-\end{tabular}
-\caption{Diccionario completo de las 21 características extraído del código fuente (\texttt{queries.py} y pipelines de modelos).}
-\label{tab:caracteristicas}
+    \centering
+    \small
+    \begin{tabular}{
+        |l|c|p{5cm}|
+        }
+    \hline
+    \textbf{Variable} & \textbf{Grupo} & \textbf{Interpretación} \\
+    \hline
+        num\_creditos & Volumen & Número de créditos agregados en el bloque-mes \\
+    \hline
+        monto\_total & Volumen & Suma del monto crediticio \\
+    \hline
+        monto\_promedio & Volumen & Monto promedio de los créditos \\
+    \hline
+        plazo\_promedio & Condición & Plazo promedio de las operaciones (cuotas) \\
+    \hline
+        tasa\_interes\_promedio & Condición & Tasa de interés promedio \\
+    \hline
+        saldo\_promedio & Riesgo & Saldo capital promedio \\
+    \hline
+        total\_costo\_judicial & Riesgo & Suma de costos judiciales del bloque \\
+    \hline
+        total\_gestion\_cobro & Riesgo & Suma de gestiones de cobro \\
+    \hline
+        total\_notificaciones & Riesgo & Suma de notificaciones \\
+    \hline
+        tot\_dias\_mora\_promedio & Riesgo & Promedio de días en mora \\
+    \hline
+        tot\_num\_moras\_promedio & Riesgo & Promedio de número de moras \\
+    \hline
+        mora\_promedio & Riesgo & Monto promedio de mora \\
+    \hline
+        creditos\_judiciales & Riesgo & Créditos con indicador judicial = `S' \\
+    \hline
+        creditos\_cerrados & Riesgo & Créditos con estado `C' o `L' \\
+    \hline
+        tasa\_judicial & Riesgo & creditos\_judiciales / num\_creditos $\times$ 100 \\
+    \hline
+        tasa\_cierre & Riesgo & creditos\_cerrados / num\_creditos $\times$ 100 \\
+    \hline
+        tasa\_mora\_90 & Riesgo & Créditos con $>$90 días mora / num\_creditos $\times$ 100 \\
+    \hline
+        creditos\_por\_cliente & Derivada & num\_creditos / num\_clientes\_unicos \\
+    \hline
+        coef\_variacion\_montos & Derivada & desviación\_montos / monto\_promedio $\times$ 100 \\
+    \hline
+        tasa\_crecimiento\_creditos & Derivada & Variación \%, $\Delta$ num\_creditos / num\_creditos\_previo \\
+    \hline
+        tasa\_crecimiento\_monto & Derivada & Variación \%, $\Delta$ monto\_total / monto\_total\_previo \\
+    \hline
+    \end{tabular}
+    \caption{Diccionario completo de las 21 características extraído del código fuente (\texttt{queries.py} y pipelines de modelos).}
+    \label{tab:caracteristicas}
 \end{table}
 
 La variable binaria \texttt{crisis\_flag} se construye mediante ocho condiciones heurísticas con pesos acumulativos. Si la suma de pesos supera el umbral de 5, el bloque se etiqueta como crisis (1); de lo contrario, como no crisis (0). Las ocho condiciones son:
@@ -188,9 +194,9 @@ La variable binaria \texttt{crisis\_flag} se construye mediante ocho condiciones
 
 Umbral de decisión: $\sum \text{pesos} \geq 5 \Rightarrow \texttt{crisis\_flag} = 1$. La etiqueta fue validada por juicio experto según el documento original, aunque el procedimiento de validación no está documentado.
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
-    \includegraphics[width=0.8\linewidth]{images/MM-07 Definicion de crisis_flag.png}
+    \includegraphics[width=1.0\linewidth]{images/MM-07 Definicion de crisis_flag.png}
     \caption{Diagrama de flujo de la definición de \texttt{crisis\_flag}. Cada condición evalúa un umbral y asigna un peso; si la suma total supera 5, el bloque se etiqueta como crisis.}
     \label{fig:crisis_flag}
 \end{figure}
@@ -201,9 +207,9 @@ Umbral de decisión: $\sum \text{pesos} \geq 5 \Rightarrow \texttt{crisis\_flag}
 
 La salida considera dieciocho horizontes mensuales. Para una ventana que termina en $t$, la etiqueta del horizonte $h$ corresponde al estado futuro en $t + h$. CNN y MLP generan un vector de dieciocho probabilidades, mientras que LightGBM entrena un clasificador independiente por horizonte.
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
-    \includegraphics[width=0.8\linewidth]{images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png}
+    \includegraphics[width=1.0\linewidth]{images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png}
     \caption{Representación conceptual de la ventana de entrada y las etiquetas multi-horizonte. Cada bloque-mes genera una secuencia de 6 meses con 21 características, y 18 etiquetas futuras correspondientes a los horizontes de predicción.}
     \label{fig:horizontes}
 \end{figure}
@@ -296,41 +302,47 @@ LightGBM se implementa mediante dieciocho clasificadores independientes, uno por
 
 A diferencia de las redes neuronales, LightGBM no requiere representación secuencial; cada horizonte se entrena como un problema de clasificación binaria independiente con las mismas 21 características.
 
-\begin{table}
-\centering
-\small
-\begin{tabular}{|l|l|l|l|}
-\hline
-\textbf{Elemento} & \textbf{LightGBM} & \textbf{CNN} & \textbf{MLP} \\
-\hline
-Salida & 18 modelos binarios independientes & 18 salidas sigmoidales & 18 salidas sigmoidales \\
-\hline
-Arquitectura & Árboles potenciados (GBDT) & Conv1D(64,$k$=3), BN, Do(0,3), Conv1D(128,$k$=3), BN, MaxPool(2), Do(0,3), Flat, Den(128), BN, Do(0,4), Den(64), Do(0,3) & Flat, Den(128), Do(0,3), Den(64), Do(0,2) \\
-\hline
-Optimizador & GBDT, lr=0,05 & Adam (lr=0,001) & Adam (lr=0,001) \\
-\hline
-Loss & binary\_logloss & binary\_crossentropy & binary\_crossentropy \\
-\hline
-Batch size & N/A (usa bagging) & 32 & 32 \\
-\hline
-Sample weights & scale\_pos\_weight=5,67 & SÍ (total/2$\times$n\_clase) & NO \\
-\hline
-Early stopping & 50 rondas & Paciencia 10 (\texttt{val\_loss}) & Paciencia 10 (\texttt{val\_loss}) \\
-\hline
-Semilla & 42 (fija) & No fijada & No fijada \\
-\hline
-Escalado & MinMaxScaler & MinMaxScaler & MinMaxScaler \\
-\hline
-Clipping & No & SÍ (q01--q99) & SÍ (q01--q99) \\
-\hline
-\end{tabular}
-\caption{Configuración completa documentada de los modelos evaluados, extraída del código fuente.}
-\label{tab:config_modelos}
+\begin{table}[h!]
+    \centering
+    \small
+    \begin{tabular}{
+        | >{\raggedright\arraybackslash}p{3.5cm}
+        | >{\raggedright\arraybackslash}p{3.5cm}
+        | >{\raggedright\arraybackslash}p{3.5cm}
+        | >{\raggedright\arraybackslash}p{3.5cm}
+        |
+        }
+    \hline
+        \textbf{Elemento} & \textbf{LightGBM} & \textbf{CNN} & \textbf{MLP} \\
+    \hline
+        Salida & 18 modelos binarios independientes & 18 salidas sigmoidales & 18 salidas sigmoidales \\
+    \hline
+        Arquitectura & Árboles potenciados (GBDT) & Conv1D(64,$k$=3), BN, Do(0,3), Conv1D(128,$k$=3), BN, MaxPool(2), Do(0,3), Flat, Den(128), BN, Do(0,4), Den(64), Do(0,3) & Flat, Den(128), Do(0,3), Den(64), Do(0,2) \\
+    \hline
+        Optimizador & GBDT, lr=0,05 & Adam (lr=0,001) & Adam (lr=0,001) \\
+    \hline
+        Loss & binary\_logloss & binary\_crossentropy & binary\_crossentropy \\
+    \hline
+        Batch size & N/A (usa bagging) & 32 & 32 \\
+    \hline
+        Sample weights & scale\_pos\_weight=5,67 & SÍ (total/2$\times$n\_clase) & NO \\
+    \hline
+        Early stopping & 50 rondas & Paciencia 10 (\texttt{val\_loss}) & Paciencia 10 (\texttt{val\_loss}) \\
+    \hline
+        Semilla & 42 (fija) & No fijada & No fijada \\
+    \hline
+        Escalado & MinMaxScaler & MinMaxScaler & MinMaxScaler \\
+    \hline
+        Clipping & No & SÍ (q01--q99) & SÍ (q01--q99) \\
+    \hline
+    \end{tabular}
+    \caption{Configuración completa documentada de los modelos evaluados, extraída del código fuente.}
+    \label{tab:config_modelos}
 \end{table}
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
-    \includegraphics[width=0.8\linewidth]{images/MM-03 Comparacion de Arquitecturas de Modelos.png}
+    \includegraphics[width=1.0\linewidth]{images/MM-03 Comparacion de Arquitecturas de Modelos.png}
     \caption{Comparación de arquitecturas: LightGBM entrena 18 modelos independientes (uno por horizonte), mientras que CNN y MLP son redes únicas con 18 salidas sigmoidales. Todos comparten la misma entrada de $6 \times 21$ valores.}
     \label{fig:arquitecturas}
 \end{figure}
@@ -351,23 +363,23 @@ La división de datos se implementa en tres etapas temporales, verificada en el 
 \end{enumerate}
 
 \begin{table}[h!]
-\centering
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Conjunto} & \textbf{Proporción} & \textbf{Uso} \\
-\hline
-Entrenamiento & 49\% del total & Ajuste de pesos del modelo \\
-\hline
-Validación & 21\% del total & Early stopping, monitoreo de \texttt{val\_loss} \\
-\hline
-Prueba & 30\% del total & Evaluación final (una sola vez) \\
-\hline
-\end{tabular}
-\caption{Distribución real de los conjuntos de datos extraída del código.}
+    \centering
+    \begin{tabular}{|l|l|l|}
+    \hline
+        \textbf{Conjunto} & \textbf{Proporción} & \textbf{Uso} \\
+    \hline
+        Entrenamiento & 49\% del total & Ajuste de pesos del modelo \\
+    \hline
+        Validación & 21\% del total & Early stopping, monitoreo de \texttt{val\_loss} \\
+    \hline
+        Prueba & 30\% del total & Evaluación final (una sola vez) \\
+    \hline
+    \end{tabular}
+    \caption{Distribución real de los conjuntos de datos extraída del código.}
 \label{tab:splits}
 \end{table}
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\linewidth]{images/MM-02 b Diagrama Linea Tiempo.png}
     \caption{Línea de tiempo de la división temporal de datos. El periodo 2015--2022 se utiliza para entrenamiento y validación, mientras que 2023--2026 se reserva para prueba.}
@@ -378,9 +390,9 @@ El conjunto de validación se utiliza exclusivamente para early stopping (monito
 
 \textbf{Limitaciones del protocolo}: (1) No se reportan los conteos exactos de muestras por conjuntos y por horizonte; (2) la semilla no está fijada para CNN y MLP, lo que dificulta la reproducibilidad; (3) no se realizan repeticiones con múltiples semillas para estimar variabilidad; (4) la búsqueda de hiperparámetros fue manual y no documentada.
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
-    \includegraphics[width=0.8\linewidth]{images/MM-05 Flujo de Entrenamiento.png}
+    \includegraphics[width=0.65\linewidth]{images/MM-05 Flujo de Entrenamiento.png}
     \caption{Flujo de entrenamiento, registro y selección implementado en el prototipo. Los datos pasan por preprocesamiento, generación de secuencias y división temporal antes de entrenar los tres modelos.}
     \label{fig:entrenamiento}
 \end{figure}
@@ -401,9 +413,9 @@ MLflow almacena los resultados de las ejecuciones y permite recuperar el modelo 
 
 El DAG de inferencia se ejecuta diariamente a las 06:00. Actualiza la vista materializada, carga el modelo registrado, genera probabilidades para los dieciocho horizontes y realiza upsert en \texttt{fact\_predicciones\_mensual}.
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
-    \includegraphics[width=0.8\linewidth]{images/MM-06 Flujo de Inferencia Diaria.png}
+    \includegraphics[width=0.3\linewidth]{images/MM-06 Flujo de Inferencia Diaria.png}
     \caption{Flujo de inferencia y actualización analítica. El DAG diario actualiza la vista materializada, carga el modelo y genera predicciones para los 18 horizontes.}
     \label{fig:inferencia}
 \end{figure}
@@ -414,9 +426,9 @@ La tabla de predicciones contiene probabilidades \texttt{prob\_h01}--\texttt{pro
 
 El datamart adopta un esquema estrella con \texttt{dim\_tiempo}, \texttt{dim\_riesgo}, \texttt{dim\_sector} y \texttt{dim\_sucursal}. Las tablas \texttt{fact\_creditos\_mensual} y \texttt{fact\_predicciones\_mensual} almacenan los agregados históricos y las predicciones. Apache Superset consulta estas tablas para construir siete dashboards: histórico de créditos, análisis dimensional, KPIs generales, predicciones por sucursal, predicciones por sector, evolución temporal y bloques de mayor riesgo.
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
-    \includegraphics[width=0.6\linewidth]{images/MM-09 Diagrama de Integracion.png}
+    \includegraphics[width=1.0\linewidth]{images/MM-09 Diagrama de Integracion.png}
     \caption{Esquema conceptual del datamart analítico. Las dimensiones comparten ambas tablas de hechos: fact\_creditos\_mensual (datos históricos) y fact\_predicciones (salida del modelo).}
     \label{fig:datamart}
 \end{figure}
@@ -425,38 +437,38 @@ El datamart adopta un esquema estrella con \texttt{dim\_tiempo}, \texttt{dim\_ri
 
 La Tabla 4.6 documenta los recursos utilizados para el entrenamiento de los modelos, extraída del código y la documentación del proyecto.
 
-\begin{table}
-\centering
-\small
-\begin{tabular}{|l|l|}
-\hline
-\textbf{Recurso} & \textbf{Especificación} \\
-\hline
-Procesador & [PENDIENTE: especificar CPU] \\
-\hline
-Memoria RAM & [PENDIENTE: especificar GB] \\
-\hline
-GPU & [PENDIENTE: especificar si aplica] \\
-\hline
-Sistema operativo & [PENDIENTE: especificar SO] \\
-\hline
-Python & 3.12 \\
-\hline
-TensorFlow/Keras & [PENDIENTE: versión] \\
-\hline
-LightGBM & [PENDIENTE: versión] \\
-\hline
-PostgreSQL & 15 \\
-\hline
-Apache Airflow & 2.10 \\
-\hline
-MLflow & [PENDIENTE: versión] \\
-\hline
-Apache Superset & [PENDIENTE: versión] \\
-\hline
-\end{tabular}
-\caption{Recursos computacionales y versiones de software. Los campos marcados como [PENDIENTE] deben completarse con la información exacta del entorno de ejecución.}
-\label{tab:recursos}
+\begin{table}[h!]
+    \centering
+    \small
+    \begin{tabular}{|l|l|}
+    \hline
+    \textbf{Recurso} & \textbf{Especificación} \\
+    \hline
+        Procesador & [PENDIENTE: especificar CPU] \\
+    \hline
+        Memoria RAM & [PENDIENTE: especificar GB] \\
+    \hline
+        GPU & [PENDIENTE: especificar si aplica] \\
+    \hline
+        Sistema operativo & [PENDIENTE: especificar SO] \\
+    \hline
+        Python & 3.12 \\
+    \hline
+        TensorFlow/Keras & [PENDIENTE: versión] \\
+    \hline
+        LightGBM & [PENDIENTE: versión] \\
+    \hline
+        PostgreSQL & 15 \\
+    \hline
+        Apache Airflow & 2.10 \\
+    \hline
+        MLflow & [PENDIENTE: versión] \\
+    \hline
+        Apache Superset & [PENDIENTE: versión] \\
+    \hline
+    \end{tabular}
+    \caption{Recursos computacionales y versiones de software. Los campos marcados como [PENDIENTE] deben completarse con la información exacta del entorno de ejecución.}
+    \label{tab:recursos}
 \end{table}
 
 \textbf{Tiempos de ejecución reportados}: LightGBM entrenó los 18 horizontes en aproximadamente 5 minutos; CNN requirió más de 2 horas sin convergencia; MLP requirió un tiempo intermedio. Estos tiempos son aproximados y pueden variar según el hardware utilizado.

@@ -13,21 +13,21 @@ Para una reproducción verificable, la versión final debe asociar los enlaces c
 
 \section{Capturas adicionales de dashboards}
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/dw-01-historicoCreditos2.png}
     \caption{Vista complementaria del dashboard histórico de créditos.}
     \label{fig:appendix_historico}
 \end{figure}
 
-\begin{figure}[htbp] 
+\begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/dw-02-AnalisisDimensional.png}
     \caption{Dashboard de análisis dimensional por riesgo y sector.}
     \label{fig:appendix_dimensional}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/dw-06-evolucionTemporal.png}
     \caption{Dashboard de evolución temporal de predicciones.}
@@ -44,7 +44,7 @@ El datamart analítico utiliza un esquema estrella con dos tablas de hechos que 
 
 \subsection{Tabla de hechos: fact\_creditos\_mensual}
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/MM-08a Estrella para fact_creditos_mensual.png}
     \caption{Esquema estrella de la tabla \texttt{fact\_creditos\_mensual}. Almacena los agregados históricos de créditos por bloque-mes, incluyendo la variable objetivo \texttt{crisis\_flag}.}
@@ -53,7 +53,7 @@ El datamart analítico utiliza un esquema estrella con dos tablas de hechos que 
 
 \subsection{Tabla de hechos: fact\_predicciones}
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/MM-8b Estrella para fact_predicciones.png}
     \caption{Esquema estrella de la tabla \texttt{fact\_predicciones}. Almacena las probabilidades y predicciones binarias para los 18 horizontes temporales, generadas por el modelo seleccionado.}

@@ -4,7 +4,7 @@ Este capítulo presenta los resultados disponibles y los interpreta en relación
 
 El conjunto consolidado contiene 20.025 registros a nivel bloque-mes y veintiuna características numéricas. La distribución reportada para la variable objetivo es de 17.010 registros sin crisis (85\%) y 3.015 con crisis (15\%). Esta proporción evidencia un desbalance que hace necesario interpretar la exactitud junto con precision, recall y AUC-ROC.
 
-\begin{table}
+\begin{table}[h!]
 \centering
 \begin{tabular}{|l|l|l|}
 \hline
@@ -40,7 +40,7 @@ La Figura 5.1 muestra correlaciones elevadas entre algunas variables. En particu
 
 El análisis univariado identifica \texttt{tasa\_judicial} y \texttt{creditos\_judiciales} como las variables con mayor AUC-ROC individual. Las categorías cualitativas ``muy alto'' y ``medio'' se eliminan porque la tesis no define umbrales formales para ellas.
 
-\begin{table}
+\begin{table}[h!]
 \centering
 \begin{tabular}{|l|l|}
 \hline
@@ -85,7 +85,7 @@ La Figura 5.3 muestra cambios en la proporción de crisis a lo largo del periodo
 
 LightGBM produjo resultados para los dieciocho horizontes. La Tabla 5.3 reproduce los horizontes documentados y el promedio reportado. El AUC-ROC disminuye de 0,874 a un mes a 0,702 a dieciocho meses. El recall se reduce de 0,542 a 0,034, lo que indica que, con el umbral utilizado, el modelo identifica muy pocos casos positivos en el horizonte más largo.
 
-\begin{table}
+\begin{table}[h!]
 \centering
 \small
 \begin{tabular}{|l|l|l|l|l|}

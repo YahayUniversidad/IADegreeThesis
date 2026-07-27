@@ -39,7 +39,7 @@ Entrenamiento & Python 3.12 + Jupyter & PC Local & Desarrollo de modelos \\
 \subsection{Diagrama de Arquitectura}
 
 El flujo completo del sistema opera de la siguiente manera:
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
     \includegraphics[width=0.45\linewidth]{images/mermaid-diagram.png}
     \caption{Diagrama de Arquitectura Propuesta}
@@ -60,7 +60,7 @@ El flujo completo del sistema opera de la siguiente manera:
 
 El DAG (del inglés Directed Acyclic Graph) de entrenamiento que es el flujo de trabajo para el servidor AirFlow, y; se ejecuta el primer día de cada mes a las 03:00. Su flujo es el siguiente:
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
     \includegraphics[width=1.0\textwidth]{images/dag-01entrenamiento.png}
     \caption{Entrenamiento de Modelos}
@@ -127,7 +127,7 @@ El DAG selecciona el mejor modelo comparando el AUC-ROC promedio de los 18 horiz
 
 El DAG de inferencia se ejecuta diariamente a las 06:00. Su flujo es:
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
     \includegraphics[width=1.00\linewidth]{images/dag-02inferencia.png}
     \caption{Análisis Dimensional}
@@ -144,13 +144,13 @@ El DAG de inferencia se ejecuta diariamente a las 06:00. Su flujo es:
 \begin{itemize}
     \item
         \textbf{Dashboard 1: Histórico de Créditos} Visualiza la evolución temporal de la cartera crediticia. Incluye gráficos de líneas para evolución de créditos, monto total promedio y tasa de mora; gráfico de barras para crisis por mes; gráfico circular para créditos por sector; y tabla de top sucursales por monto.
-        \begin{figure}[H]
+        \begin{figure}[h!]
             \centering
             \includegraphics[width=1.00\linewidth]{images/dw-01-historicoCreditos1.png}
             \caption{Histórico de Créditos 1}
             \label{fig:placeholder}
         \end{figure}
-        \begin{figure}[H]
+        \begin{figure}[h!]
             \centering
             \includegraphics[width=1.00\linewidth]{images/dw-01-historicoCreditos2.png}
             \caption{Histórico de Créditos 2}
@@ -158,7 +158,7 @@ El DAG de inferencia se ejecuta diariamente a las 06:00. Su flujo es:
         \end{figure}   
     \item         
         \textbf{Dashboard 2: Análisis Dimensional}Permite el análisis cruzado por dimensiones de riesgo y sector. Incluye tablas de créditos por riesgo y mora por sector, y gráfico de líneas de evolución por riesgo.
-        \begin{figure}[H]
+        \begin{figure}[h!]
             \centering
             \includegraphics[width=1.00\linewidth]{images/dw-02-AnalisisDimensional.png}
             \caption{Análisis Dimensional}
@@ -166,7 +166,7 @@ El DAG de inferencia se ejecuta diariamente a las 06:00. Su flujo es:
         \end{figure}
     \item         
         \textbf{Dashboard 3: KPIs Generales} Presenta los indicadores clave de negocio en formato de números grandes (big number). Incluye: total de créditos, créditos con crisis, total de predicciones, predicciones de crisis, probabilidad promedio y bloques de alto riesgo.
-        \begin{figure}[H]
+        \begin{figure}[h!]
             \centering
             \includegraphics[width=1.00\linewidth]{images/dw-03-kpiGenerales.png}
             \caption{KPIs Generales}
@@ -175,7 +175,7 @@ El DAG de inferencia se ejecuta diariamente a las 06:00. Su flujo es:
     
     \item
         \textbf{Dashboard 4: Predicciones por Sucursal} Muestra las predicciones de riesgo agrupadas por sucursal. Incluye tablas de probabilidad promedio y crisis por sucursal, gráfico de evolución de probabilidad por sucursal, y top 10 sucursales en riesgo.
-        \begin{figure}[H]
+        \begin{figure}[h!]
             \centering
             \includegraphics[width=1.00\linewidth]{images/dw-04-PrediccionSucursal.png}
             \caption{Predicciones por Sucursal}
@@ -184,7 +184,7 @@ El DAG de inferencia se ejecuta diariamente a las 06:00. Su flujo es:
         
     \item 
         \textbf{Dashboard 5: Predicciones por Sector} Análisis de predicciones agrupadas por sector económico. Incluye tablas de probabilidad y crisis por sector, y gráficos de evolución temporal por sector.
-        \begin{figure}[H]
+        \begin{figure}[h!]
             \centering
             \includegraphics[width=1.00\linewidth]{images/dw-05-prediccionSector.png}
             \caption{Predicciones por Sector}
@@ -193,7 +193,7 @@ El DAG de inferencia se ejecuta diariamente a las 06:00. Su flujo es:
     
     \item 
         \textbf{Dashboard 6: Evolución Temporal} Visualiza la tendencia temporal de las predicciones. Incluye gráfico de probabilidad promedio por mes, barras de crisis por mes, y tablas de predicciones y probabilidad por año.
-        \begin{figure}[H]
+        \begin{figure}[h!]
             \centering
             \includegraphics[width=1.00\linewidth]{images/dw-06-evolucionTemporal.png}
             \caption{Evolución Temporal}
@@ -202,7 +202,7 @@ El DAG de inferencia se ejecuta diariamente a las 06:00. Su flujo es:
 
     \item 
         \textbf{Dashboard 7: Top Bloques en Riesgo} Identifica los bloques con mayor probabilidad de incumplimiento. Incluye tabla de top 20 bloques por probabilidad y tabla de bloques con crisis activa.
-        \begin{figure}[H]
+        \begin{figure}[h!]
             \centering
             \includegraphics[width=1.00\linewidth]{images/dw-07-TopBloquesEnRiesgo.png}
             \caption{Evolución Temporal}
