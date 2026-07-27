@@ -4,7 +4,7 @@ Este capítulo presenta los resultados disponibles y los interpreta en relación
 
 El conjunto consolidado contiene 20.025 registros a nivel bloque-mes y veintiuna características numéricas. La distribución reportada para la variable objetivo es de 17.010 registros sin crisis (85\%) y 3.015 con crisis (15\%). Esta proporción evidencia un desbalance que hace necesario interpretar la exactitud junto con precision, recall y AUC-ROC.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \begin{tabular}{|l|l|l|}
 \hline
@@ -27,20 +27,20 @@ El número de registros agregados no equivale directamente al número de secuenc
 
 \subsection{Correlaciones}
 
-La Figura 5.1 muestra correlaciones elevadas entre algunas variables. En particular, el documento original reporta una relación cercana a 1 entre \texttt{num\_creditos y \texttt{creditos\_cerrados}, así como entre \texttt{monto\_total} y \texttt{monto\_promedio}. Estas relaciones pueden generar redundancia, aunque la multicolinealidad no afecta de la misma manera a árboles y redes neuronales. Los valores de VIF mencionados en la versión original no se conservan como evidencia principal porque no se documenta su cálculo completo.}
+La Figura 5.1 muestra correlaciones elevadas entre algunas variables. En particular, el documento original reporta una relación cercana a 1 entre \texttt{num\_creditos} y \texttt{creditos\_cerrados}, así como entre \texttt{monto\_total} y \texttt{monto\_promedio}. Estas relaciones pueden generar redundancia, aunque la multicolinealidad no afecta de la misma manera a árboles y redes neuronales. Los valores de VIF mencionados en la versión original no se conservan como evidencia principal porque no se documenta su cálculo completo.
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/01_heatmap_correlaciones.png}
-    \caption{Matriz de correlaciones de Pearson entre las 21 características numéricas del conjunto analítico. Los valores cercanos a 1,0 (color intenso) indican alta correlación positiva. Se observa multicolinealidad severa entre pares como \texttt{num\_creditos--\texttt{creditos\_cerrados} y \texttt{monto\_total}--\texttt{monto\_promedio}. La multicolinealidad afecta de manera diferente a modelos lineales y no lineales.}}
+    \caption{Matriz de correlaciones de Pearson entre las 21 características numéricas del conjunto analítico. Los valores cercanos a 1,0 (color intenso) indican alta correlación positiva. Se observa multicolinealidad severa entre pares como \texttt{num\_creditos}--\texttt{creditos\_cerrados} y \texttt{monto\_total}--\texttt{monto\_promedio}. La multicolinealidad afecta de manera diferente a modelos lineales y no lineales.}
     \label{fig:heatmap}
 \end{figure}
 
 \subsection{Poder predictivo individual}
 
-El análisis univariado identifica \texttt{tasa\_judicial y \texttt{creditos\_judiciales} como las variables con mayor AUC-ROC individual. Las categorías cualitativas ``muy alto'' y ``medio'' se eliminan porque la tesis no define umbrales formales para ellas.}
+El análisis univariado identifica \texttt{tasa\_judicial} y \texttt{creditos\_judiciales} como las variables con mayor AUC-ROC individual. Las categorías cualitativas ``muy alto'' y ``medio'' se eliminan porque la tesis no define umbrales formales para ellas.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \begin{tabular}{|l|l|}
 \hline
@@ -62,11 +62,11 @@ monto\_total & 0,651 \\
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/09_auc_roc_variable.png}
-    \caption{AUC-ROC calculada individualmente para cada variablepredictora, evaluada contra la etiqueta \texttt{crisis\_flag. El AUC-ROC mide la capacidad de cada variable para distinguir entre bloques con y sin crisis, sin considerar interacciones con otras variables.}}
+    \caption{AUC-ROC calculada individualmente para cada variablepredictora, evaluada contra la etiqueta \texttt{crisis\_flag}. El AUC-ROC mide la capacidad de cada variable para distinguir entre bloques con y sin crisis, sin considerar interacciones con otras variables.}
     \label{fig:auc_roc}
 \end{figure}
 
-Estos resultados requieren una lectura prudente. Una alta capacidad discriminativa de variables judiciales puede ser válida si la información está disponible antes del horizonte predicho; también puede revelar fuga de información si esas variables forman parte de la etiqueta o reflejan un evento contemporáneo. Sin las ocho reglas de \texttt{crisis\_flag, no es posible distinguir entre ambas explicaciones.}
+Estos resultados requieren una lectura prudente. Una alta capacidad discriminativa de variables judiciales puede ser válida si la información está disponible antes del horizonte predicho; también puede revelar fuga de información si esas variables forman parte de la etiqueta o reflejan un evento contemporáneo. Sin las ocho reglas de \texttt{crisis\_flag}, no es posible distinguir entre ambas explicaciones.
 
 \subsection{Evolución temporal de la clase positiva}
 
@@ -75,7 +75,7 @@ La Figura 5.3 muestra cambios en la proporción de crisis a lo largo del periodo
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/07_tasa_crisis_temporal.png}
-    \caption{Evolución mensual de la proporción de bloques etiquetados como crisis (\texttt{crisis\_flag=1) en el periodo 2015--2026. Se observa un incremento en el periodo 2020--2021 seguido de una estabilización. Esta descripción es únicamente observacional; no se establece relación causal con eventos externos.}}
+    \caption{Evolución mensual de la proporción de bloques etiquetados como crisis (\texttt{crisis\_flag}=1) en el periodo 2015--2026. Se observa un incremento en el periodo 2020--2021 seguido de una estabilización. Esta descripción es únicamente observacional; no se establece relación causal con eventos externos.}
     \label{fig:crisis_temporal}
 \end{figure}
 
@@ -85,7 +85,7 @@ La Figura 5.3 muestra cambios en la proporción de crisis a lo largo del periodo
 
 LightGBM produjo resultados para los dieciocho horizontes. La Tabla 5.3 reproduce los horizontes documentados y el promedio reportado. El AUC-ROC disminuye de 0,874 a un mes a 0,702 a dieciocho meses. El recall se reduce de 0,542 a 0,034, lo que indica que, con el umbral utilizado, el modelo identifica muy pocos casos positivos en el horizonte más largo.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \small
 \begin{tabular}{|l|l|l|l|l|}
@@ -121,7 +121,7 @@ La Figura 5.5 muestra la importancia interna de las características. La predomi
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/lgbm_importancia_features.png}
-    \caption{Importancia de características reportada por LightGBM (``split importance''). El método cuenta la cantidad de veces que cada variable se utiliza para dividir nodos en todos los árboles del ensemble. Las variables judiciales (\texttt{tasa\_judicial, \texttt{creditos\_judiciales}) predominan, lo cual puede reflejar tanto poder predictivo real como dependencia con la etiqueta \texttt{crisis\_flag} (ver Sección 4.5).}}
+    \caption{Importancia de características reportada por LightGBM (``split importance''). El método cuenta la cantidad de veces que cada variable se utiliza para dividir nodos en todos los árboles del ensemble. Las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}) predominan, lo cual puede reflejar tanto poder predictivo real como dependencia con la etiqueta \texttt{crisis\_flag} (ver Sección 4.5).}
     \label{fig:lgbm_features}
 \end{figure}
 
@@ -132,7 +132,7 @@ La implementación de CNN reportó un AUC-ROC de 0,50 y una pérdida que se mant
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{images/cnn_loss.png}
-    \caption{Curva de pérdida (\texttt{binary\_crossentropy) durante el entrenamiento de la CNN. La línea continua representa la pérdida en entrenamiento y la discontinua la pérdida en validación (\texttt{val\_loss}). La pérdida se estabiliza en valores elevados ($\sim$12,5), lo que indica que el modelo no logra aprender una discriminación efectiva entre clases.}}
+    \caption{Curva de pérdida (\texttt{binary\_crossentropy}) durante el entrenamiento de la CNN. La línea continua representa la pérdida en entrenamiento y la discontinua la pérdida en validación (\texttt{val\_loss}). La pérdida se estabiliza en valores elevados ($\sim$12,5), lo que indica que el modelo no logra aprender una discriminación efectiva entre clases.}
     \label{fig:cnn_loss}
 \end{figure}
 
@@ -202,7 +202,7 @@ La diferencia no debe atribuirse a Apache Airflow. Airflow orquesta el procedimi
 
 \section{Datamart y dashboards}
 
-La implementación almacena las predicciones en \texttt{fact\_predicciones\_mensual y las expone mediante Apache Superset. Las Figuras 5.9--5.11 muestran ejemplos de los dashboards construidos.}
+La implementación almacena las predicciones en \texttt{fact\_predicciones\_mensual} y las expone mediante Apache Superset. Las Figuras 5.9--5.11 muestran ejemplos de los dashboards construidos.
 
 \begin{figure}[h!]
     \centering
@@ -215,7 +215,7 @@ Las capturas demuestran que las vistas fueron implementadas, pero no constituyen
 
 \section{Discusión}
 
-Los resultados disponibles favorecen a LightGBM en el escenario evaluado, lo que es compatible con trabajos que reportan buen desempeño de modelos de boosting en datos tabulares \cite{lessmann2015benchmarking, moscato2021benchmark. Sin embargo, la literatura también incluye escenarios en los que un MLP supera a los árboles \cite{gunnarsson2021deep}. Por ello, las diferencias observadas deben atribuirse al conjunto de datos y a las configuraciones utilizadas, no a una propiedad universal de los algoritmos.}
+Los resultados disponibles favorecen a LightGBM en el escenario evaluado, lo que es compatible con trabajos que reportan buen desempeño de modelos de boosting en datos tabulares \cite{lessmann2015benchmarking, moscato2021benchmark}. Sin embargo, la literatura también incluye escenarios en los que un MLP supera a los árboles \cite{gunnarsson2021deep}. Por ello, las diferencias observadas deben atribuirse al conjunto de datos y a las configuraciones utilizadas, no a una propiedad universal de los algoritmos.
 
 El deterioro con el horizonte es visible en AUC-ROC y, con mayor intensidad, en recall. La cifra de recall igual a 0,034 a dieciocho meses significa que la clasificación binaria bajo el umbral 0,5 recupera una fracción muy pequeña de las crisis. Aunque el AUC-ROC se mantiene por encima de 0,70, no es suficiente para calificar estas predicciones como confiables o útiles sin análisis de umbral, calibración y costos de error.
 

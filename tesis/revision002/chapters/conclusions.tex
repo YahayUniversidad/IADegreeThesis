@@ -2,7 +2,7 @@
 
 La investigación permitió implementar un prototipo que integra procesamiento de datos crediticios, entrenamiento automatizado, registro de experimentos, almacenamiento analítico y visualización. En la evaluación presentada, LightGBM mostró una mayor capacidad discriminativa que las implementaciones de CNN y MLP. El rendimiento de LightGBM disminuyó conforme aumentó el horizonte, y el recall presentó una reducción especialmente relevante en los plazos largos.
 
-El análisis del código fuente permitió documentar completamente las ocho condiciones de \texttt{crisis\_flag, las 21 características, la arquitectura exacta de cada modelo y el protocolo de división de datos (49\% entrenamiento, 21\% validación, 30\% prueba).}
+El análisis del código fuente permitió documentar completamente las ocho condiciones de \texttt{crisis\_flag}, las 21 características, la arquitectura exacta de cada modelo y el protocolo de división de datos (49\% entrenamiento, 21\% validación, 30\% prueba).
 
 \section{Respuesta al objetivo general}
 
@@ -10,7 +10,7 @@ El objetivo general se alcanzó en lo relativo al diseño y la integración téc
 
 \section{Respuesta a los objetivos específicos}
 
-Respecto al primer objetivo, se identificaron factores plausibles asociados con el comportamiento de las redes neuronales: una muestra secuencial reducida (solo bloques con $\geq 24$ meses de historial generan secuencias), desbalance de clases sin compensación en MLP, ventanas de seis meses y configuración documentada completa. El MLP no implementa \texttt{sample\_weights, lo que puede explicar su tendencia a predecir todas las observaciones como ``no crisis''. No se realizaron experimentos de ablación, por lo que estos factores no pueden declararse causas demostradas.}
+Respecto al primer objetivo, se identificaron factores plausibles asociados con el comportamiento de las redes neuronales: una muestra secuencial reducida (solo bloques con $\geq 24$ meses de historial generan secuencias), desbalance de clases sin compensación en MLP, ventanas de seis meses y configuración documentada completa. El MLP no implementa \texttt{sample\_weights}, lo que puede explicar su tendencia a predecir todas las observaciones como ``no crisis''. No se realizaron experimentos de ablación, por lo que estos factores no pueden declararse causas demostradas.
 
 En relación con el segundo objetivo, LightGBM alcanzó el mayor AUC-ROC bajo las configuraciones disponibles. Esta comparación no demuestra que los modelos basados en árboles sean superiores en todos los conjuntos tabulares, porque la búsqueda de hiperparámetros no fue equivalente (LightGBM usa semilla fija y tuning documentado; CNN y MLP no fijan semilla).
 
@@ -26,7 +26,7 @@ Las contribuciones se circunscriben al prototipo y a la institución analizada. 
 
 \section{Limitaciones}
 
-El estudio presenta limitaciones metodológicas y de generalización. La definición de \texttt{crisis\_flag quedó documentada mediante ocho condiciones con pesos acumulativos (umbral $\geq 5$), pero existe un riesgo confirmado de target leakage: las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) se utilizan tanto para definir la etiqueta como como características de entrada. Esta dependencia puede inflar artificialmente el poder predictivo de esas variables y del modelo.}
+El estudio presenta limitaciones metodológicas y de generalización. La definición de \texttt{crisis\_flag} quedó documentada mediante ocho condiciones con pesos acumulativos (umbral $\geq 5$), pero existe un riesgo confirmado de target leakage: las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) se utilizan tanto para definir la etiqueta como como características de entrada. Esta dependencia puede inflar artificialmente el poder predictivo de esas variables y del modelo.
 
 La división de datos sigue un protocolo temporal con tres conjuntos (49\% entrenamiento, 21\% validación, 30\% prueba), y el early stopping utiliza exclusivamente el conjunto de validación. Sin embargo, no se reportan conteos por horizonte, no se fijan semillas para CNN y MLP, y no se realizan repeticiones para estimar variabilidad.
 
@@ -38,8 +38,8 @@ Desde la perspectiva operativa, las capturas demuestran la implementación de lo
 
 El trabajo futuro debe priorizar la reproducibilidad. Se requiere registrar conteos por etapa y horizonte, fijar semillas para todos los modelos, realizar repeticiones con múltiples semillas y versionar datos, código y entornos.
 
-Es crítica una ablación de leakage: repetir la evaluación excluyendo las variables judiciales (\texttt{tasa\_judicial, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) para estimar cuánto del poder predictivo se debe a la dependencia con la etiqueta.}
+Es crítica una ablación de leakage: repetir la evaluación excluyendo las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) para estimar cuánto del poder predictivo se debe a la dependencia con la etiqueta.
 
-La comparación de modelos debe equilibrar los presupuestos de ajuste, utilizar múltiples semillas, reportar intervalos de confianza, incluir PR-AUC, calibración y selección de umbrales basada en costos. Para las redes neuronales, se recomienda añadir \texttt{sample\_weights al MLP y explorar arquitecturas con mayor capacidad.}
+La comparación de modelos debe equilibrar los presupuestos de ajuste, utilizar múltiples semillas, reportar intervalos de confianza, incluir PR-AUC, calibración y selección de umbrales basada en costos. Para las redes neuronales, se recomienda añadir \texttt{sample\_weights} al MLP y explorar arquitecturas con mayor capacidad.
 
 Finalmente, el prototipo debe evaluarse con datos de otras instituciones y mediante pruebas funcionales y de usabilidad. Solo después de estas validaciones sería posible estimar su contribución a procesos de decisión, alertas o gestión de cartera.
