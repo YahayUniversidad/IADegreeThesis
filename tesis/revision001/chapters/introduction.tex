@@ -1,0 +1,84 @@
+Este capítulo establece las bases operativas y conceptuales de la investigación aplicadas al sector financiero de la economía social y solidaria. A partir de la experiencia práctica, se identifican limitantes críticos en la gestión de datos crediticios mediante tecnologías modernas como el aprendizaje automático. Finalmente, se establece la hipótesis, los objetivos y las contribuciones que espero lograr con la solución que propongo.
+
+\section{"Background" y Contexto}
+
+Las instituciones financieras, en especial las pertenecientes al sector de la economía social y solidaria, manejan grandes volúmenes de datos crediticios que, correctamente analizados, pueden revelar patrones predictivos sobre el comportamiento de pago de sus socios y clientes. \\
+Tradicionalmente, el análisis de cartera se realiza mediante indicadores retrospectivos —tasa de morosidad, índice de castigos, relación cartera vencida / cartera total— que informan sobre lo que ya ocurrió, pero no ofrecen capacidad de anticipación.\\
+En los últimos años, la orquestación de las tres tecnologías ha abierto una nueva frontera  de desarrollo:
+\\
+\newline\textbf{Las Arquitecturas de datos modernas} como los Data Warehouse's y los Data Marts permiten consolidar datos operativos y predicciones en un solo repositorio optimizado para consultas de negocio, eliminando la fricción entre los equipos de datos y los usuarios de negocio.
+\\
+\newline\textbf{El Aprendizaje profundo} y los modelos de Redes Neuronales Convolucionales han mostrado capacidad para extraer patrones temporales en series financieras, superando a métodos estadísticos clásicos como ARIMA o la regresión logística en tareas de clasificación de riesgo.
+
+\section{La Motivación}
+
+\begin{flushright}
+    \small\itshape 
+    "En temas de datos, la falta de acceso es tan útil como no tenerlos" 
+    \vspace{0.2cm}  
+    \normalfont--- Autoría propia. 
+\end{flushright}
+
+La motivación de este trabajo surge de la experiencia práctica en el área de desarrollo y el análisis de datos en una institución financiera ecuatoriana; y, al cursar la maestría en inteligencia artificial nos ha permitido identificar las siguientes problemáticas recurrentes:
+
+\begin{itemize}
+    \item Los reportes de cartera se generan de forma manual, consumiendo días de trabajo cada mes.
+    \item  Los modelos predictivos existentes tienen alta exactitud (accuracy > 93\% ) pero precisión y recall en cero, lo que indica que no detectan crisis reales (problema de clases desbalanceadas).
+    \item  No existe un datamart unificado que permita a los analistas cruzar datos históricos con predicciones del modelo.
+    \item  Los dashboards son estáticos, dependen de personal técnico para su actualización y su acceso está restringido a un grupo reducido de analistas, lo que contradice la política de puertas abiertas de la institución y limita la democratización de la información.
+    \item  No se tiene una herramienta predictiva para mejorar la colocación de capitales en prestamos, lo que podría reducir la tasa de morosidad y mejorar los rendimientos de la cartera.   
+\end{itemize}
+
+\section{Planteamiento del problema}
+
+Luego de más de una década desempeñándome en instituciones financieras de la economía social y solidaria, he constatado que, si bien a diario se generan millones de registros transaccionales, su valor estratégico se diluye debido a cuatro brechas estructurales:
+
+\begin{enumerate}
+    \item \textbf{Falta de integración de la IA con los sistemas de reporte}: los modelos y técnicas de inteligencia artificial no están disponibles para la construcción de datamarts, lo que impide que los analistas de negocio aprovechen su potencial analítico.
+    \item \textbf{Los dashboards no son dinámicos ni auto-gestionados}: La creación y actualización de dashboards requiere intervención manual de personal técnico, creando cuellos de botella.
+    \item \textbf{No existe un canal conversacional para consultar los datos}: Los usuarios de negocio deben depender del equipo de datos para responder preguntas que podrían resolverse con lenguaje natural, requiere de interpretación técnica.
+    \item \textbf{El monitoreo del modelo no está integrado con las alertas de negocio}: No hay un mecanismo que notifique automáticamente cuando las predicciones superan umbrales críticos o que indiquen un riesgo crediticio.
+\end{enumerate}
+
+Estas limitaciones derivan en una  \textbf{Pregunta de investigación}: ¿Cómo integrar un modelo predictivo de riesgo crediticio con un datamart analítico y dashboards, a fin de conformar una plataforma unificada de inteligencia de negocio que permita controlar eficazmente la mora?
+
+\section{Hipótesis}
+
+Los modelos de Gradient Boosting superan a las redes neuronales convolucionales y perceptrones multicapa en la predicción de incumplimiento crediticio multi-horizonte cuando se trabaja con datos tabulares de instituciones de economía social y solidaria, caracterizados por secuencias temporales cortas, clases desbalanceadas y volumen de datos limitado.
+
+\section{Objetivo General}
+
+Desarrollar una plataforma de inteligencia de negocio crediticia que, mediante un flujo de operaciones de Machine Learning automatizado, compare modelos de deep learning y gradient boosting para la predicción multi-horizonte de riesgo, e integre el modelo seleccionado en un datamart analítico con dashboards interactivos para el control de la mora.
+
+\section{Objetivos Específicos}
+
+\begin{enumerate}
+    \item  \textbf{Identificar las causas del fracaso de las redes neuronales} en la predicción de incumplimiento crediticio con datos tabulares de instituciones de economía social y solidaria.
+    \item \textbf{Determinar qué características de los datos crediticios}(volumen, balanceo de clases, dimensionalidad) hacen que los modelos basados en árboles de decisión superen a las redes neuronales en este dominio.
+    \item \textbf{Evaluar el impacto del horizonte temporal} en la degradación del rendimiento predictivo de cada tipo de modelo.
+    \item \textbf{Visualizar un datamart analítico} como parte de la infraestructura para integrar predicciones con datos históricos y facilitar la toma de decisiones    
+\end{enumerate}
+
+\section{Contribuciones de la Tesis}
+Las principales contribuciones de este trabajo son:
+
+\begin{enumerate}
+    \item \textbf{Comparación rigurosa de modelo}: Se evaluaran tres enfoques de machine learning para predicción de riesgo crediticio multi-horizonte, demostrando que los modelos basados en árboles de decisión superan a las redes neuronales en datos tabulares con secuencias cortas.
+    \item \textbf{Pipeline MLOps completo}: Se diseñó e implementó un sistema end-to-end que cubre desde la ingesta de datos hasta la visualización, con orquestación automatizada, gestión de experimentos y observabilidad.
+    \item \textbf{Datamart analítico integrado}: Se creó un esquema estrella que permite cruzar datos históricos con predicciones del modelo, facilitando el análisis exploratorio y la toma de decisiones.
+    \item \textbf{Dashboards interactivos}: Se implementaron visualizaciones en Apache Superset que permiten a los usuarios de negocio explorar datos y predicciones de forma autónoma.
+\end{enumerate}
+
+\section{Estructura del Documento}
+El presente trabajo de titulación consta de los siguientes capítulos:
+
+\begin{itemize}
+    \item {Capitulo 1 (Introducción)}: Presenta el contexto, motivación, planteamiento del problema y objetivos de la investigación.
+    \item {Capítulo 2 (Marco Teórico)}: Describe los fundamentos teóricos de inteligencia de negocio, aprendizaje automático y las tecnologías utilizadas.
+    \item {Capítulo 3 (Estado del Arte)}: Revisa la literatura existente sobre predicción de riesgo crediticio, datamarts analíticos e integración de IA con plataformas BI.
+    \item {Capítulo 4 (Metodología)}: Detalla el diseño del sistema, los datos utilizados, los modelos implementados y la configuración experimental.
+    \item {Capítulo 5 (Resultados)}: Presenta los resultados experimentales, la comparación de modelos y el análisis de los hallazgos principales.
+    \item {Capitulo 6 (Conclusiones) }: Expone el cumplimiento de los objetivos, las limitaciones del estudio y las recomendaciones para trabajos futuros.
+    \item{Apéndice}: Listado de repositorios técnico del desarrollo del presente trabajo de titulación. 
+\end{itemize}
+%[Ov}Pasar a revision 

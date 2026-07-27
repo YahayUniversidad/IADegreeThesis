@@ -1,0 +1,54 @@
+Este capítulo delimita el problema de investigación, presenta la pregunta y la hipótesis, y establece los objetivos y las contribuciones del trabajo. El alcance se concentra en la integración técnica de datos, modelos predictivos, MLOps y visualización; no se evalúa una reducción causal de la mora ni se implementan funciones conversacionales o alertas automáticas.
+
+\section{Contexto}
+
+Las instituciones financieras de la economía social y solidaria administran información de créditos, amortizaciones, recuperaciones y cartera que puede utilizarse para describir el comportamiento histórico y estimar escenarios futuros. En muchos entornos, los indicadores de morosidad, cartera vencida y recuperación se generan a partir de procesos manuales o repositorios separados. Esta fragmentación dificulta la actualización oportuna de los reportes y limita la incorporación de resultados predictivos en los procesos analíticos.
+
+La inteligencia de negocio permite consolidar fuentes operativas en repositorios orientados al análisis y presentar indicadores mediante dashboards. Por su parte, el aprendizaje automático permite estimar probabilidades de incumplimiento a partir de patrones presentes en los datos. La integración de ambas áreas requiere, además, mecanismos para automatizar el procesamiento, registrar experimentos, versionar modelos y ejecutar inferencias de forma controlada. En este trabajo, dicha integración se aborda mediante PostgreSQL, Apache Airflow, MLflow y Apache Superset.
+
+\section{Motivación}
+
+El proyecto surge de una necesidad aplicada: reducir la dependencia de tareas manuales para consolidar información crediticia y disponer de una vista unificada que combine datos históricos y predicciones. La institución considerada contaba con grandes volúmenes de registros operativos, pero no con un flujo integrado que permitiera preparar los datos, comparar modelos, almacenar predicciones multi-horizonte y visualizarlas en un mismo entorno.
+
+La motivación científica se relaciona con dos aspectos. Primero, la comparación entre modelos basados en árboles y redes neuronales bajo datos tabulares, desbalanceados y con secuencias temporales cortas. Segundo, la evaluación del efecto del horizonte temporal sobre el rendimiento predictivo. La motivación técnica consiste en llevar el modelo seleccionado desde el entorno de experimentación hacia un prototipo reproducible de entrenamiento, inferencia, registro y visualización.
+
+\section{Planteamiento del problema}
+
+El problema se define por la ausencia de integración entre las fuentes crediticias, el entrenamiento de modelos y las herramientas de análisis. Los datos se encuentran en tablas con propósitos operativos distintos; la preparación y actualización de reportes requiere intervención técnica; y las predicciones no están incorporadas de manera sistemática en un datamart que permita analizarlas junto con el histórico de cartera.
+
+Esta situación genera tres brechas. La primera es una brecha de datos, porque no existe un flujo único y documentado para integrar, limpiar y agregar la información. La segunda es una brecha analítica, debido a que los modelos no se comparan dentro de un protocolo multi-horizonte común. La tercera es una brecha operativa, ya que los resultados del modelado no se registran, almacenan y visualizan mediante un proceso automatizado.
+
+\section{Pregunta de investigación}
+
+La investigación se guía por la siguiente pregunta:
+
+\textbf{¿Cómo diseñar e implementar una plataforma de inteligencia de negocio que integre predicción multi-horizonte de riesgo crediticio, un datamart analítico y dashboards interactivos para apoyar la identificación anticipada de escenarios de mora en una institución de la economía social y solidaria?}
+
+La pregunta se limita al diseño, la implementación y la evaluación técnica del prototipo. No implica que la plataforma reduzca por sí misma la mora ni que sustituya la valoración de especialistas.
+
+\section{Hipótesis}
+
+Bajo el conjunto de datos, la división temporal y las configuraciones experimentales utilizadas, se espera que LightGBM alcance una capacidad discriminativa superior a las implementaciones de CNN y MLP para la predicción multi-horizonte de crisis crediticias. Esta hipótesis se evalúa en el contexto específico del estudio y no pretende establecer una superioridad universal de una familia de modelos.
+
+\section{Objetivo general}
+
+Diseñar e implementar un prototipo de inteligencia de negocio crediticia que automatice el procesamiento de datos, compare LightGBM, CNN y MLP para predicción multi-horizonte, y conecte el modelo seleccionado con un datamart y dashboards interactivos.
+
+\section{Objetivos específicos}
+
+\begin{enumerate}
+    \item Analizar los factores plausibles asociados con el rendimiento observado de las arquitecturas neuronales en el conjunto de datos evaluado.
+    \item Comparar LightGBM, CNN y MLP mediante las métricas y configuraciones documentadas para el escenario de estudio.
+    \item Evaluar la variación del rendimiento predictivo conforme aumenta el horizonte temporal.
+    \item Diseñar e implementar un datamart en esquema estrella y dashboards que integren datos históricos y predicciones.
+\end{enumerate}
+
+\section{Contribuciones}
+
+El trabajo aporta una arquitectura de extremo a extremo que conecta ingesta, preparación de datos, entrenamiento, registro de experimentos, inferencia, almacenamiento analítico y visualización. También presenta una comparación multi-horizonte entre tres familias de modelos y documenta el deterioro de las métricas en horizontes largos. Finalmente, implementa un datamart con dimensiones de tiempo, riesgo, sector y sucursal, junto con dashboards orientados al análisis de cartera y predicciones.
+
+Estas contribuciones deben interpretarse como resultados de un prototipo evaluado en una institución. La validación con otras entidades, las pruebas de utilidad con usuarios y la auditoría completa de la variable objetivo permanecen como trabajo posterior.
+
+\section{Organización del documento}
+
+El Capítulo 2 presenta los fundamentos de riesgo crediticio, inteligencia de negocio, predicción multi-horizonte, modelos y métricas. El Capítulo 3 resume la literatura utilizada y delimita las brechas abordadas. El Capítulo 4 describe el diseño de la investigación, el procesamiento de datos, los modelos, la configuración experimental y los flujos MLOps. El Capítulo 5 presenta y discute los resultados del análisis exploratorio, el entrenamiento, la comparación de modelos y la implementación. El Capítulo 6 sintetiza los hallazgos, responde a los objetivos y expone las limitaciones y líneas de trabajo futuro.

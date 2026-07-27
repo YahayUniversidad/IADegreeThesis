@@ -1,0 +1,303 @@
+Este capítulo describe la arquitectura del sistema, los flujos de datos, los modelos implementados y la configuración experimental utilizada para validar la hipótesis de investigación.
+
+\section{Diseño General de la Propuesta}
+
+\subsection{Arquitectura del Sistema}
+
+El sistema propuesto se estructura en dos flujos principales ejecutados por Apache Airflow \cite{apache2024airflow}:
+
+\begin{itemize}
+    \item \textbf{Flujo de Entrenamiento} (ejecución mensual): Procesa datos históricos completos, ejecuta análisis exploratorio, entrena tres modelos (CNN, MLP, LightGBM) y selecciona el mejor basado en métricas de rendimiento.
+    \item \textbf{Flujo de Inferencia} (ejecución diaria): Procesa datos recientes, actualiza el datamart, genera predicciones con el modelo aprobado y refresca los dashboards en Apache Superset.
+\end{itemize}
+
+Esta separación permite mantener un ciclo de mejora continua: el modelo se reentrena mensualmente con datos nuevos, mientras que las predicciones se generan diariamente para soportar la toma de decisiones operativa.
+
+\subsection{Componentes del Sistema}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Componente} & \textbf{Tecnología} & \textbf{Ubicación} & \textbf{Función} \\
+\hline
+Base de datos & PostgreSQL 15 \cite{postgresql2024documentation} & Local/Cloud & Datamart analítico \\
+\hline
+Orquestación & Apache Airflow 2.10 \cite{apache2024airflow} & Local/Cloud & Flujo de entrenamiento e inferencia \\
+\hline
+Tracking ML & MLflow \cite{mlflow2024documentation} & PC local & Registro de experimentos \\
+\hline
+Dashboards & Apache Superset \cite{apache2024superset} & Local/Cloud & Visualización BI \\
+\hline
+Entrenamiento & Python 3.12 + Jupyter & PC Local & Desarrollo de modelos \\
+\hline
+\end{tabular}
+\caption{Componentes del sistema y tecnologías utilizadas.}
+\label{tab:componentes}
+\end{table}
+
+\subsection{Diagrama de Arquitectura}
+
+El flujo completo del sistema opera de la siguiente manera:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\linewidth]{images/mermaid-diagram.png}
+    \caption{Diagrama de Arquitectura Propuesta}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Ingesta}: Los archivos CSV (del inglés Comma Separated Values) con datos crediticios se cargan en PostgreSQL mediante el proceso ETL (del inglés Extract, Transform, Load).
+    \item \textbf{Procesamiento}: Se crea una vista materializada que agrega los datos a nivel mensual por bloque (riesgo-sector-sucursal).
+    \item \textbf{Análisis}: El pipeline EDA (del inglés Exploratory Data Analysis) que es Análisis exploratorio de dato y  calcula 21 características numéricas e identifica variables de importancia.
+    \item \textbf{Entrenamiento}: Tres modelos se entrenan en paralelo y registran sus métricas en MLflow.
+    \item \textbf{Selección}: Se compara el rendimiento de los tres modelos y se selecciona al mejor.
+    \item \textbf{Predicción}: El modelo seleccionado genera predicciones para los 18 horizontes temporales.
+    \item \textbf{Visualización}: Los resultados se reflejan en dashboards interactivos de Apache Superset.
+\end{enumerate}
+
+\section{Flujo de Entrenamiento (DAG-Entrenamiento)}
+
+El DAG (del inglés Directed Acyclic Graph) de entrenamiento que es el flujo de trabajo para el servidor AirFlow, y; se ejecuta el primer día de cada mes a las 03:00. Su flujo es el siguiente:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/dag-01entrenamiento.png}
+    \caption{Entrenamiento de Modelos}
+\end{figure}
+
+\subsection{Extracción y Carga de Datos (ETL)}
+
+El proceso ETL lee tres fuentes de datos principales:
+
+\begin{itemize}
+    \item \textbf{CABECERA\_PRESTAMOS}: Información maestra de créditos (\verb|~|500,000 registros, 2015-2026).
+    \item \textbf{AMORTIZACAL\_PRESTAMOS}: Tabla de amortización mensual (\verb|~|2,000,000 registros).
+    \item \textbf{RECUPERACION\_PRESTAMOS}: Juicios y recuperaciones (\verb|~|100,000 registros).
+\end{itemize}
+
+Los datos se cargan mediante \texttt{Copia Masiva}  con validación de integridad y upsert (\texttt{ON CONFLICT}) para mejorar la tolerancia a fallos y evitar la duplicación de la información.
+
+\subsection{Análisis Exploratorio (EDA/EVA)}
+
+El pipeline de análisis exploratorio calcula 21 características numéricas por \textbf{bloque por mes}:
+
+\begin{itemize}
+    \item \textbf{Variables de volumen}: num\_creditos, monto\_total, monto\_promedio.
+    \item \textbf{Variables de plazo}: plazo\_promedio, tasa\_interes\_promedio.
+    \item \textbf{Variables de riesgo}: tasa\_judicial, creditos\_judiciales, mora\_promedio.
+    \item \textbf{Variables derivadas o calculadas}: coef\_variacion\_montos, tasa\_crecimiento\_creditos, tasa\_crecimiento\_monto.
+\end{itemize}
+
+La variable objetivo (\texttt{crisis\_flag}) se define mediante una regla heurística de 8 condiciones validada por juicio de experto.
+
+\subsection{Entrenamiento de Modelos}
+
+Los tres modelos se entrenan en paralelo después del análisis exploratorio, lo que tiende a saturar los recursos de hardware y merece un punto de cuidado al riesgo de tumbar el equipo en procesamiento:
+
+\subsubsection{CNN Multi-Horizonte}
+\begin{itemize}
+    \item Arquitectura: Conv1D(64) → BatchNorm → Dropout → Conv1D(128) → MaxPool → Flatten → Dense(128) → Dense(64) → Dense(18, sigmoid)
+    \item Optimizador: Adam (lr=0.001)
+    \item Epochs: 100 con EarlyStopping (patience=10)
+    \item \colorbox{yellow}{Resultado: No convergió (AUC-ROC = 50\%)}
+\end{itemize}
+
+\subsubsection{MLP Multi-Horizonte}
+\begin{itemize}
+    \item Arquitectura: Dense(256) → BatchNorm → Dropout → Dense(128) → Dropout → Dense(18, sigmoid)
+    \item Optimizador: Adam (lr=0.001)
+    \item \colorbox{yellow}{Resultado: No convergió (predice todo como no-crisis)}
+\end{itemize}
+
+\subsubsection{LightGBM Multi-Horizonte}
+\begin{itemize}
+    \item 18 modelos independientes (uno por horizonte), basados en el algoritmo de gradient boosting \cite{ke2017lightgbm, friedman2001greedy}
+    \item Hiperparámetros: num\_leaves=31, learning\_rate=0.05, feature\_fraction=0.8
+    \item scale\_pos\_weight=5.67 para balanceo de clases
+    \item Early stopping: 50 rounds sin mejora
+    \item \colorbox{green}{Resultado: Convergió exitosamente (AUC-ROC promedio = 80\%)}
+\end{itemize}
+
+\subsection{Selección del Mejor Modelo}
+
+El DAG selecciona el mejor modelo comparando el AUC-ROC promedio de los 18 horizontes en MLflow. LightGBM fue seleccionado como modelo ganador por las razones que se detallan en la sección \ref{section:comparacion_modelos_justificacion}
+
+\section{Flujo de Inferencia (DAG-Inferencia)}
+
+El DAG de inferencia se ejecuta diariamente a las 06:00. Su flujo es:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.00\linewidth]{images/dag-02inferencia.png}
+    \caption{Análisis Dimensional}
+    \label{fig:placeholder}
+\end{figure}
+
+
+\textbf{Actualización del Datamart}: Se refresca la vista materializada \texttt{mv\_creditos\_mensuales} mediante \texttt{REFRESH MATERIALIZED VIEW CONCURRENTLY}, lo que permite actualizaciones no bloqueantes.
+\\
+\newline \textbf{Generación de Predicciones}: Carga el modelo aprobado desde MLflow, extrae datos del datamart y genera predicciones para los 18 horizontes temporales. Los resultados se almacenan en la tabla \texttt{fact\_predicciones\_mensual} mediante upsert.
+\\
+\newline \textbf{Dashboards en Apache Superset}: El sistema implementa 7 dashboards en Apache Superset. Estos dashboards se conectan directamente al datamart PostgreSQL y se actualizan automáticamente después de cada ejecución del pipeline.
+
+\begin{itemize}
+    \item
+        \textbf{Dashboard 1: Histórico de Créditos} Visualiza la evolución temporal de la cartera crediticia. Incluye gráficos de líneas para evolución de créditos, monto total promedio y tasa de mora; gráfico de barras para crisis por mes; gráfico circular para créditos por sector; y tabla de top sucursales por monto.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=1.00\linewidth]{images/dw-01-historicoCreditos1.png}
+            \caption{Histórico de Créditos 1}
+            \label{fig:placeholder}
+        \end{figure}
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=1.00\linewidth]{images/dw-01-historicoCreditos2.png}
+            \caption{Histórico de Créditos 2}
+            \label{fig:placeholder}
+        \end{figure}   
+    \item         
+        \textbf{Dashboard 2: Análisis Dimensional}Permite el análisis cruzado por dimensiones de riesgo y sector. Incluye tablas de créditos por riesgo y mora por sector, y gráfico de líneas de evolución por riesgo.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=1.00\linewidth]{images/dw-02-AnalisisDimensional.png}
+            \caption{Análisis Dimensional}
+            \label{fig:placeholder}
+        \end{figure}
+    \item         
+        \textbf{Dashboard 3: KPIs Generales} Presenta los indicadores clave de negocio en formato de números grandes (big number). Incluye: total de créditos, créditos con crisis, total de predicciones, predicciones de crisis, probabilidad promedio y bloques de alto riesgo.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=1.00\linewidth]{images/dw-03-kpiGenerales.png}
+            \caption{KPIs Generales}
+            \label{fig:placeholder}
+        \end{figure}
+    
+    \item
+        \textbf{Dashboard 4: Predicciones por Sucursal} Muestra las predicciones de riesgo agrupadas por sucursal. Incluye tablas de probabilidad promedio y crisis por sucursal, gráfico de evolución de probabilidad por sucursal, y top 10 sucursales en riesgo.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=1.00\linewidth]{images/dw-04-PrediccionSucursal.png}
+            \caption{Predicciones por Sucursal}
+            \label{fig:placeholder}
+        \end{figure}
+        
+    \item 
+        \textbf{Dashboard 5: Predicciones por Sector} Análisis de predicciones agrupadas por sector económico. Incluye tablas de probabilidad y crisis por sector, y gráficos de evolución temporal por sector.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=1.00\linewidth]{images/dw-05-prediccionSector.png}
+            \caption{Predicciones por Sector}
+            \label{fig:placeholder}
+        \end{figure}    
+    
+    \item 
+        \textbf{Dashboard 6: Evolución Temporal} Visualiza la tendencia temporal de las predicciones. Incluye gráfico de probabilidad promedio por mes, barras de crisis por mes, y tablas de predicciones y probabilidad por año.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=1.00\linewidth]{images/dw-06-evolucionTemporal.png}
+            \caption{Evolución Temporal}
+            \label{fig:placeholder}
+        \end{figure}    
+
+    \item 
+        \textbf{Dashboard 7: Top Bloques en Riesgo} Identifica los bloques con mayor probabilidad de incumplimiento. Incluye tabla de top 20 bloques por probabilidad y tabla de bloques con crisis activa.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=1.00\linewidth]{images/dw-07-TopBloquesEnRiesgo.png}
+            \caption{Evolución Temporal}
+            \label{fig:placeholder}
+        \end{figure}
+\end{itemize}
+
+\section{Datamart Analítico}
+
+\subsection{Esquema Estrella}
+
+El datamart utiliza un esquema estrella \cite{kimball2013datawarehouse} con las siguientes tablas:
+
+\begin{itemize}
+    \item \textbf{dim\_tiempo}: Mes, año, trimestre, mes\_del\_anio, nombre\_mes.
+    \item \textbf{dim\_riesgo}: Código de riesgo crediticio.
+    \item \textbf{dim\_sector}: Código de sector económico.
+    \item \textbf{dim\_sucursal}: Código de sucursal bancaria.
+    \item \textbf{fact\_creditos\_mensual}: Métricas agregadas por bloque-mes.
+    \item \textbf{fact\_predicciones\_mensual}: Predicciones de los modelos por horizonte.
+\end{itemize}
+
+\subsection{Vista Materializada}
+
+La vista \texttt{mv\_creditos\_mensuales} encapsula el pipeline completo de transformación:
+
+\begin{enumerate}
+    \item JOIN de las tres tablas fuente (creditos, amortizacion, juicios).
+    \item Agregación mensual por bloque (riesgo-sector-sucursal).
+    \item Cálculo de 21 características numéricas.
+    \item Aplicación de la regla heurística para \texttt{crisis\_flag}.
+\end{enumerate}
+
+\subsection{Tabla de Predicciones}
+
+La tabla \texttt{fact\_predicciones\_mensual} almacena los resultados de cada ejecución del modelo:
+
+\begin{itemize}
+    \item \textbf{Probabilidades}: prob\_h01 a prob\_h18 (valores entre 0 y 1).
+    \item \textbf{Predicciones binarias}: pred\_h01 a pred\_h18 (0 o 1, umbral 0.5).
+    \item \textbf{Métricas resumen}: prob\_media, pred\_media, crisis\_count.
+    \item \textbf{Metadatos}: fecha\_ejecucion, modelo\_utilizado.
+\end{itemize}
+
+\section{Configuración Experimental}
+
+\subsection{Split Temporal}
+
+Los datos se dividen respetando el orden cronológico para evitar data leakage:
+
+\begin{itemize}
+    \item \textbf{Entrenamiento}: 70\% más antiguo (2015-2022).
+    \item \textbf{Prueba}: 30\% más reciente (2023-2026).
+\end{itemize}
+
+Este split simula un escenario de producción y se entrena con datos pasados y se evalúa en datos futuros.
+
+\subsection{Hiperparámetros}
+
+Los hiperparámetros de LightGBM se optimizaron mediante búsqueda manual:
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|l|}
+    \hline
+        \textbf{Parámetro} & \textbf{Valor} \\
+        \hline num\_leaves & 31 \\
+        \hline learning\_rate & 0.05 \\
+        \hline feature\_fraction & 0.8 \\
+        \hline bagging\_fraction & 0.8 \\
+        \hline bagging\_freq & 5 \\
+        \hline scale\_pos\_weight & 5.67 \\
+        \hline
+        \end{tabular}
+    \caption{Hiperparámetros de LightGBM.}    
+\end{table}
+
+\subsection{Métricas de Evaluación}
+
+Se utilizaron las siguientes métricas para evaluar el rendimiento de los modelos:
+
+\begin{itemize}
+    \item \textbf{Accuracy}: Proporción de predicciones correctas.
+    \item \textbf{Precision}: Proporción de positivos predichos que son realmente positivos.
+    \item \textbf{Recall}: Proporción de positivos reales identificados correctamente.
+    \item \textbf{F1-Score}: Media armónica de precisión y recall.
+    \item \textbf{AUC-ROC}: Área bajo la curva ROC, mide la capacidad de discriminación.
+\end{itemize}
+
+\subsection{Criterio de Selección}
+
+El criterio principal para seleccionar el modelo ganador fue el \textbf{AUC-ROC promedio} de los 18 horizontes temporales. Este criterio se eligió porque:
+
+\begin{itemize}    
+    \item \textbf{Es una métrica robusta ante el desbalanceo de clases.}
+    \item \textbf{Captura la capacidad global de discriminación del modelo.}
+    \item \textbf{Permite comparar modelos de forma justa independientemente del umbral de clasificación.}
+\end{itemize}

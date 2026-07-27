@@ -1,0 +1,253 @@
+Este capítulo presenta los resultados experimentales obtenidos a partir de la implementación del sistema. Se analizan los resultados del análisis exploratorio, el entrenamiento de modelos y la comparación entre enfoques, concluyendo con la justificación de la selección de LightGBM como modelo final.
+
+\section{Resultados del Análisis Exploratorio (EDA/EVA)}
+
+El análisis exploratorio se ejecutó en dos momentos: inicialmente con el notebook \texttt{jupy\_eda} y posteriormente con el pipeline automatizado \texttt{air\_eda}. Ambos procesos generaron las siguientes visualizaciones que se encuentran en la carpeta \texttt{imagenes/}, o en la ficha Artifact de la corrida de cada experimento dentro del servidor MlFlow
+
+\subsection{Estadísticas Descriptivas del Dataset}
+
+El dataset consolidado contiene 20,025 registros (bloques-mes) con 21 variables numéricas. La distribución de la variable objetivo muestra un desbalanceo significativo:
+
+\begin{itemize}
+    \item \textbf{Clase negativa (no crisis)}: 85\% (17,010 registros)
+    \item \textbf{Clase positiva (crisis)}: 15\% (3,015 registros)
+\end{itemize}
+
+Este desbalanceo es típico en problemas de riesgo crediticio y requiere técnicas especiales durante el entrenamiento.
+
+\subsection{Análisis de Correlaciones}
+
+El heatmap de correlaciones (figura \ref{fig:heatmap}) revela multicolinealidad severa entre algunas variables:
+
+\begin{itemize}
+    \item \texttt{num\_creditos} y \texttt{creditos\_cerrados}: correlation $\approx$ 1.0 (VIF > 11 millones)
+    \item \texttt{monto\_total} y \texttt{monto\_promedio}: correlation $\approx$ 1.0 (VIF > 1,000)
+\end{itemize}
+
+% tengo un problema con el caractar de semejante ≈ y hay que cambiar por  $\approx$
+
+\begin{quote}
+    \textbf{VIF} (del inglés Variance Inflation Factor) que permite medir cuando dos o mas variables independientes estan altamente correlacionadas.
+\end{quote}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/01_heatmap_correlaciones.png}
+    \caption{Heatmap de correlaciones entre variables del dataset.}
+    \label{fig:heatmap}
+\end{figure}
+
+\subsection{Variables con Mayor Poder Predictivo}
+
+El análisis de AUC-ROC individual por variable (figura \ref{fig:auc_roc}) identifica las variables más discriminativas:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|r|c|}
+\hline
+\textbf{Variable} & \textbf{AUC normalizada} & \textbf{Nivel} \\
+\hline
+tasa\_judicial & 0.926 & MUY ALTO \\
+\hline
+creditos\_judiciales & 0.912 & MUY ALTO \\
+\hline
+saldo\_promedio & 0.666 & MEDIO \\
+\hline
+monto\_total & 0.651 & MEDIO \\
+\hline
+\end{tabular}
+\caption{Variables con mayor poder predictivo.}
+\label{tab:variables_predictivas}
+\end{table}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/09_auc_roc_variable.png}
+    \caption{Poder predictivo individual de cada variable (AUC-ROC).}
+    \label{fig:auc_roc}
+\end{figure}
+
+\subsection{Evolución Temporal de la Crisis}
+
+La tasa de crisis presenta un patrón temporal claro (figura \ref{fig:crisis_temporal}):
+
+\begin{itemize}
+    \item \textbf{Pre-2020}: 5-7\% de crisis
+    \item \textbf{COVID (2020-2021}): Pico de 20-24\%
+    \item \textbf{Post-2021}: Estabilización en 15\%
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/07_tasa_crisis_temporal.png}
+    \caption{Evolución de la tasa de crisis en el tiempo.}
+    \label{fig:crisis_temporal}
+\end{figure}
+
+\section{Resultados del Entrenamiento Inicial (jupy\_entrenamiento)}
+
+Los modelos se entrenaron inicialmente en el entorno de experimentación (notebooks) con los siguientes resultados:
+
+\subsection{Resultados de LightGBM}
+
+LightGBM logró convergencia exitosa en los 18 horizontes temporales (figura \ref{fig:lgbm_metricas}):
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|r|r|r|r|}
+\hline
+\textbf{Horizonte} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{AUC-ROC} \\
+\hline
+1 mes & 93.7\% & 69.4\% & 54.2\% & 87.4\% \\
+\hline
+3 meses & 94.2\% & 83.7\% & 51.2\% & 86.9\% \\
+\hline
+6 meses & 92.7\% & 63.2\% & 52.5\% & 83.8\% \\
+\hline
+12 meses & 90.6\% & 44.7\% & 36.9\% & 76.5\% \\
+\hline
+18 meses & 89.7\% & 50.0\% & 3.4\% & 70.2\% \\
+\hline
+\textbf{Promedio} & \textbf{91.7\%} & \textbf{57.1\%} & \textbf{39.1\%} & \textbf{80.0\%} \\
+\hline
+\end{tabular}
+\caption{Métricas de LightGBM por horizonte temporal.}
+\label{tab:lgbm_metricas}
+\end{table}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/lgbm_metricas_por_horizonte.png}
+    \caption{Evolución de métricas de LightGBM por horizonte.}
+    \label{fig:lgbm_metricas}
+\end{figure}
+
+La importancia de características (figura \ref{fig:lgbm_features}) muestra que las variables de riesgo judicial son predominantes en la predicción:
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/lgbm_importancia_features.png}
+    \caption{Importancia de features en LightGBM.}
+    \label{fig:lgbm_features}
+\end{figure}
+
+\subsection{Resultados de CNN}
+
+\colorbox{yellow}{La red neuronal convolucional no logró convergencia:}
+
+\begin{itemize}
+    \item \textbf{Loss}: Estancado en 12.5 (equivale a predecir todo como 1)
+    \item \textbf{Accuracy}: Oscila entre 10\% y 90\%
+    \item \textbf{Precision/Recall}: Alternan entre 0\% y 100\%
+    \item \textbf{AUC-ROC}: 50\% (que es igual a una determinación randomica)
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/cnn_loss.png}
+    \caption{Evolución del loss durante entrenamiento de CNN.}
+    \label{fig:cnn_loss}
+\end{figure}
+
+\subsection{Resultados de MLP}
+
+\colorbox{yellow}{El perceptrón multicapa tampoco convergió:}
+
+\begin{itemize}
+    \item \textbf{Loss}: Estancado en 12.47
+    \item \textbf{Comportamiento}: Predice TODO como ``no crisis'' (crisis\_flag=0)
+    \item \textbf{Precision}: 0\%
+    \item \textbf{Recall}: 0\%
+\end{itemize}
+
+\section{Resultados del Entrenamiento Final (air\_entrenamiento)}
+
+El pipeline automatizado en Airflow (\texttt{air\_entrenamiento\_lightgbm}) validó los resultados del entrenamiento inicial:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Métrica} & \textbf{jupy (inicial)} & \textbf{air (final)} \\
+\hline
+Accuracy promedio & 91.7\% & 87.8\% \\
+\hline
+AUC-ROC promedio & 80.0\% & 84.6\% \\
+\hline
+\end{tabular}
+\caption{Comparación de métricas entre entrenamiento inicial y final.}
+\label{tab:comparacion_inicial_final}
+\end{table}
+
+\textbf{El AUC-ROC mejoró de 80.0\% a 84.6\% en la ejecución automatizada, lo que indica que el pipeline de Airflow procesa correctamente los datos y genera un modelo funcional.}
+
+\section{Comparación de Modelos y Justificación de LightGBM}
+\label{section:comparacion_modelos_justificacion}
+
+Los resultados obtenidos son consistentes con la literatura existente. Yu et al. \cite{yu2024advanced} reportaron que LightGBM combinado con SMOTEENN logra el mejor rendimiento en predicción de riesgo crediticio, mientras que Zhu et al. \cite{zhu2024ensemble} demostraron que los ensambles basados en gradient boosting superan a modelos individuales. Shreya y Pathak \cite{shreya2025explainable} encontraron que \textbf{LightGBM emerge como el modelo más idóneo para aplicaciones de negocio}.
+
+\subsection{Tabla Comparativa}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{Métrica} & \textbf{LightGBM} & \textbf{CNN} & \textbf{MLP} \\
+\hline
+Accuracy & 91.7\% & 9.0\% & 91.0\% \\
+\hline
+Precision & 57.1\% & 9.0\% & 0.0\% \\
+\hline
+Recall & 39.1\% & 100.0\% & 0.0\% \\
+\hline
+AUC-ROC & \textbf{80.0\%} & 50.0\% & 50.0\% \\
+\hline
+\end{tabular}
+\caption{Comparación de modelos (horizonte 1 mes).}
+\label{tab:comparacion_modelos}
+\end{table}
+
+\subsection{Justificación de la Decisión}
+
+La selección de LightGBM como modelo final se sustenta en las siguientees razones:
+
+\begin{enumerate}
+
+    \item\textbf{Métricas superiores en AUC-ROC}: LightGBM logra un AUC-ROC promedio de 80.0\%, mientras que CNN y MLP no superan el 50\% (equivalente a clasificación randomica). Esta diferencia es estadísticamente significativa para la predicción de incumplimiento de pago.
+
+    \item\textbf{Convergencia consistente}: LightGBM convergió en todas las ejecuciones del entrenamiento, tanto en el entorno de experimentación (jupy en el notebook) como en producción (air en los flujos automatizados). En contraste, CNN y MLP se estancaron en valores de loss que indican que no aprendieron patrones del dataset.
+
+    \item\textbf{Manejo nativo del desbalanceo}: El parámetro \texttt{scale\_pos\_weight} de LightGBM ajusta automáticamente el peso de las clases durante el entrenamiento, permitiendo que el modelo preste atención adecuada a la clase minoritaria (crisis) sin requerir técnicas externas como SMOTE, en contraparte esta labor se trato de mejorar con programación, sin conseguir el objetivo
+
+    \item\textbf{Interpretabilidad}: LightGBM permite calcular la importancia de features, lo que facilita la explicación de las predicciones a los usuarios de negocio. Las variables \texttt{tasa\_judicial} y \texttt{creditos\_judiciales} dominan la predicción, lo que es consistente con el dominio de conocimiento de los expertos en créditos.
+
+    \item\textbf{Eficiencia computacional}: LightGBM entrenó los 18 horizontes en aproximadamente 5 minutos, mientras que CNN requirió más de 2 horas sin lograr convergencia. Esta eficiencia es crítica para el reentrenamiento mensual automatizado.
+\end{enumerate}
+
+\subsection{Análisis por Horizonte}
+
+La degradación del rendimiento por horizonte temporal sigue un patrón esperado, a mayor tiempo de predicción, menor precisión:
+
+\begin{itemize}
+    \item \textbf{Horizontes 1-6 meses}: AUC-ROC > 83\%. Predicciones confiables para operaciones diarias.
+    \item \textbf{Horizontes 7-12 meses}: AUC-ROC 76-82\%. Útiles para planificación estratégica.
+    \item \textbf{Horizontes 13-18 meses}: AUC-ROC 70-77\%. Solo para tendencias generales.
+\end{itemize}
+
+Esta degradación es natural y se debe a la incertidumbre acumulada en predicciones a mayor plazo. Sin embargo, incluso los horizontes más largos mantienen un rendimiento superior al azar (AUC-ROC > 70\%).
+
+\section{Resultados de la Predicción}
+
+Las predicciones generadas por el modelo se almacenan en la tabla \texttt{fact\_predicciones\_mensual} y se visualizan en Apache Superset. Los dashboards permiten:
+
+\begin{itemize}    
+    \item Visualizar la probabilidad de crisis por horizonte.
+    \item Filtrar predicciones por riesgo, sector y sucursal.
+    \item Comparar predicciones históricas con valores verídicos.
+    \item Identificar bloques con alta probabilidad de incumplimiento.
+\end{itemize}
+
+El impacto en el negocio se mide mediante la capacidad de anticipar crisis crediticias con 1-6 meses de antelación, permitiendo a la institución tomar medidas preventivas como restructuración, re financiamiento, novacion de créditos o intensificación de procesos de recuperación de cartera.
+
+%[Ov] ya estoy cansado.

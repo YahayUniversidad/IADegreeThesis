@@ -1,0 +1,71 @@
+Este capítulo presenta los conceptos necesarios para comprender el diseño del sistema y la evaluación experimental. Se priorizan los fundamentos relacionados con el problema y se separan de la descripción operativa de las herramientas, que se desarrolla en la metodología.
+
+\section{Riesgo crediticio y clasificación binaria}
+
+El riesgo crediticio representa la posibilidad de que una obligación no sea atendida según las condiciones pactadas. En este trabajo, el problema se formula como una tarea de clasificación binaria en la que cada unidad de análisis recibe una etiqueta de crisis o no crisis. La etiqueta no corresponde directamente a una decisión regulatoria universal, sino a una regla heurística construida para el contexto institucional analizado.
+
+En una clasificación binaria, los resultados se organizan en verdaderos positivos, falsos positivos, verdaderos negativos y falsos negativos. En riesgo crediticio, los falsos negativos son especialmente relevantes porque representan casos de crisis que el modelo no identifica. Por ello, una exactitud elevada puede resultar engañosa cuando la clase positiva es minoritaria.
+
+\section{Inteligencia de negocio, data warehouse y datamart}
+
+La inteligencia de negocio comprende procesos y tecnologías que transforman datos operativos en información analítica para apoyar decisiones \cite{laursen2017business. Un data warehouse integra información de múltiples fuentes y conserva una estructura orientada al análisis. Un datamart es un subconjunto enfocado en un dominio específico, como cartera o riesgo crediticio \cite{kimball2013datawarehouse}.}
+
+El esquema estrella organiza una tabla de hechos central y varias tablas de dimensiones. Las tablas de hechos almacenan medidas cuantitativas y claves foráneas; las dimensiones proporcionan contexto temporal, geográfico o de negocio. En esta tesis, las dimensiones corresponden a tiempo, riesgo, sector y sucursal, mientras que las tablas de hechos contienen agregados mensuales y predicciones.
+
+\section{Predicción multi-horizonte}
+
+La predicción multi-horizonte estima el estado futuro de una variable para varios plazos. Si $x_t$ representa la información disponible hasta el mes $t$, el objetivo consiste en estimar una probabilidad $\hat{p_{t+h}$ para cada horizonte $h \in \{1, \ldots, 18\}$. Los horizontes cortos y largos no necesariamente presentan la misma dificultad, porque la relación entre la información actual y el evento futuro puede debilitarse con el tiempo.}
+
+El proyecto utiliza dos estrategias. CNN y MLP producen dieciocho salidas simultáneas, una por horizonte. LightGBM utiliza dieciocho clasificadores independientes. Estas estrategias no son idénticas: la salida conjunta puede compartir representaciones entre horizontes, mientras que los modelos independientes optimizan cada plazo por separado. Esta diferencia debe considerarse al interpretar la comparación.
+
+\section{Clases desbalanceadas}
+
+Un conjunto está desbalanceado cuando una clase contiene muchas más observaciones que la otra. Este escenario puede inducir modelos que predicen casi siempre la clase mayoritaria y, aun así, obtienen una exactitud alta. He y Garcia \cite{he2009learning describen técnicas de reponderación, remuestreo y aprendizaje sensible al costo para enfrentar este problema.}
+
+En LightGBM se utilizó el parámetro \texttt{scale\_pos\_weight. En las redes neuronales se reporta el uso de pesos de muestra, aunque los artefactos disponibles no documentan con suficiente detalle su cálculo ni su aplicación. La comparación debe considerar que cada modelo puede responder de manera distinta al desbalance.}
+
+\section{Modelos evaluados}
+
+\subsection{LightGBM}
+
+LightGBM es una implementación eficiente de árboles de decisión potenciados por gradiente \cite{ke2017lightgbm. El método construye secuencialmente árboles que corrigen los errores del conjunto anterior, siguiendo el principio general de gradient boosting \cite{friedman2001greedy}. Entre sus ventajas para datos tabulares se encuentran el manejo de relaciones no lineales, interacciones entre variables y escalas heterogéneas. Sin embargo, también puede sobreajustar y amplificar fugas de información si una característica contiene señales derivadas directa o indirectamente de la etiqueta.}
+
+\subsection{Red neuronal convolucional}
+
+Las redes neuronales convolucionales aprenden filtros locales y representaciones jerárquicas \cite{lecun2015deep. En series temporales, una convolución unidimensional puede identificar patrones entre meses consecutivos. La utilidad de este enfoque depende del número de secuencias, la longitud temporal, el tratamiento del desbalance, la regularización y la configuración del entrenamiento.}
+
+\subsection{Perceptrón multicapa}
+
+El perceptrón multicapa transforma la entrada mediante capas densas y funciones no lineales. Para una ventana de seis meses y veintiuna características, la entrada contiene $6 \times 21 = 126$ valores antes de cualquier transformación adicional. La arquitectura utilizada produce dieciocho probabilidades mediante activación sigmoide. El desempeño depende, entre otros factores, del escalado, la función de pérdida, el tamaño de lote, la tasa de aprendizaje y la cantidad de muestras.
+
+\section{Validación temporal y fuga de información}
+
+Cuando los datos tienen orden temporal, la división aleatoria puede permitir que información futura influya en el entrenamiento. Una división temporal conserva las observaciones más antiguas para entrenamiento y las más recientes para evaluación. El conjunto de prueba debe permanecer aislado de la selección de hiperparámetros, del early stopping y de la selección del umbral.
+
+La fuga de información ocurre cuando una característica contiene datos que no estarían disponibles en el momento real de la predicción o cuando deriva de la misma regla utilizada para construir la etiqueta. En este estudio, las variables judiciales requieren una auditoría específica porque presentan alta importancia predictiva y podrían estar relacionadas con las condiciones que definen \texttt{crisis\_flag.}
+
+\section{Métricas de evaluación}
+
+La exactitud, precisión, recall y F1-score se definen como:
+
+\begin{equation}
+\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
+\end{equation}
+
+\begin{equation}
+\text{Precision} = \frac{TP}{TP + FP}
+\end{equation}
+
+\begin{equation}
+\text{Recall} = \frac{TP}{TP + FN}
+\end{equation}
+
+\begin{equation}
+F1 = 2 \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}
+\end{equation}
+
+El AUC-ROC resume la capacidad del modelo para ordenar positivos por encima de negativos a través de diferentes umbrales \cite{fawcett2006introduction. Un valor cercano a 0,5 indica discriminación equivalente al azar, mientras que un valor mayor no garantiza por sí solo una utilidad operativa. En conjuntos desbalanceados también es recomendable examinar PR-AUC, matrices de confusión, calibración y errores por horizonte. Estas evaluaciones no están disponibles de forma completa en los resultados originales y se reconocen como limitaciones.}
+
+\section{MLOps y observabilidad}
+
+MLOps integra prácticas de desarrollo, datos y operación para gestionar el ciclo de vida de modelos. En este trabajo, Apache Airflow orquesta tareas; MLflow registra parámetros, métricas y artefactos; PostgreSQL almacena datos y predicciones; y Apache Superset consulta el datamart. La presencia de estas herramientas no demuestra por sí sola reproducibilidad o calidad operativa: también se requieren versiones, semillas, validaciones, manejo de fallos, monitoreo de datos y pruebas funcionales.

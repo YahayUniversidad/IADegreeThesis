@@ -1,0 +1,91 @@
+Este capítulo sintetiza los hallazgos principales de la investigación, evalúa el cumplimiento de los objetivos planteados, expone las limitaciones del estudio, y; propone expectativas a futuro.
+
+\section{Cumplimiento de Objetivos}
+
+\subsection{Objetivo General}
+
+El objetivo general era desarrollar una plataforma de inteligencia de negocio crediticia que, mediante un flujo de operaciones de Machine Learning automatizado, compare modelos de deep learning y gradient boosting para la predicción multi-horizonte de riesgo, e integre el modelo seleccionado en un datamart analítico con dashboards interactivos para el control de la mora.
+
+\textbf{Este objetivo se cumplió de forma  satisfactoria}. Se implementó un sistema completo que incluye:
+
+\begin{enumerate}
+    \item Pipeline orquestado en Apache Airflow con dos flujos (entrenamiento e inferencia).
+    \item Comparación de tres modelos: CNN, MLP y LightGBM. Monitoreado mediante MlFlow
+    \item Selección de LightGBM como modelo ganador basado en métricas objetivas.
+    \item Integración del modelo en un datamart analítico en esquema estrella.
+    \item Dashboards interactivos en Apache Superset para visualización de resultados.
+\end{enumerate}
+
+\subsection{Objetivos Específicos}
+
+\textbf{Objetivo 1: Identificar las causas del fracaso de las redes neuronales en la predicción de incumplimiento crediticio con datos tabulares.}
+
+Los resultados son consistentes con Arram et al. \cite{arram2023credit}, quienes encontraron que MLP logra buen rendimiento solo con datasets grandes. En nuestro caso, con solo 293 muestras de entrenamiento, las redes neuronales no pudieron converger.
+
+\textbf{Objetivo 2: Determinar qué características de los datos crediticios hacen que los modelos basados en árboles superen a las redes neuronales.}
+
+Las características encontradas son:
+
+\begin{enumerate}
+    \item \textbf{Datos tabulares}: Las redes neuronales destacan en imágenes y texto, pero los árboles de decisión son superiores para datos estructurados en tabla.
+    \item \textbf{Secuencias cortas}: La ventana de entrada (6 meses × 21 features = 128 valores) es insuficiente para que las CNN capturen patrones temporales relevantes.
+    \item \textbf{Valores atípicos}: Los montos crediticios presentan valores extremos que afectan a las redes neuronales pero no a los árboles de decisión.
+\end{enumerate}
+
+\textbf{Objetivo 3: Evaluar el impacto del horizonte temporal en la degradación del rendimiento predictivo.}
+
+Se confirmó que el rendimiento decae naturalmente con el horizonte:
+
+\begin{itemize}
+    \item \textbf{Horizontes 1-6 meses}: AUC-ROC > 83\%. Alta confiabilidad.
+    \item \textbf{Horizontes 7-12 meses}: AUC-ROC 76-82\%. Confianza moderada.
+    \item \textbf{Horizontes 13-18 meses}: AUC-ROC 70-77\%. Baja confianza.
+\end{itemize}
+
+Esta degradación se debe a la acumulación de incertidumbre en predicciones a mayor plazo y es consistente con la literatura existente.
+
+\textbf{Objetivo 4: Visualizar un datamart analítico como parte de la infraestructura para integrar predicciones con datos históricos.}
+
+Este objetivo se alinea con las recomendaciones de Kimball y Ross \cite{kimball2013datawarehouse} sobre el uso de esquemas estrella para datamarts analíticos. Se implementó un datamart en esquema estrella.
+
+\section{Contribuciones}
+
+Las principales contribuciones de este trabajo son:
+
+\begin{enumerate}
+    \item \textbf{Comparación rigurosa de modelos}: Se evaluaron tres enfoques de machine learning para predicción de riesgo crediticio multi-horizonte, demostrando que LightGBM supera a CNN y MLP en datos tabulares y con clases desbalanceadas. Estos resultados son consistentes con los hallazgos de Yu et al. \cite{yu2024advanced} y Zhu et al. \cite{zhu2024ensemble}.
+    
+    \item \textbf{Pipeline MLOps completo}: Se diseñó e implementó una sistema que cubre desde la ingreso de datos hasta la visualización, que automatizada en Airflow y tracking de experimentos en MLflow, siguiendo las prácticas de MLOps documentadas por Marcos-Mercadé et al. \cite{marcos2026empirical} y Micallef et al. \cite{micallef2026systematic}.
+    
+    \item \textbf{Datamart analítico integrado}: Se creó un esquema estrella que permite cruzar datos históricos con predicciones del modelo, facilitando el análisis exploratorio y la toma de decisiones.
+    
+    \item \textbf{Dashboards interactivos}: Se implementaron visualizaciones en Apache Superset que permiten a los usuarios de negocio explorar datos y predicciones.
+\end{enumerate}
+
+\section{Limitaciones del Estudio}
+
+El presente trabajo presenta las siguientes limitaciones:
+
+\begin{enumerate}
+    \item \textbf{Degradación en horizontes largos}: Los horizontes 13-18 meses muestran una degradación significativa (AUC-ROC < 77\%), lo que reduce la utilidad de la predicción.
+    
+    \item \textbf{Ausencia de validación externa}: No se comparó con modelos de referencia externos ni se realizó validación cruzada con datos de otras instituciones, esto es entendible por la naturaleza restringida de la data.
+    
+    \item \textbf{Análisis de modelos mejor valorados}: No se exploraron técnicas avanzadas como embeddings de secuencias, attention mechanisms o transformers para datos tabulares, los cuales podrían mejorar el rendimiento de las redes neuronales según Nayak \cite{nayak2026calibrated}.
+\end{enumerate}
+
+\section{Perspectivas a Futuro}
+
+Las líneas con visión de futura incluyen:
+
+\begin{enumerate}
+    \item \textbf{Aumentar el volumen de datos}: Incorporar datos de múltiples instituciones o generar datos sintéticos para mejorar el entrenamiento de redes neuronales. 
+    
+    \item \textbf{Optimizar horizontes largos}: Explorar técnicas de regularización, aprendizaje por transferencia o arquitecturas híbridas para mejorar el rendimiento en horizontes 13-18 meses.
+    
+    \item \textbf{Incorporar más fuentes de datos}: Integrar variables macroeconómicas, datos de crédito buró o información de redes sociales para enriquecer las predicciones.
+    
+    \item \textbf{Monitoreo en cambios en la data}: Implementar un sistema de alertas en el cambio de distribución de datos y active reentrenamiento automático.
+    
+    \item \textbf{Uso en giros de negocios semejantes}: El modelo de predicción se puede utilizar en otros giros de negocios que otorguen crédito directo como comercios de electrodomésticos, venta de autos, etc.
+\end{enumerate}

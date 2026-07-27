@@ -13,8 +13,7 @@ wandb/
 *__pycache__/
 *herramientasPersonales/
 
-*tesis/
-*DocumentosBase/
+## *tesis/
 
 Contenedores/ts_airflow/config/
 Contenedores/ts_airflow/dags/
@@ -33,3 +32,20 @@ Contenedores/ts_airflow/plugins/
 *superset/__pycache__/
 
 *.obsidian/
+*.libs/
+
+*.mimocode/
+*.mimocode_code/
+*DIAGRAMAS_MERMAID_files/
+DocumentosBase/
+tesis/revision002/main.toc
+tesis/revision002/main.out
+tesis/revision002/main.lot
+tesis/revision002/main.aux
+tesis/revision002/main.bbl
+tesis/revision002/main.fdb_latexmk
+tesis/revision002/main.fls
+tesis/revision002/main.lof
+tesis/revision002/RESUMEN_CAMBIOS.md
+tesis/TesisMuestra.txt
+tesis/revision002/DIAGRAMAS_MERMAID_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css

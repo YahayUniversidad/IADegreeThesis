@@ -10,12 +10,32 @@ Consultas
 
 ## Comandos
 
-Comandos para
+Comandos para crear una maquina virutal
 
 ```bash
 python3 -m venv .venv
 ```
 
+Comandos para chequear formato de codigo
+
+```bash
+clear & ruff check . --fix
+```
+
+Comando para ejecutar codificacion:
+
+```bash
+## compila
+python3 -c xxxxx.py
+
+## compila 
+python3 -c pathxxxxx
+
+
+## ejecuta y que tenga creado la figura main
+python3 xxxx.py 
+
+```
 ### Productos para limpiar librerías
 
 ### Programar 

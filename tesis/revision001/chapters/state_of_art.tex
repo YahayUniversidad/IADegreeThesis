@@ -1,0 +1,100 @@
+Este capítulo presenta una revisión sistemática del estado del arte en predicción de riesgo crediticio con ML, gestión de modelos con MLOps y visualización de datos. Se analizan modelos basados en árboles y redes neuronales, frameworks MLOps y plataformas de visualización, para concluir con una comparación cuantitativa y la identificación de brechas que guían esta investigación.
+
+\section{Estrategia de Búsqueda Bibliográfica}
+
+La revisión de literatura se realizó en arXiv, Google Scholar y bases de
+datos científicas. Los términos de búsqueda incluyeron:
+
+\begin{itemize}
+    \item ``credit risk prediction'' AND ``machine learning'' (2021-2026)
+    \item ``LightGBM'' AND ``credit scoring'' (2021-2026)
+    \item ``MLOps'' OR ``machine learning operations'' (2021-2026)
+    \item ``data warehouse'' AND ``financial institutions'' (2017-2026)
+\end{itemize}
+
+El período de búsqueda abarcó de 2021 a 2026, priorizando publicaciones
+recientes.
+
+\section{Predicción de Riesgo Crediticio con Machine Learning}
+
+\subsection{Modelos Basados en Árboles de Decisión}
+
+Yu et al.~\cite{yu2024advanced} desarrollaron un modelo de predicción de riesgo crediticio utilizando LightGBM, XGBoost y TabNet con la técnica SMOTEENN para balanceo de clases. En su estudio con datos de un banco comercial, LightGBM combinado con PCA y SMOTEENN mostró el mejor rendimiento para predecir clientes de alta calidad.
+
+Zhu et al.~\cite{zhu2024ensemble} presentaron un framework de ensemble que combina LightGBM, XGBoost y LocalEnsemble para predicción de incumplimiento crediticio. Su enfoque utiliza conjuntos de features distintos para mejorar la generalización y superar las limitaciones de modelos individuales.
+
+Yang et al.~\cite{yang2025interpretable} aplicaron ensemble learning con SHAP para interpretabilidad en predicción de incumplimiento crediticio. Sus resultados muestran que los métodos de ensemble tienen ventajas claras en rendimiento predictivo, especialmente en relaciones no lineales y datos desbalanceados.
+
+\subsection{Redes Neuronales y Deep Learning}
+
+Shreya y Pathak \cite{shreya2025explainable} presentaron un sistema de evaluación de riesgo crediticio que combina XGBoost, LightGBM y Random Forest con técnicas de XAI (SHAP y LIME). LightGBM emergió como el modelo más óptimo para negocios, con la mayor precisión y mejor balance entre aprobaciones y tasas de incumplimiento.
+
+Nayak \cite{nayak2026calibrated} propuso Calibrated Credit Intelligence (CCI), un framework que combina un scoring bayesian con gradient boosting fairness-constrained. CCI logró un AUC-ROC de 0.912 en el benchmark Home Credit, mejorando la calibración y equidad bajo distribuciones de datos cambiantes.
+
+\subsection{Comparación de Enfoques}
+
+Arram et al.~\cite{arram2023credit} compararon múltiples algoritmos incluyendo regresión logística, árboles de decisión, random forest, MLP, XGBoost y LightGBM para predicción de incumplimiento de tarjetas de crédito. MLP logró el mejor rendimiento con AUC de 86.7\% y precisión de 91.6\%, superando a LightGBM y XGBoost en su dataset específico.
+
+AlMarri et al.~\cite{almarri2025interpreting} compararon clasificadores LLM zero-shot con LightGBM para predicción de incumplimiento de préstamos. Aunque los LLMs pudieron identificar indicadores clave de riesgo financiero, sus ranking de importancia de features divergieron notablemente de LightGBM, y sus auto-explicaciones no se alinearon con las atribuciones SHAP empíricas.
+
+\section{MLOps y Gestión de Modelos en Producción}
+\subsection{Frameworks y Herramientas MLOps}
+
+Marcos-Mercadé et al.~\cite{marcos2026empirical} evaluaron empíricamente herramientas MLOps modernas: MLflow, Metaflow, Apache Airflow y Kubeflow Pipelines.
+
+Sus resultados muestran que MLflow y Apache Airflow son los más utilizados en proyectos reales, con diferentes fortalezas según el escenario de uso.
+
+Micallef et al.~\cite{micallef2026systematic} realizaron una revisión sistemática de herramientas MLOps, identificando que los componentes más usados son frameworks de orquestación, versionado de datos, tracking de experimentos y plataformas cloud gestionadas. Ninguna herramienta cubre todo el ciclo de vida, por lo que los investigadores combinan múltiples herramientas.
+
+Zampetti et al.~\cite{zampetti2026how} analizaron el uso de frameworks MLOps en proyectos open source, encontrando que rara vez se utilizan fuera de la caja y que los desarrolladores prefieren implementar funcionalidad personalizada usando las APIs de las herramientas.
+
+\subsection{MLOps para Riesgo Crediticio}
+
+Amed et al.~\cite{amed2025pdx} presentaron PDx, un sistema adaptativo de predicción
+de riesgo crediticio impulsado por MLOps para préstamos digitales. 
+
+Su framework integra monitoreo continuo, reentrenamiento y validación mediante un pipeline MLOps robusto, incluyendo un framework dinámico champion-challenger para actualizar regularmente los modelos base. 
+
+Sus análisis empíricos muestran que los modelos ensemble basados en árboles superan consistentemente a otros en clasificación de morosos, pero requieren actualizaciones frecuentes para mantener el rendimiento.
+
+\subsection{Ética y Transparencia en MLOps}
+
+Hossain et al.~\cite{hossain2026ethical} introdujeron un framework MLOps que integra principios de IA ética, reduciendo el sesgo (demographic parity difference de 0.31 a 0.04) sin reentrenamiento del modelo. Su sistema bloquea el despliegue si los métricos de equidad exceden umbrales, y activa reentrenamiento automático cuando se detecta drift de datos.
+
+
+\section{Brechas Identificadas en la Literatura}
+
+Tras revisar la literatura existente, se identificaron las siguientes
+brechas:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Falta de comparación multi-horizonte}: La mayoría de estudios
+  evalúan predicciones a un solo horizonte temporal, pero en la práctica
+  financiera se requieren proyecciones a múltiples plazos (1, 3, 6, 12,
+  18 meses).
+\item
+  \textbf{Integración limitada entre MLOps y datamarts}: Pocos trabajos
+  abordan la integración completa entre pipelines MLOps y datamarts
+  analíticos para instituciones financieras.
+\item
+  \textbf{Escasez de estudios en economía social y solidaria}: La
+  mayoría de investigaciones se enfocan en bancos comerciales, con poca
+  atención al sector cooperativo y de economía solidaria.
+\item
+  \textbf{Ausencia de procesos de aprobación humana}: La mayoría de
+  sistemas despliegan modelos automáticamente, sin un mecanismo de
+  validación por expertos antes de su puesta en producción.
+\end{enumerate}
+
+\subsection{Contribución Esperada}
+
+Esta tesis busca cerrar estas brechas mediante:
+
+\begin{enumerate}
+    \item\textbf{Comparación multi-horizonte}: Evaluación de modelos a 1, 3, 6, 12 y 18 meses.
+    \item\textbf{Integración MLOps-Datamart}: Pipeline completo desde datos hasta dashboards con actualización automática.
+    \item\textbf{Enfoque en economía solidaria}: Aplicación específica para instituciones cooperativas.
+    \item\textbf{Aprobación humana}: Proceso de validación por expertos antes de desplegar modelos en producción.
+\end{enumerate}
