@@ -110,7 +110,7 @@ La Tabla 4.2b documenta la trazabilidad de los datos desde las fuentes hasta las
     \label{tab:trazabilidad}
 \end{table}
 
-\textbf{Nota}: La restricción clave es que solo los bloques con al menos 24 meses de historial (6 meses de ventana + 18 horizontes) generan secuencias válidas. Esto reduce significativamente el número de muestras disponibles desde los 20.025 bloques-mes iniciales.
+\textbf{Nota sobre la muestra efectiva}: La restricción de que cada bloque-mes debe tener al menos 24 meses de historial continuo (6 meses de ventana + 18 horizontes) reduce drásticamente el número de secuencias disponibles. Mientras que la vista materializada contiene 20.025 bloques-mes, solo los registros con historial completo desde 2015 generan secuencias. En la ejecución documentada, esto resultó en aproximadamente 293 muestras de entrenamiento. Esta cifra debe verificarse en el repositorio, ya que depende de la fecha de extracción y de la política de actualización de la vista materializada.
 
 \section{Procesamiento y preparación de datos}
 

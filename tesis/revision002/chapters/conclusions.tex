@@ -24,6 +24,16 @@ La primera contribución es una arquitectura de extremo a extremo que enlaza ETL
 
 Las contribuciones se circunscriben al prototipo y a la institución analizada. No se afirma superioridad universal de LightGBM ni se generalizan los resultados a otras entidades financieras.
 
+\section{Aspectos éticos}
+
+El desarrollo del presente trabajo involucra datos crediticios reales de una institución financiera. Por ello, se consideraron los siguientes aspectos éticos:
+
+\begin{itemize}
+    \item \textbf{Confidencialidad}: Los datos fueron anonimizados a nivel de bloque-mes, sin incluir identificadores personales. El acceso al repositorio está restringido al autor y al tutor.
+    \item \textbf{Transparencia}: El modelo seleccionado (LightGBM) permite calcular importancias de características, lo que facilita la interpretación de las predicciones. No obstante, no se realizó una auditoría formal de sesgos por sector económico o región.
+    \item \textbf{Impacto en decisiones}: El prototipo no reemplaza el juicio de los analistas de crédito; su función es complementaria y su uso debe estar sujeto a validación humana. La institución debe establecer políticas claras sobre el uso de predicciones automáticas antes de cualquier implementación productiva.
+\end{itemize}
+
 \section{Limitaciones}
 
 El estudio presenta limitaciones metodológicas y de generalización. La definición de \texttt{crisis\_flag} quedó documentada mediante ocho condiciones con pesos acumulativos (umbral $\geq 5$), pero existe un riesgo confirmado de target leakage: las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) se utilizan tanto para definir la etiqueta como como características de entrada. Esta dependencia puede inflar artificialmente el poder predictivo de esas variables y del modelo.\\
@@ -36,10 +46,14 @@ Desde la perspectiva operativa, las capturas demuestran la implementación de lo
 
 \section{Trabajo futuro}
 
-El trabajo futuro debe priorizar la reproducibilidad. Se requiere registrar conteos por etapa y horizonte, fijar semillas para todos los modelos, realizar repeticiones con múltiples semillas y versionar datos, código y entornos.\\
+El trabajo futuro se organiza en tres líneas prioritarias:
 
-Es crítica una ablación de leakage: repetir la evaluación excluyendo las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) para estimar cuánto del poder predictivo se debe a la dependencia con la etiqueta.\\
-
-La comparación de modelos debe equilibrar los presupuestos de ajuste, utilizar múltiples semillas, reportar intervalos de confianza, incluir PR-AUC, calibración y selección de umbrales basada en costos. Para las redes neuronales, se recomienda añadir \texttt{sample\_weights} al MLP y explorar arquitecturas con mayor capacidad.\\
-
-Finalmente, el prototipo debe evaluarse con datos de otras instituciones y mediante pruebas funcionales y de usabilidad. Solo después de estas validaciones sería posible estimar su contribución a procesos de decisión, alertas o gestión de cartera.
+\begin{enumerate}
+    \item \textbf{Reproducibilidad y robustez}: Registrar conteos por etapa y horizonte, fijar semillas para todos los modelos, realizar repeticiones con múltiples semillas (al menos 10), y versionar datos, código y entornos mediante \texttt{dvc} o \texttt{git-lfs}.
+    
+    \item \textbf{Ablación de leakage}: Repetir la evaluación excluyendo las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) para estimar cuánto del poder predictivo se debe a la dependencia con la etiqueta. Este es el experimento más crítico antes de cualquier implementación operativa.
+    
+    \item \textbf{Comparación equilibrada}: Equilibrar los presupuestos de ajuste (añadir \texttt{sample\_weights} al MLP, realizar búsqueda de hiperparámetros equivalente para CNN y MLP), reportar intervalos de confianza, incluir PR-AUC, calibración y selección de umbrales basada en costos de error (falsos positivos vs. falsos negativos).
+    
+    \item \textbf{Validación externa}: Evaluar el prototipo con datos de al menos otra institución financiera y mediante pruebas funcionales con usuarios analistas. Solo después de estas validaciones sería posible estimar su contribución a procesos de decisión, alertas o gestión de cartera.
+\end{enumerate}
