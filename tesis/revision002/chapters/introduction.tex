@@ -2,35 +2,34 @@ Este capítulo delimita el problema de investigación, presenta la pregunta, la 
 
 \section{Contexto}
 
-Las instituciones financieras de la economía social y solidaria administran información de créditos, amortizaciones, cartera y recuperación, que puede utilizarse para describir el comportamiento histórico y estimar escenarios futuros. En muchos entornos, los indicadores de morosidad, cartera, recuperación y cartera vencida; se generan a partir de procesos manuales o repositorios separados. Esta fragmentación dificulta la actualización oportuna de los reportes y limita la incorporación de resultados predictivos en los procesos analíticos.
+Las instituciones financieras de la economía social y solidaria administran información de créditos, amortizaciones, cartera y recuperación, que puede utilizarse para describir el comportamiento histórico y estimar escenarios futuros. En muchos entornos, los indicadores de morosidad, cartera, recuperación y cartera vencida; se generan a partir de procesos manuales o repositorios separados. Esta fragmentación dificulta la actualización oportuna de los reportes y limita la incorporación de resultados predictivos en los procesos analíticos.\\
 
-La inteligencia de negocio permite consolidar fuentes operativas en repositorios orientados al análisis y presentar indicadores mediante dashboards. Por su parte, el aprendizaje automático permite estimar probabilidades de incumplimiento a partir de patrones latentes en los datos. La integración de ambas áreas requiere de mecanismos para automatizar el procesamiento, registrar experimentos, versionar modelos y ejecutar inferencias de forma controlada. 
+La inteligencia de negocio permite consolidar fuentes operativas en repositorios orientados al análisis y presentar indicadores mediante dashboards. Por su parte, el aprendizaje automático permite estimar probabilidades de incumplimiento a partir de patrones latentes en los datos. La integración de ambas áreas requiere de mecanismos para automatizar el procesamiento, registrar experimentos, versionar modelos y ejecutar inferencias de forma controlada.\\
 
 En este trabajo, dicha integración se aborda mediante el uso de productos de bases de datos(PostgreSQL), administradores de flujos de trabajo (Apache Airflow), plataformas del ciclo de vida de experimentos de modelos de inteligencia artificial (MLflow) y visualización de datos (Apache Superset).
 
 \section{Motivación}
 
-El proyecto surge de una necesidad aplicada: reducir la dependencia de tareas manuales para consolidar información crediticia y disponer de una vista unificada que combine datos históricos y predicciones. 
+El proyecto surge de una necesidad aplicada: reducir la dependencia de tareas manuales para consolidar información crediticia y disponer de una vista unificada que combine datos históricos y predicciones.\\
 
-La institución contaba con grandes volúmenes de registros operativos, pero no con un flujo integrado que permitiera preparar los datos, comparar modelos, almacenar predicciones multi-horizonte y visualizarlas en un mismo entorno.
+La institución contaba con grandes volúmenes de registros operativos, pero no con un flujo integrado que permitiera preparar los datos, comparar modelos, almacenar predicciones multi-horizonte y visualizarlas en un mismo entorno.\\
 
-La motivación científica se relaciona con dos aspectos. Primero, la comparación entre modelos basados en árboles y redes neuronales bajo datos tabulares, desbalanceados y con secuencias temporales cortas. Segundo, la evaluación del efecto del horizonte temporal sobre el rendimiento predictivo. 
+La motivación científica se relaciona con dos aspectos. Primero, la comparación entre modelos basados en árboles y redes neuronales bajo datos tabulares, desbalanceados y con secuencias temporales cortas. Segundo, la evaluación del efecto del horizonte temporal sobre el rendimiento predictivo.\\
+
 La motivación técnica consiste en llevar el modelo seleccionado desde el entorno de experimentación hacia un prototipo reproducible de entrenamiento, inferencia, registro y visualización.
 
 \section{Planteamiento del problema}
 
-El problema se define por la ausencia de integración entre las fuentes crediticias, el entrenamiento de modelos y las herramientas de análisis. Los datos se encuentran en tablas con propósitos operativos distintos; la preparación y actualización de reportes requiere intervención técnica; y las predicciones no están incorporadas de manera sistemática en un datamart que permita analizarlas junto con el histórico de cartera u operaciones de crédito.
+El problema se define por la ausencia de integración entre las fuentes crediticias, el entrenamiento de modelos y las herramientas de análisis. Los datos se encuentran en tablas con propósitos operativos distintos; la preparación y actualización de reportes requiere intervención técnica; y las predicciones no están incorporadas de manera sistemática en un datamart que permita analizarlas junto con el histórico de cartera u operaciones de crédito.\\
 
 Esta situación genera tres brechas. La primera es una brecha de datos, porque no existe un flujo único y documentado para integrar, limpiar y agregar la información. La segunda es una brecha analítica, debido a que los modelos no se comparan dentro de un protocolo multi-horizonte común. La tercera es una brecha operativa, ya que los resultados del modelado no se registran, almacenan y visualizan mediante un proceso automatizado.
 
 \section{Pregunta de investigación}
 
-La investigación aborda la siguiente interrogante:
-\\
-\newline
-\textbf{¿Cómo diseñar e implementar una plataforma de inteligencia de negocio que integre predicción multi-horizonte de riesgo crediticio, un datamart analítico y dashboards interactivos para apoyar la identificación anticipada de escenarios de mora en una institución de la economía social y solidaria?}
-\\
-\newline
+La investigación aborda la siguiente interrogante:\\
+
+\textbf{¿Cómo diseñar e implementar una plataforma de inteligencia de negocio que integre predicción multi-horizonte de riesgo crediticio, un datamart analítico y dashboards interactivos para apoyar la identificación anticipada de escenarios de mora en una institución de la economía social y solidaria?}\\
+
 La pregunta se limita al diseño, la implementación y la evaluación técnica del prototipo. No implica que la plataforma propuesta baje la mora por sí sola ni que reemplace a los especialistas en el área de recuperación.
 
 \section{Hipótesis}
@@ -52,11 +51,11 @@ Diseñar e implementar un prototipo de inteligencia de negocio crediticia que au
 
 \section{Contribuciones}
 
-El trabajo aporta una arquitectura de extremo a extremo que conecta ingesta, preparación de datos, entrenamiento, registro de experimentos, inferencia, almacenamiento analítico y visualización.
+El trabajo aporta una arquitectura de extremo a extremo que conecta ingesta, preparación de datos, entrenamiento, registro de experimentos, inferencia, almacenamiento analítico y visualización.\\
 
-También presenta una comparación multi-horizonte entre tres familias de modelos y documenta el deterioro de las métricas en horizontes largos.
+También presenta una comparación multi-horizonte entre tres familias de modelos y documenta el deterioro de las métricas en horizontes largos.\\
 
-Finalmente, implementa un datamart con dimensiones de tiempo, riesgo, sector y sucursal, junto con dashboards orientados al análisis de cartera y predicciones.
+Finalmente, implementa un datamart con dimensiones de tiempo, riesgo, sector y sucursal, junto con dashboards orientados al análisis de cartera y predicciones.\\
 
 Estas contribuciones deben interpretarse como resultados de un prototipo evaluado en una institución financiera de la economía social y solidara, por lo que la validación con otras entidades, las pruebas de utilidad con usuarios y la auditoría completa de la variable objetivo permanecen como trabajo posterior.
 

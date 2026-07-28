@@ -1,29 +1,28 @@
-Este capítulo describe el diseño de la investigación, la arquitectura del prototipo, la preparación de datos, los modelos y el protocolo de evaluación. Los resultados numéricos y su interpretación se presentan exclusivamente en el Capítulo 5.
+Este capítulo describe el diseño de la investigación, la arquitectura del prototipo, la preparación de los datos, los modelos y el protocolo de evaluación. Los resultados numéricos y su interpretación se presentan exclusivamente en el Capítulo 5.
 
 \section{Diseño de la investigación}
 
-El estudio es aplicado, cuantitativo y experimental en el sentido de que implementa y compara tres modelos sobre una división temporal del mismo conjunto de datos. La unidad analítica corresponde a un bloque-mes, definido por la combinación de mes, nivel de riesgo, sector económico y sucursal. Sobre cada bloque se calculan características agregadas y una etiqueta binaria de crisis.
+El estudio es practico, cuantitativo y experimental en el sentido de que implementa y compara tres modelos sobre una división temporal del mismo conjunto de datos. La unidad analítica corresponde a un bloque-mes, definido por la combinación de mes, nivel de riesgo, sector económico y sucursal. Sobre cada bloque se calculan características agregadas y una etiqueta binaria de crisis.\\
 
-El flujo metodológico comprende: integración de fuentes, agregación mensual, construcción de características y etiqueta, generación de ventanas temporales, entrenamiento de modelos, evaluación por horizonte, selección del modelo, registro en MLflow, inferencia, almacenamiento de predicciones y visualización.
+El flujo metodológico comprende: integración de fuentes, agregación mensual, construcción de características y etiquetas, generación de ventanas temporales, entrenamiento de modelos, evaluación por horizonte, selección del modelo, registro en MLflow, inferencia, almacenamiento de predicciones y visualización detallada.
 
 \section{Diseño y arquitectura del sistema}
 
-La arquitectura integra cinco componentes: PostgreSQL 15 como repositorio operativo y analítico; Apache Airflow 2.10 como orquestador; Python 3.12 y Jupyter para el desarrollo de modelos; MLflow para el registro de experimentos; y Apache Superset para la visualización.
-
+La arquitectura integra cinco componentes: PostgreSQL 15 como repositorio operativo y analítico; Apache Airflow 2.10 como orquestador; Python 3.12 y Notebook Jupyter para el desarrollo de modelos; MLflow para el registro de experimentos; y Apache Superset para la visualización.
 
 \section{Síntesis comparativa}
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.45\linewidth]{images/mermaid-diagram.png}
     \caption{Diagrama de Arquitectura Propuesta}
     \label{fig:arquitectura}
 \end{figure}
 
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \begin{tabular}{
-        | >{\raggedright\arraybackslash}p{2.5cm}
+        | >{\raggedright\arraybackslash}p{3.0cm}
         | >{\raggedright\arraybackslash}p{4.5cm}
         | >{\raggedright\arraybackslash}p{2.5cm}        
         | >{\raggedright\arraybackslash}p{4.5cm} |
@@ -50,9 +49,9 @@ La implementación incluye un flujo mensual de entrenamiento y un flujo diario d
 
 \section{Fuentes de datos y unidad de análisis}
 
-El proceso ETL integra tres fuentes institucionales.
+El proceso ETL (del ingles Extract, Transform and Load) integra tres fuentes institucionales en formato de archivos separados por comas, obtenidos de manera mensual.
 
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \begin{tabular}{        
         | >{\raggedright\arraybackslash}p{6.5cm}
@@ -60,7 +59,7 @@ El proceso ETL integra tres fuentes institucionales.
         | >{\raggedright\arraybackslash}p{4.5cm} |   
     }
     \hline
-        \textbf{Fuente} & \textbf{Magnitud} & \textbf{Contenido} \\
+        \textbf{Fuente} & \textbf{Magnitud Aprox.} & \textbf{Contenido} \\
     \hline
         CABECERA\_PRESTAMOS & $\sim$500.000 filas & Información maestra de créditos, periodo 2015--2026 \\
     \hline
@@ -75,7 +74,7 @@ El proceso ETL integra tres fuentes institucionales.
 
 La Tabla 4.2b documenta la trazabilidad de los datos desde las fuentes hasta las muestras de entrenamiento, extraída del análisis del código fuente.
 
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \small
     \begin{tabular}{
@@ -115,19 +114,21 @@ La Tabla 4.2b documenta la trazabilidad de los datos desde las fuentes hasta las
 
 \section{Procesamiento y preparación de datos}
 
-El procesamiento se implementa en una vista materializada y en tareas del DAG. Las etapas documentadas son: integración de las tres fuentes, validación de claves, prevención de duplicados mediante upsert, agregación mensual y cálculo de características. El proyecto no aporta un registro completo de filas eliminadas, valores faltantes, criterios de tratamiento de atípicos ni conteos posteriores a cada filtro. Estas decisiones deben versionarse junto con el código para garantizar reproducibilidad.
+El procesamiento se implementa en una vista materializada y en tareas del DAG (por sus siglas en ingles Gráfico Acíclico Dirigido). Las etapas documentadas son: integración de las tres fuentes, validación de claves, prevención de duplicados mediante la combinaciones de inserciones y actualizaciones de registros, agregación mensual y cálculo de características. El proyecto no aporta un registro completo de filas eliminadas, valores faltantes, criterios de tratamiento de atípicos ni conteos posteriores a cada filtro. Estas decisiones deben versionarse junto con el código para garantizar reproducibilidad.\\
 
-Las redes neuronales requieren una representación secuencial. Para cada bloque se utiliza una ventana de seis meses con veintiuna características por mes, lo que corresponde a una matriz de $6 \times 21$ y a 126 valores antes de cualquier transformación adicional. La referencia original a 128 valores se corrige porque no se documentan dos variables adicionales.
+Las redes neuronales requieren una representación secuencial. Para cada bloque se utiliza una ventana de seis meses con veintiun características por mes, lo que corresponde a una matriz de $6 \times 21$ y a 126 valores antes de cualquier transformación adicional. La referencia original a 128 valores se corrige porque no se documentan dos variables adicionales.
 
 \section{Ingeniería de características y variable objetivo}
 
 El proyecto calcula veintiuna características numéricas derivadas de las tres fuentes. La Tabla 4.3 presenta el diccionario completo extraído del código fuente.
 
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \small
     \begin{tabular}{
-        |l|c|p{5cm}|
+        | >{\raggedright\arraybackslash}p{5.0cm}
+        | >{\raggedright\arraybackslash}p{2.0cm}        
+        | >{\raggedright\arraybackslash}p{7.5cm} |
         }
     \hline
     \textbf{Variable} & \textbf{Grupo} & \textbf{Interpretación} \\
@@ -179,9 +180,9 @@ El proyecto calcula veintiuna características numéricas derivadas de las tres 
     \label{tab:caracteristicas}
 \end{table}
 
-La variable binaria \texttt{crisis\_flag} se construye mediante ocho condiciones heurísticas con pesos acumulativos. Si la suma de pesos supera el umbral de 5, el bloque se etiqueta como crisis (1); de lo contrario, como no crisis (0). Las ocho condiciones son:
+La variable binaria \texttt{crisis\_flag} se construye mediante ocho condiciones heurísticas o llamados criterios empíricos con pesos acumulativos. Si la suma de pesos supera el umbral de 5, el bloque se etiqueta como crisis (1); de lo contrario, como no crisis (0). Las ocho condiciones son:
 
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{Condición 1} (peso 3): tasa\_judicial $> 5\%$
     \item \textbf{Condición 2} (peso 1): tasa\_judicial $> 2\%$
     \item \textbf{Condición 3} (peso 2): costo\_judicial $> 0$ Y (costo\_judicial / num\_creditos) $> $ monto\_promedio $\times$ 10\%
@@ -190,24 +191,26 @@ La variable binaria \texttt{crisis\_flag} se construye mediante ocho condiciones
     \item \textbf{Condición 6} (peso 1): plazo\_promedio $> 36$ meses
     \item \textbf{Condición 7} (peso 1): plazo\_promedio $> 60$ meses
     \item \textbf{Condición 8} (peso 1): tasa\_interes\_promedio $> 15\%$
-\end{enumerate}
+\end{itemize}
 
-Umbral de decisión: $\sum \text{pesos} \geq 5 \Rightarrow \texttt{crisis\_flag} = 1$. La etiqueta fue validada por juicio experto según el documento original, aunque el procedimiento de validación no está documentado.
+Umbral de decisión: $\sum \text{pesos} \geq 5 \Rightarrow \texttt{crisis\_flag} = 1$. La etiqueta fue validada por juicio experto según el documento original, aunque el procedimiento de validación no está documentado.\\
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=1.0\linewidth]{images/MM-07 Definicion de crisis_flag.png}
     \caption{Diagrama de flujo de la definición de \texttt{crisis\_flag}. Cada condición evalúa un umbral y asigna un peso; si la suma total supera 5, el bloque se etiqueta como crisis.}
     \label{fig:crisis_flag}
 \end{figure}
 
-\textbf{Advertencia de fuga de información}: Las condiciones 1, 2 y 3 utilizan variables judiciales (\texttt{creditos\_judiciales}, \texttt{tasa\_judicial}, \texttt{total\_costo\_judicial}) que también aparecen como características de entrada. Esto crea una dependencia directa entre la etiqueta y algunas variables predictoras, lo que constituye un riesgo de target leakage. Las variables judiciales muestran un poder predictivo elevado (AUC individual $> 0,9$) parcialmente porque contribuyen a la definición de la etiqueta. Se recomienda una ablación excluyendo estas variables para estimar su impacto real.
+\textbf{Advertencia de fuga de información}: Las condiciones 1, 2 y 3 utilizan variables judiciales (\texttt{creditos\_judiciales}, \texttt{tasa\_judicial}, \texttt{total\_costo\_judicial}) que también aparecen como características de entrada. Esto crea una dependencia directa entre la etiqueta y algunas variables predictoras, lo que constituye un riesgo de fuga de datos del objetivo o también conocido como \textbf{target leakage}.\\
+
+Las variables judiciales muestran un poder predictivo elevado (AUC individual $> 0,9$) parcialmente porque contribuyen a la definición de la etiqueta. Se recomienda una ablación excluyendo estas variables para estimar su impacto real.
 
 \subsection{Generación de horizontes}
 
 La salida considera dieciocho horizontes mensuales. Para una ventana que termina en $t$, la etiqueta del horizonte $h$ corresponde al estado futuro en $t + h$. CNN y MLP generan un vector de dieciocho probabilidades, mientras que LightGBM entrena un clasificador independiente por horizonte.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=1.0\linewidth]{images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png}
     \caption{Representación conceptual de la ventana de entrada y las etiquetas multi-horizonte. Cada bloque-mes genera una secuencia de 6 meses con 21 características, y 18 etiquetas futuras correspondientes a los horizontes de predicción.}
@@ -241,6 +244,7 @@ La CNN se implementa como una red unidimensional (\texttt{Conv1D}) con la siguie
 \end{itemize}
 
 Configuración de entrenamiento:
+
 \begin{itemize}
     \item Pérdida: \texttt{binary\_crossentropy}
     \item Optimizador: Adam (lr por defecto = 0,001)
@@ -300,17 +304,16 @@ LightGBM se implementa mediante dieciocho clasificadores independientes, uno por
     \item Escalado: MinMaxScaler (fit solo en train)
 \end{itemize}
 
-A diferencia de las redes neuronales, LightGBM no requiere representación secuencial; cada horizonte se entrena como un problema de clasificación binaria independiente con las mismas 21 características.
+A diferencia de las redes neuronales, LightGBM no requiere representación secuencial; cada horizonte se entrena como un problema de clasificación binaria independiente con las mismas 21 características.\\
 
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \small
     \begin{tabular}{
+        | >{\raggedright\arraybackslash}p{2.5cm}
         | >{\raggedright\arraybackslash}p{3.5cm}
-        | >{\raggedright\arraybackslash}p{3.5cm}
-        | >{\raggedright\arraybackslash}p{3.5cm}
-        | >{\raggedright\arraybackslash}p{3.5cm}
-        |
+        | >{\raggedright\arraybackslash}p{5.0cm}
+        | >{\raggedright\arraybackslash}p{3.5cm} |
         }
     \hline
         \textbf{Elemento} & \textbf{LightGBM} & \textbf{CNN} & \textbf{MLP} \\
@@ -325,7 +328,7 @@ A diferencia de las redes neuronales, LightGBM no requiere representación secue
     \hline
         Batch size & N/A (usa bagging) & 32 & 32 \\
     \hline
-        Sample weights & scale\_pos\_weight=5,67 & SÍ (total/2$\times$n\_clase) & NO \\
+        Sample weights & scale\_pos\_weight = 5,67 & SÍ (total/2$\times$n\_clase) & NO \\
     \hline
         Early stopping & 50 rondas & Paciencia 10 (\texttt{val\_loss}) & Paciencia 10 (\texttt{val\_loss}) \\
     \hline
@@ -340,7 +343,7 @@ A diferencia de las redes neuronales, LightGBM no requiere representación secue
     \label{tab:config_modelos}
 \end{table}
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=1.0\linewidth]{images/MM-03 Comparacion de Arquitecturas de Modelos.png}
     \caption{Comparación de arquitecturas: LightGBM entrena 18 modelos independientes (uno por horizonte), mientras que CNN y MLP son redes únicas con 18 salidas sigmoidales. Todos comparten la misma entrada de $6 \times 21$ valores.}
@@ -349,7 +352,7 @@ A diferencia de las redes neuronales, LightGBM no requiere representación secue
 
 \section{Hiperparámetros y estrategia de ajuste}
 
-Los hiperparámetros de LightGBM se seleccionaron mediante búsqueda manual. No se documentan el espacio explorado, el número de configuraciones ni la regla utilizada para detener la búsqueda. Para CNN y MLP se reportan las arquitecturas principales, pero no un procedimiento equivalente de ajuste. Por ello, la comparación refleja las implementaciones disponibles y no una búsqueda equilibrada de la mejor configuración de cada familia.
+Los hiperparámetros de LightGBM se seleccionaron mediante búsqueda manual. No se documentan el espacio explorado, el número de configuraciones ni la regla utilizada para detener la búsqueda. Para CNN y MLP se reportan las arquitecturas principales, pero no un procedimiento equivalente de ajuste. Por ello, la comparación refleja las implementaciones disponibles y no una búsqueda equilibrada de la mejor configuración de cada familia.\\
 
 El valor \texttt{scale\_pos\_weight=5,67} es consistente con una razón aproximada entre clases negativa y positiva, pero el cálculo exacto debe realizarse únicamente con el conjunto de entrenamiento de cada horizonte. El proyecto no presenta los conteos por horizonte necesarios para verificarlo.
 
@@ -362,7 +365,7 @@ La división de datos se implementa en tres etapas temporales, verificada en el 
     \item \textbf{Extracción de validación} (del 70\% de train): Del conjunto de entrenamiento se extrae un 30\% para validación, resultando en:
 \end{enumerate}
 
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \begin{tabular}{|l|l|l|}
     \hline
@@ -379,18 +382,18 @@ La división de datos se implementa en tres etapas temporales, verificada en el 
 \label{tab:splits}
 \end{table}
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{images/MM-02 b Diagrama Linea Tiempo.png}
     \caption{Línea de tiempo de la división temporal de datos. El periodo 2015--2022 se utiliza para entrenamiento y validación, mientras que 2023--2026 se reserva para prueba.}
     \label{fig:timeline}
 \end{figure}
 
-El conjunto de validación se utiliza exclusivamente para early stopping (monitoreo de \texttt{val\_loss} con paciencia de 10 épocas) y checkpoint del mejor modelo. El conjunto de prueba se reserva para una única evaluación al final del entrenamiento.
+El conjunto de validación se utiliza exclusivamente para early stopping (monitoreo de \texttt{val\_loss} con paciencia de 10 épocas) y checkpoint del mejor modelo. El conjunto de prueba se reserva para una única evaluación al final del entrenamiento.\\
 
 \textbf{Limitaciones del protocolo}: (1) No se reportan los conteos exactos de muestras por conjuntos y por horizonte; (2) la semilla no está fijada para CNN y MLP, lo que dificulta la reproducibilidad; (3) no se realizan repeticiones con múltiples semillas para estimar variabilidad; (4) la búsqueda de hiperparámetros fue manual y no documentada.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.65\linewidth]{images/MM-05 Flujo de Entrenamiento.png}
     \caption{Flujo de entrenamiento, registro y selección implementado en el prototipo. Los datos pasan por preprocesamiento, generación de secuencias y división temporal antes de entrenar los tres modelos.}
@@ -399,13 +402,13 @@ El conjunto de validación se utiliza exclusivamente para early stopping (monito
 
 \section{Métricas y criterio de selección}
 
-Los modelos se evalúan mediante accuracy, precision, recall, F1-score y AUC-ROC. El criterio principal implementado para seleccionar el modelo es el AUC-ROC promedio de los dieciocho horizontes registrado en MLflow. En la discusión se examina también el recall, debido a que un AUC moderado puede coexistir con una baja detección de crisis bajo el umbral utilizado.
+Los modelos se evalúan mediante accuracy, precision, recall, F1-score y AUC-ROC. El criterio principal implementado para seleccionar el modelo es el AUC-ROC promedio de los dieciocho horizontes registrado en MLflow. En la discusión se examina también el recall, debido a que un AUC moderado puede coexistir con una baja detección de crisis bajo el umbral utilizado.\\
 
 No se reportan intervalos de confianza, pruebas estadísticas, PR-AUC ni calibración. En consecuencia, no se utiliza el término significativo en sentido estadístico y no se atribuyen diferencias observadas a una causa específica.
 
 \section{Pipeline MLOps y registro de experimentos}
 
-El DAG de entrenamiento se programa para el primer día de cada mes a las 03:00. Sus tareas cubren extracción, carga, preparación, entrenamiento, cálculo de métricas y registro de artefactos. La versión original ejecuta los modelos en paralelo; este diseño puede aumentar la utilización de recursos, pero no se dispone de mediciones de CPU, memoria o temperatura que permitan cuantificar el impacto.
+El DAG de entrenamiento se programa para el primer día de cada mes a las 03:00. Sus tareas cubren extracción, carga, preparación, entrenamiento, cálculo de métricas y registro de artefactos. La versión original ejecuta los modelos en paralelo; este diseño puede aumentar la utilización de recursos, pero no se dispone de mediciones de CPU, memoria o temperatura que permitan cuantificar el impacto.\\
 
 MLflow almacena los resultados de las ejecuciones y permite recuperar el modelo seleccionado. La tesis no documenta un esquema de aprobación humana verificable, reglas de promoción, hash de datos, commit del código ni política de reversión. Por ello, el sistema se presenta como prototipo MLOps y no como una operación regulada en producción.
 
@@ -413,7 +416,7 @@ MLflow almacena los resultados de las ejecuciones y permite recuperar el modelo 
 
 El DAG de inferencia se ejecuta diariamente a las 06:00. Actualiza la vista materializada, carga el modelo registrado, genera probabilidades para los dieciocho horizontes y realiza upsert en \texttt{fact\_predicciones\_mensual}.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.3\linewidth]{images/MM-06 Flujo de Inferencia Diaria.png}
     \caption{Flujo de inferencia y actualización analítica. El DAG diario actualiza la vista materializada, carga el modelo y genera predicciones para los 18 horizontes.}
@@ -426,7 +429,7 @@ La tabla de predicciones contiene probabilidades \texttt{prob\_h01}--\texttt{pro
 
 El datamart adopta un esquema estrella con \texttt{dim\_tiempo}, \texttt{dim\_riesgo}, \texttt{dim\_sector} y \texttt{dim\_sucursal}. Las tablas \texttt{fact\_creditos\_mensual} y \texttt{fact\_predicciones\_mensual} almacenan los agregados históricos y las predicciones. Apache Superset consulta estas tablas para construir siete dashboards: histórico de créditos, análisis dimensional, KPIs generales, predicciones por sucursal, predicciones por sector, evolución temporal y bloques de mayor riesgo.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=1.0\linewidth]{images/MM-09 Diagrama de Integracion.png}
     \caption{Esquema conceptual del datamart analítico. Las dimensiones comparten ambas tablas de hechos: fact\_creditos\_mensual (datos históricos) y fact\_predicciones (salida del modelo).}
@@ -437,37 +440,37 @@ El datamart adopta un esquema estrella con \texttt{dim\_tiempo}, \texttt{dim\_ri
 
 La Tabla 4.6 documenta los recursos utilizados para el entrenamiento de los modelos, extraída del código y la documentación del proyecto.
 
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \small
     \begin{tabular}{|l|l|}
     \hline
     \textbf{Recurso} & \textbf{Especificación} \\
     \hline
-        Procesador & [PENDIENTE: especificar CPU] \\
+        Procesador & Intel i7 12va Generación \\
     \hline
-        Memoria RAM & [PENDIENTE: especificar GB] \\
+        Memoria RAM & 32GB \\
     \hline
-        GPU & [PENDIENTE: especificar si aplica] \\
+        GPU & no presente \\
     \hline
-        Sistema operativo & [PENDIENTE: especificar SO] \\
+        Sistema operativo & Ubuntu Linux 24.02 \\
     \hline
         Python & 3.12 \\
     \hline
-        TensorFlow/Keras & [PENDIENTE: versión] \\
+        TensorFlow/Keras & -- \\
     \hline
-        LightGBM & [PENDIENTE: versión] \\
+        LightGBM & -- \\
     \hline
         PostgreSQL & 15 \\
     \hline
         Apache Airflow & 2.10 \\
     \hline
-        MLflow & [PENDIENTE: versión] \\
+        MLflow & 3.14 \\
     \hline
-        Apache Superset & [PENDIENTE: versión] \\
+        Apache Superset & 6.10 \\
     \hline
     \end{tabular}
-    \caption{Recursos computacionales y versiones de software. Los campos marcados como [PENDIENTE] deben completarse con la información exacta del entorno de ejecución.}
+    \caption{Recursos computacionales y versiones de software. Corresponde a un pc de uso doméstico}
     \label{tab:recursos}
 \end{table}
 
