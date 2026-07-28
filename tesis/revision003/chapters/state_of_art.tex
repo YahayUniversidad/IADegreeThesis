@@ -1,0 +1,56 @@
+Este capítulo presenta una revisión de literatura orientada a identificar enfoques de predicción de riesgo crediticio, herramientas MLOps e integración analítica. No se denomina revisión sistemática, porque los artefactos disponibles no incluyen un protocolo completo de selección, conteos de estudios ni un diagrama reproducible de filtrado.
+
+\section{Estrategia de búsqueda}
+
+La búsqueda reportada utilizó Google Scholar, arXiv y bases de datos científicas, con términos relacionados con credit risk prediction, LightGBM, credit scoring, MLOps y data warehouse. El periodo priorizado fue 2021--2026. Debido a que no se conservaron los conteos de resultados, los criterios detallados de inclusión y exclusión ni la fecha exacta de cada consulta, el capítulo debe interpretarse como una revisión narrativa de las fuentes seleccionadas.
+
+\section{Predicción de riesgo crediticio}
+
+Lessmann et al. \cite{lessmann2015benchmarking} realizaron un benchmark de 41 clasificadores sobre ocho datasets, mostrando que no existe un algoritmo universalmente superior. Moscato et al. \cite{moscato2021benchmark} apoyan la discusión sobre comparaciones reproducibles. Gunnarsson et al. \cite{gunnarsson2021deep} compararon MLP, deep belief network y ensembles usando pruebas estadísticas, confirmando que el rendimiento depende del dataset y la configuración.Yang et al. \cite{yang2025interpretable} estudiaron ensambles e interpretabilidad mediante SHAP. Estos trabajos muestran el uso frecuente de modelos basados en árboles para datos tabulares y resaltan la importancia del tratamiento del desbalance y de la interpretabilidad.\\
+
+La literatura revisada no respalda una superioridad universal de los árboles. Gunnarsson et al. \cite{gunnarsson2021deep}, por ejemplo, reportaron que un MLP obtuvo el mejor resultado en su conjunto de datos. \textbf{Esta diferencia evidencia que el rendimiento depende del tamaño de muestra}, las variables, la distribución, el protocolo de evaluación y la configuración de cada modelo.\\
+
+Shreya y Pathak \cite{shreya2025explainable} compararon XGBoost, LightGBM y Random Forest con técnicas explicativas. Nayak \cite{nayak2026calibrated} combinó calibración, restricciones de equidad y gradient boosting. AlMarri et al. \cite{almarri2025interpreting} compararon clasificadores basados en modelos de lenguaje con LightGBM y analizaron la alineación de sus explicaciones.
+
+\section{MLOps aplicado al riesgo crediticio}
+
+Testi et al. \cite{testi2022mlops} presentaron una taxonomía completa para MLOps. Kreuzberger et al. \cite{kreuzberger2023machine} definieron formalmente MLOps, sus roles, componentes y arquitectura. Sculley et al. \cite{sculley2015hidden} documentaron la deuda técnica oculta en sistemas ML, mientras que Breck et al. \cite{breck2017ml} propusieron una rúbrica de pruebas para preparación en producción. En conjunto, estas fuentes sugieren que la orquestación, el registro de experimentos y el versionado suelen combinarse mediante varias herramientas.\\
+
+Amed et al. \cite{amed2025pdx} propusieron un flujo adaptativo para riesgo crediticio digital con monitoreo y reentrenamiento. Bussmann et al. \cite{bussmann2021explainable} presentaron XAI basada en valores de Shapley para gestión del riesgo crediticio, mientras que Bücker et al. \cite{bucker2022transparency} diferenciaron transparencia, auditabilidad y explicabilidad en modelos crediticios. Estos enfoques muestran que un pipeline MLOps no debe limitarse a automatizar tareas; también debe incorporar validaciones, seguimiento de cambios y criterios de aprobación.
+
+\section{Síntesis comparativa}
+
+\begin{table}[h!]
+    \centering
+    \small
+    \begin{tabular}{
+        | >{\raggedright\arraybackslash}p{2.0cm}
+        | >{\raggedright\arraybackslash}p{2.5cm}
+        | >{\raggedright\arraybackslash}p{2.5cm}
+        | >{\raggedright\arraybackslash}p{2.0cm}
+        | >{\centering\arraybackslash}p{1.5cm}
+        | >{\raggedright\arraybackslash}p{3.0cm} |        
+        }
+        \hline
+            \textbf{Estudio} & \textbf{Datos} & \textbf{Modelos} & \textbf{Horizonte} & \textbf{MLOps} & \textbf{Limitación} \\
+        \hline
+            Lessmann et al. \cite{lessmann2015benchmarking} &  8 datasets & 41 clasificadores & Único & No & Benchmark clásico \\
+        \hline
+            Gunnarsson et al. \cite{gunnarsson2021deep} & Varios set de datos & MLP, DBN, ensembles & Único & No & MLP obtiene mejor resultado \\
+        \hline
+            Nayak \cite{nayak2026calibrated} & Home Credit & Gradient boosting calibrado & Único & No & No reproduce escenario multi-horizonte \\
+        \hline
+            Amed et al. \cite{amed2025pdx} & Préstamos digitales & Modelos adaptativos y MLOps & No especificado & Parcial & Arquitectura y datos distintos \\
+        \hline
+            Testi et al. \cite{testi2022mlops} & Herramientas MLOps & Taxonomía MLOps & No aplica & Sí & Documento conceptual \\
+        \hline
+    \end{tabular}
+    \caption{Síntesis de trabajos relacionados según la información reportada en la tesis.}
+    \label{tab:sintesis_literatura}
+\end{table}
+
+\section{Brechas y posicionamiento del trabajo}
+
+En el conjunto de fuentes revisado se observa una separación entre los estudios de modelado predictivo y los trabajos sobre MLOps. También existe poca evidencia, dentro de la selección disponible, sobre predicción simultánea para dieciocho horizontes y su integración con un datamart institucional. La tesis se posiciona en esa intersección mediante un prototipo que conecta fuentes crediticias, comparación de modelos, registro de experimentos, almacenamiento de predicciones y dashboards.\\
+
+La contribución no consiste en demostrar que LightGBM es universalmente superior, sino en documentar su comportamiento frente a dos arquitecturas neuronales dentro de un escenario concreto y en experimentos controlados. El déficit pendiente es metodológico: se requiere un protocolo reproducible, comparaciones equivalentes, validación externa de la institución y evaluación operativa con usuarios expertos.

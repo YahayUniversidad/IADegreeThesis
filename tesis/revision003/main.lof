@@ -1,0 +1,29 @@
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Diagrama de Arquitectura Propuesta}}{15}{figure.caption.8}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Diagrama de flujo de la definición de \texttt {crisis\_flag}. Cada condición evalúa un umbral y asigna un peso; si la suma total supera 5, el bloque se etiqueta como crisis.}}{19}{figure.caption.13}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Representación conceptual de la ventana de entrada y las etiquetas multi-horizonte. Cada bloque-mes genera una secuencia de 6 meses con 21 características, y 18 etiquetas futuras correspondientes a los horizontes de predicción.}}{20}{figure.caption.14}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Comparación de arquitecturas: LightGBM entrena 18 modelos independientes (uno por horizonte), mientras que CNN y MLP son redes únicas con 18 salidas sigmoidales. Todos comparten la misma entrada de $6 \times 21$ valores.}}{25}{figure.caption.16}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Línea de tiempo de la división temporal de datos. El periodo 2015--2022 se utiliza para entrenamiento y validación, mientras que 2023--2026 se reserva para prueba.}}{26}{figure.caption.18}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Flujo de entrenamiento, registro y selección implementado en el prototipo. Los datos pasan por preprocesamiento, generación de secuencias y división temporal antes de entrenar los tres modelos.}}{27}{figure.caption.19}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Flujo de inferencia y actualización analítica. El DAG diario actualiza la vista materializada, carga el modelo y genera predicciones para los 18 horizontes.}}{28}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Esquema conceptual del datamart analítico. Las dimensiones comparten ambas tablas de hechos: fact\_creditos\_mensual (datos históricos) y fact\_predicciones (salida del modelo).}}{29}{figure.caption.21}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Matriz de correlaciones de Pearson entre las 21 características numéricas del conjunto analítico. Los valores cercanos a 1,0 (color intenso) indican alta correlación positiva. Se observa multicolinealidad severa entre pares como \texttt {num\_creditos}--\texttt {creditos\_cerrados} y \texttt {monto\_total}--\texttt {monto\_promedio}. La multicolinealidad afecta de manera diferente a modelos lineales y no lineales.}}{33}{figure.caption.24}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces AUC-ROC calculada individualmente para cada variablepredictora, evaluada contra la etiqueta \texttt {crisis\_flag}. El AUC-ROC mide la capacidad de cada variable para distinguir entre bloques con y sin crisis, sin considerar interacciones con otras variables.}}{34}{figure.caption.26}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Evolución mensual de la proporción de bloques etiquetados como crisis (\texttt {crisis\_flag}=1) en el periodo 2015--2026. Se observa un incremento en el periodo 2020--2021 seguido de una estabilización. Esta descripción es únicamente observacional; no se establece relación causal con eventos externos.}}{35}{figure.caption.27}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Evolución de las métricas de LightGBM a través de los horizontes evaluados.}}{36}{figure.caption.29}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Importancia de características reportada por LightGBM (``split importance''). El método cuenta la cantidad de veces que cada variable se utiliza para dividir nodos en todos los árboles del ensemble. Las variables judiciales (\texttt {tasa\_judicial}, \texttt {creditos\_judiciales}) predominan, lo cual puede reflejar tanto poder predictivo real como dependencia con la etiqueta \texttt {crisis\_flag} (ver Sección 4.5).}}{37}{figure.caption.30}%
+\contentsline {figure}{\numberline {5.6}{\ignorespaces Curva de pérdida (\texttt {binary\_crossentropy}) durante el entrenamiento de la CNN. La línea continua representa la pérdida en entrenamiento y la discontinua la pérdida en validación (\texttt {val\_loss}). La pérdida se estabiliza en valores elevados ($\sim $12,5), lo que indica que el modelo no logra aprender una discriminación efectiva entre clases.}}{38}{figure.caption.31}%
+\contentsline {figure}{\numberline {5.7}{\ignorespaces Vista del DAG de entrenamiento implementado en Apache Airflow.}}{39}{figure.caption.34}%
+\contentsline {figure}{\numberline {5.8}{\ignorespaces Vista del DAG de inferencia implementado en Apache Airflow.}}{40}{figure.caption.35}%
+\contentsline {figure}{\numberline {5.9}{\ignorespaces Dashboard para el análisis histórico de la cartera crediticia.}}{40}{figure.caption.36}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {A.1}{\ignorespaces Vista complementaria del dashboard histórico de créditos.}}{51}{figure.caption.39}%
+\contentsline {figure}{\numberline {A.2}{\ignorespaces Dashboard de análisis dimensional por riesgo y sector.}}{51}{figure.caption.40}%
+\contentsline {figure}{\numberline {A.3}{\ignorespaces Dashboard de evolución temporal de predicciones.}}{52}{figure.caption.41}%
+\contentsline {figure}{\numberline {A.4}{\ignorespaces Esquema estrella de la tabla \texttt {fact\_creditos\_mensual}. Almacena los agregados históricos de créditos por bloque-mes, incluyendo la variable objetivo \texttt {crisis\_flag}.}}{52}{figure.caption.42}%
+\contentsline {figure}{\numberline {A.5}{\ignorespaces Esquema estrella de la tabla \texttt {fact\_predicciones}. Almacena las probabilidades y predicciones binarias para los 18 horizontes temporales, generadas por el modelo seleccionado.}}{53}{figure.caption.43}%
