@@ -13,6 +13,7 @@ __all__ = [
     "EPOCHS",
     "BATCH_SIZE",
     "PATIENCE",
+    "SEED",
 ]
 
 VENTANA_MLP = 6
@@ -20,3 +21,4 @@ MAX_HORIZONTE = 18
 EPOCHS = 100
 BATCH_SIZE = 32
 PATIENCE = 10
+SEED = 42

@@ -20,6 +20,8 @@ import pandas as pd
 import src.ts_cnn as ts_cnn
 import src.ts_cnn.mlflowCustom as mlflowCustom
 import tensorflow as tf
+import random
+import numpy as np
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras import Model, layers
@@ -330,6 +332,9 @@ class PipelineCNN:
 
         """
         print("Cargando datos...")
+        np.random.seed(ts_cnn.SEED)
+        random.seed(ts_cnn.SEED)
+        tf.random.set_seed(ts_cnn.SEED)
         df = pd.read_csv(input_path)
         df["mes"] = pd.to_datetime(df["mes"])
 

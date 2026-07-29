@@ -196,22 +196,8 @@ def _crear_secuencias_prediccion(df, bloque_id, features, ventana):
 
     X_seq, meses = [], []
     for i in range(len(df_b) - ventana + 1):
-        hist = df_b[features].iloc[i : i + ventana]
-        feats = []
-        for col in features:
-            v = hist[col].values
-            feats.extend(
-                [
-                    np.mean(v),
-                    np.std(v),
-                    np.min(v),
-                    np.max(v),
-                    np.median(v),
-                    v[-1],
-                    v[-1] - v[0],
-                ]
-            )
-        X_seq.append(feats)
+        hist = df_b[features].iloc[i : i + ventana].values.flatten()
+        X_seq.append(hist)
         meses.append(df_b["mes"].iloc[i + ventana - 1])
     return np.array(X_seq), meses, df_b
 
@@ -374,22 +360,8 @@ def _generar_predicciones_futuras(df, modelos, tipo, features, ventana, max_hori
         ultimo_mes = info["mes"].iloc[-1]
 
         # Tomar ultima ventana
-        ultima_ventana = info[features].iloc[-ventana:]
-        feats = []
-        for col in features:
-            v = ultima_ventana[col].values
-            feats.extend(
-                [
-                    np.mean(v),
-                    np.std(v),
-                    np.min(v),
-                    np.max(v),
-                    np.median(v),
-                    v[-1],
-                    v[-1] - v[0],
-                ]
-            )
-        x_in = np.array([feats])
+        ultima_ventana = info[features].iloc[-ventana:].values.flatten()
+        x_in = np.array([ultima_ventana])
 
         # Una fila POR cada horizonte futuro
         for h in range(1, max_horizonte + 1):
@@ -542,6 +514,12 @@ def ejecutar_predicciones(
     features_numericas = config.get("features_numericas", [])
     if not features_numericas:
         raise ValueError("No se encontraron features_numericas en la config del modelo")
+
+    # Filtrar features con varianza cero (igual que en el entrenamiento)
+    features_limpias = [f for f in features_numericas if f in df.columns and df[f].std() > 0]
+    if len(features_limpias) < len(features_numericas):
+        print(f"Features filtradas: {len(features_numericas)} → {len(features_limpias)} (varianza cero eliminadas)")
+    features_numericas = features_limpias
 
     print(f"Tipo: {tipo}, Modelos: {len(modelos)}, Features: {len(features_numericas)}")
 

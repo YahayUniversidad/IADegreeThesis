@@ -57,9 +57,14 @@ def preprocesar_datos(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     ]
 
     features_existentes = [f for f in features_numericas if f in df_features.columns]
+    features_limpias = [f for f in features_existentes if df_features[f].std() > 0]
+    for f in features_limpias:
+        q01 = df_features[f].quantile(0.01)
+        q99 = df_features[f].quantile(0.99)
+        df_features[f] = df_features[f].clip(lower=q01, upper=q99)
     df_features = df_features.sort_values(["bloque_id", "mes"])
 
-    return df_features, features_existentes
+    return df_features, features_limpias
 
 
 def crear_secuencias_lgbm(
@@ -69,11 +74,11 @@ def crear_secuencias_lgbm(
     ventana: int,
     max_horizonte: int,
 ) -> tuple[np.ndarray, np.ndarray, list]:
-    """Genera secuencias temporales con features estadísticas para LightGBM.
+    """Genera secuencias temporales con flatten simple para LightGBM.
 
-    Para cada mes, crea 7 estadísticas (mean, std, min, max, median, last, trend)
-    por cada feature base, resultando en 7 × len(features) features.
-
+    Cada muestra es un vector de ventana × len(features) = 6 × 21 = 126 valores,
+    igual que MLP (sin estadísticas agregadas).
+    
     Args:
         df: DataFrame con los datos.
         bloque_id: Identificador del bloque.
@@ -94,21 +99,8 @@ def crear_secuencias_lgbm(
     meses_target = []
 
     for i in range(len(df_bloque) - ventana - max_horizonte + 1):
-        historial = df_bloque[features].iloc[i : i + ventana]
-
-        features_seq = []
-        for col in features:
-            valores = historial[col].values
-            features_seq.extend([
-                np.mean(valores),
-                np.std(valores),
-                np.min(valores),
-                np.max(valores),
-                np.median(valores),
-                valores[-1],
-                valores[-1] - valores[0],
-            ])
-
+        historial = df_bloque[features].iloc[i : i + ventana].values.flatten()
+        
         y_seq = []
         for h in range(1, max_horizonte + 1):
             if i + ventana + h - 1 < len(df_bloque):
@@ -117,7 +109,7 @@ def crear_secuencias_lgbm(
             else:
                 y_seq.append(0)
 
-        X_sequences.append(features_seq)
+        X_sequences.append(historial)
         y_sequences.append(y_seq)
         meses_target.append(df_bloque["mes"].iloc[i + ventana - 1])
 
@@ -156,11 +148,10 @@ def generar_secuencias(df: pd.DataFrame, features_numericas: list[str]):
 
     feature_names = []
     for col in features_numericas:
-        for stat in ["mean", "std", "min", "max", "median", "last", "trend"]:
-            feature_names.append(f"{col}_{stat}")
+        for t in range(ts_lgbm.VENTANA_LGBM):
+            feature_names.append(f"{col}_t-{ts_lgbm.VENTANA_LGBM - t}")
 
     return X_lgbm, y_lgbm, fechas_lgbm, bloques_validos, feature_names
-
 
 def preparar_splits(
     X: np.ndarray, y: np.ndarray, fechas: np.ndarray
@@ -181,7 +172,7 @@ def preparar_splits(
     X_train, X_test = X[:split_idx], X[split_idx:]
     y_train, y_test = y[:split_idx], y[split_idx:]
 
-    split_val_idx = int(len(X_train) * 0.8)
+    split_val_idx = int(len(X_train) * 0.7)
     X_val = X_train[split_val_idx:]
     y_val = y_train[split_val_idx:]
     X_train = X_train[:split_val_idx]
@@ -219,10 +210,9 @@ def entrenar_modelos(
     modelos = []
     metricas_por_horizonte = []
 
-    print("=" * 60)
-    print("ENTRENAMIENTO DE MODELOS LIGHTGBM")
-    print("=" * 60)
-
+    
+    print("Entrenando...")
+    
     for h in range(ts_lgbm.MAX_HORIZONTE):
         print(f"\n--- Horizonte {h + 1} meses ---")
 

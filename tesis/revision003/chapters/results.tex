@@ -2,7 +2,7 @@ Este capítulo presenta los resultados disponibles y los interpreta en relación
 
 \section{Caracterización del conjunto de datos}
 
-El conjunto consolidado contiene 20.025 registros a nivel bloque-mes y veintiún características numéricas. La distribución reportada para la variable objetivo es de 17.010 registros sin crisis (85\%) y 3.015 con crisis (15\%). Esta proporción evidencia un desbalance que hace necesario interpretar la exactitud junto con precision, recall y AUC-ROC.
+El conjunto consolidado contiene 45.077 registros a nivel bloque-mes y veintiún características numéricas. La distribución reportada para la variable objetivo es de 39.660 registros sin crisis (88\%) y 5.417 con crisis (12\%). Esta proporción evidencia un desbalance que hace necesario interpretar la exactitud junto con precision, recall y AUC-ROC.
 
 \begin{table}[H]
     \centering
@@ -10,9 +10,9 @@ El conjunto consolidado contiene 20.025 registros a nivel bloque-mes y veintiún
     \hline
         \textbf{Clase} & \textbf{Registros} & \textbf{Proporción} \\
     \hline
-        No crisis & 17.010 & 85\% \\
+        No crisis & 39.660 & 88\% \\
     \hline
-        Crisis & 3.015 & 15\% \\
+        Crisis & 5.417 & 12\% \\
     \hline
         \textbf{Total} & 20.025 & 100\% \\
     \hline
@@ -66,7 +66,7 @@ El análisis univariado identifica \texttt{tasa\_judicial} y \texttt{creditos\_j
     \label{fig:auc_roc}
 \end{figure}
 
-Estos resultados requieren una lectura prudente. Una alta capacidad discriminativa de variables judiciales puede ser válida si la información está disponible antes del horizonte predicho; también puede revelar fuga de información si esas variables forman parte de la etiqueta o reflejan un evento contemporáneo. Sin las ocho reglas de \texttt{crisis\_flag}, no es posible distinguir entre ambas explicaciones.
+Estos resultados requieren una lectura prudente. Las variables judiciales son atributos históricos disponibles antes del instante de predicción, por lo que su alta capacidad discriminativa puede reflejar una señal predictiva legítima. Sin embargo, dado que estas mismas variables intervienen en la definición de \texttt{crisis\_flag} (condiciones 1, 2 y 3), parte del poder predictivo observado es atribuible a la circularidad de constructo documentada en la Sección 4.5. La separación entre señal genuina y dependencia estructural requiere una ablación que excluya las variables judiciales del conjunto de predictores.
 
 \subsection{Evolución temporal de la clase positiva}
 

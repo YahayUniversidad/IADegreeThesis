@@ -20,6 +20,7 @@ import pandas as pd
 import src.ts_mlp as ts_mlp
 import src.ts_mlp.mlflowCustom as mlflowCustom
 import tensorflow as tf
+import random
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras import Model, layers
@@ -213,6 +214,9 @@ class PipelineMLP:
             tuple[Model, MinMaxScaler, Any]: Modelo entrenado, escalador y historia.
         """
         print("Cargando datos...")
+        np.random.seed(ts_mlp.SEED)
+        random.seed(ts_mlp.SEED)
+        tf.random.set_seed(ts_mlp.SEED)
         df = pd.read_csv(input_path)
         df["mes"] = pd.to_datetime(df["mes"])
 
@@ -266,10 +270,13 @@ class PipelineMLP:
 
             print("Entrenando...")
 
+            sw_train, sw_val = self._calcular_pesos_muestra(y_train, y_val)
+            
             historia = modelo.fit(
                 X_train,
                 y_train,
-                validation_data=(X_val, y_val),
+                validation_data=(X_val, y_val, sw_val),
+                sample_weight=sw_train,
                 epochs=ts_mlp.EPOCHS,
                 batch_size=ts_mlp.BATCH_SIZE,
                 callbacks=callbacks,
@@ -298,6 +305,27 @@ class PipelineMLP:
             )
 
         return modelo, scaler, historia
+
+
+    def _calcular_pesos_muestra(self, y_train, y_val):
+        """Calcula los pesos de muestra para el entrenamiento y validacion."""
+        sw_train, sw_val = [], []
+        for h in range(ts_mlp.MAX_HORIZONTE):
+            y_ht = y_train[h]
+            n_pos = int(np.sum(y_ht == 1))
+            n_neg = int(np.sum(y_ht == 0))
+            total = n_pos + n_neg
+            w_0 = total / (2.0 * n_neg) if n_neg > 0 else 1.0
+            w_1 = total / (2.0 * n_pos) if n_pos > 0 else 1.0
+            sw_train.append(np.where(y_ht == 1, w_1, w_0).astype(np.float32))
+            y_hv = y_val[h]
+            n_pos_v = int(np.sum(y_hv == 1))
+            n_neg_v = int(np.sum(y_hv == 0))
+            total_v = n_pos_v + n_neg_v
+            w_0v = total_v / (2.0 * n_neg_v) if n_neg_v > 0 else 1.0
+            w_1v = total_v / (2.0 * n_pos_v) if n_pos_v > 0 else 1.0
+            sw_val.append(np.where(y_hv == 1, w_1v, w_0v).astype(np.float32))
+        return sw_train, sw_val
 
 
 def analizar_mlp(

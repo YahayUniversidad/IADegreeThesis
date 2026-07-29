@@ -61,11 +61,11 @@ El proceso ETL (del ingles Extract, Transform and Load) integra tres fuentes ins
     \hline
         \textbf{Fuente} & \textbf{Magnitud Aprox.} & \textbf{Contenido} \\
     \hline
-        CABECERA\_PRESTAMOS & $\sim$500.000 filas & Información maestra de créditos, periodo 2015--2026 \\
+        CABECERA\_PRESTAMOS & 1.044.194 filas & Información maestra de créditos, periodo 2015--2026 \\
     \hline
-        AMORTIZACAL\_PRESTAMOS & $\sim$2.000.000 filas & Tabla de amortización mensual \\
+        AMORTIZACAL\_PRESTAMOS & 24.350.210 filas & Tabla de amortización mensual \\
     \hline
-        RECUPERACION\_PRESTAMOS & $\sim$100.000 filas & Información de juicios y recuperaciones \\
+        RECUPERACION\_PRESTAMOS & 15.741 filas & Información de juicios y recuperaciones \\
     \hline
     \end{tabular}
     \caption{Fuentes de datos utilizadas en el proceso ETL.}
@@ -85,32 +85,32 @@ La Tabla 4.2b documenta la trazabilidad de los datos desde las fuentes hasta las
     \hline
         \textbf{Etapa} & \textbf{Conteo} & \textbf{Descripción} \\
     \hline
-        Filas CABECERA\_PRESTAMOS & $\sim$500.000 & Registros maestros de créditos \\
+        Filas CABECERA\_PRESTAMOS & 1.044.194 & Registros maestros de créditos \\
     \hline
-        Filas AMORTIZACAL\_PRESTAMOS & $\sim$2.000.000 & Cuotas de amortización \\
+        Filas AMORTIZACAL\_PRESTAMOS & 24.350.210 & Cuotas de amortización \\
     \hline
-        Filas RECUPERACION\_PRESTAMOS & $\sim$100.000 & Juicios y recuperaciones \\
+        Filas RECUPERACION\_PRESTAMOS & 15.741 & Juicios y recuperaciones \\
     \hline
         Filas tras integración (JOIN) & -- & Inner join creditos-amortizacion, left join juicios \\
     \hline
-        Bloques-mes en MV & 20.025 & GROUP BY mes, riesgo, sector, sucursal \\
+        Bloques-mes en MV & 45.077 & GROUP BY mes, riesgo, sector, sucursal \\
     \hline
         Bloques con historial $\geq 24$ meses & -- & Requerido: ventana(6) + horizontes(18) \\
     \hline
-        Secuencias generadas & -- & \texttt{X\_cnn.shape[0]} (variable por ejecución) \\
+        Secuencias generadas & 25.434 & Ventanas de 6 meses × features válidas \\
     \hline
-        Conjunto entrenamiento (49\%) & -- & 70\% inicial $\times$ 70\% interno \\
+        Conjunto entrenamiento (49\%) & 12.463 & 70\% inicial $\times$ 70\% interno \\
     \hline
-        Conjunto validación (21\%) & -- & 30\% del train para early stopping \\
+        Conjunto validación (21\%) & 5.340 & 30\% del train para early stopping \\
     \hline
-        Conjunto prueba (30\%) & -- & Reservado para evaluación final \\
+        Conjunto prueba (30\%) & 7.631 & Reservado para evaluación final \\
     \hline
     \end{tabular}
-    \caption{Trazabilidad de datos: transformación desde fuentes hasta conjuntos de entrenamiento. Los conteos exactos deben verificarse en el repositorio.}
+    \caption{Trazabilidad de datos verificada mediante consultas directas a PostgreSQL y MLflow. Conteos extraídos de la ejecución del 29 de julio de 2026.}
     \label{tab:trazabilidad}
 \end{table}
 
-\textbf{Nota sobre la muestra efectiva}: La restricción de que cada bloque-mes debe tener al menos 24 meses de historial continuo (6 meses de ventana + 18 horizontes) reduce drásticamente el número de secuencias disponibles. Mientras que la vista materializada contiene 20.025 bloques-mes, solo los registros con historial completo desde 2015 generan secuencias. En la ejecución documentada, esto resultó en aproximadamente 293 muestras de entrenamiento. Esta cifra debe verificarse en el repositorio, ya que depende de la fecha de extracción y de la política de actualización de la vista materializada.
+\textbf{Nota sobre la muestra efectiva}: La restricción de que cada bloque-mes debe tener al menos 24 meses de historial continuo (6 meses de ventana + 18 horizontes) reduce el número de secuencias disponibles. La vista materializada contiene 45.077 bloques-mes, de los cuales se generan 25.434 secuencias válidas. De éstas, 12.463 se destinan a entrenamiento, 5.340 a validación y 7.631 a prueba. La distribución de la variable objetivo en la MV es 39.660 bloques sin crisis (88\%) y 5.417 con crisis (12\%).
 
 \section{Procesamiento y preparación de datos}
 
@@ -202,9 +202,9 @@ Umbral de decisión: $\sum \text{pesos} \geq 5 \Rightarrow \texttt{crisis\_flag}
     \label{fig:crisis_flag}
 \end{figure}
 
-\textbf{Advertencia de fuga de información}: Las condiciones 1, 2 y 3 utilizan variables judiciales (\texttt{creditos\_judiciales}, \texttt{tasa\_judicial}, \texttt{total\_costo\_judicial}) que también aparecen como características de entrada. Esto crea una dependencia directa entre la etiqueta y algunas variables predictoras, lo que constituye un riesgo de fuga de datos del objetivo o también conocido como \textbf{target leakage}.\\
+\textbf{Circularidad de constructo en la etiqueta}: Las condiciones 1, 2 y 3 de \texttt{crisis\_flag} utilizan variables judiciales (\texttt{creditos\_judiciales}, \texttt{tasa\_judicial}, \texttt{total\_costo\_judicial}) que también aparecen como características de entrada. Dado que el campo \texttt{judicial} es un atributo histórico del crédito (registrado al momento de la operación, antes del instante de predicción), no existe fuga de información temporal en sentido estricto. Sin embargo, el uso de las mismas variables tanto para definir la etiqueta como para predecirla genera una \textbf{circularidad de constructo}: la elevada importancia predictiva de estas variables (AUC-ROC individual $> 0,9$) refleja parcialmente la dependencia estructural con la definición de la etiqueta, y no necesariamente una capacidad genuina de anticipar crisis.\\
 
-Las variables judiciales muestran un poder predictivo elevado (AUC individual $> 0,9$) parcialmente porque contribuyen a la definición de la etiqueta. Se recomienda una ablación excluyendo estas variables para estimar su impacto real.
+Para cuantificar la contribución real de la señal judicial más allá de esta circularidad, se requiere una ablación que excluya \texttt{tasa\_judicial}, \texttt{creditos\_judiciales} y \texttt{total\_costo\_judicial} del conjunto de predictores y compare el rendimiento del modelo con y sin estas variables.
 
 \subsection{Generación de horizontes}
 
