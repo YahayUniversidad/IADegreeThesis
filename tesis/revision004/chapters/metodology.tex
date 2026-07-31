@@ -112,7 +112,7 @@ La Tabla~\ref{tab:trazabilidad} documenta la trazabilidad de los datos desde las
 
 \section{Procesamiento y preparación de datos}
 
-El procesamiento se implementa en una vista materializada y en tareas del DAG (por sus siglas en ingles Gráfico Acíclico Dirigido). Las etapas documentadas son: integración de las tres fuentes, validación de claves, prevención de duplicados mediante la combinaciones de inserciones y actualizaciones de registros, agregación mensual y cálculo de características. El proyecto no aporta un registro completo de filas eliminadas, valores faltantes, criterios de tratamiento de atípicos ni conteos posteriores a cada filtro. Estas decisiones deben versionarse junto con el código para garantizar reproducibilidad.\\
+El procesamiento se implementa en una vista materializada y en tareas del DAG (por sus siglas en inglés, Gráfico Acíclico Dirigido). Las etapas documentadas son: integración de las tres fuentes, validación de claves, prevención de duplicados mediante la combinaciones de inserciones y actualizaciones de registros, agregación mensual y cálculo de características. El proyecto no aporta un registro completo de filas eliminadas, valores faltantes, criterios de tratamiento de atípicos ni conteos posteriores a cada filtro. Estas decisiones deben versionarse junto con el código para garantizar reproducibilidad.\\
 
 Las redes neuronales requieren una representación secuencial. Para cada bloque se utiliza una ventana de seis meses con veintiun características por mes, lo que corresponde a una matriz de $6 \times 21$ y a 126 valores antes de cualquier transformación adicional. La referencia original a 128 valores se corrige porque no se documentan dos variables adicionales.
 
