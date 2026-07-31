@@ -2,7 +2,7 @@
 
 La investigación permitió implementar un prototipo que integra procesamiento de datos crediticios, entrenamiento automatizado, registro de experimentos, almacenamiento analítico y visualización. En la evaluación presentada, LightGBM mostró una mayor capacidad discriminativa que las implementaciones de CNN y MLP. El rendimiento de LightGBM disminuyó conforme aumentó el horizonte, y el recall presentó una reducción especialmente relevante en los plazos largos.\\
 
-El análisis del código fuente permitió documentar completamente las ocho condiciones de \texttt{crisis\_flag}, las 21 características, la arquitectura exacta de cada modelo y el protocolo de división de datos (49\% entrenamiento, 21\% validación, 30\% prueba).
+El análisis del código fuente permitió documentar ampliamente las ocho condiciones de \texttt{crisis\_flag}, las 21 características, la arquitectura exacta de cada modelo y el protocolo de división de datos (49\% entrenamiento, 21\% validación, 30\% prueba).
 
 \section{Respuesta al objetivo general}
 
@@ -12,7 +12,7 @@ El objetivo general se alcanzó en lo relativo al diseño y la integración téc
 
 Respecto al primer objetivo, se identificaron factores plausibles asociados con el comportamiento de las redes neuronales: una muestra secuencial reducida (solo bloques con $\geq 24$ meses de historial generan secuencias), desbalance de clases sin compensación en MLP, ventanas de seis meses y configuración documentada completa. El MLP no implementa \texttt{sample\_weights}, lo que puede explicar su tendencia a predecir todas las observaciones como ``no crisis''. No se realizaron experimentos de ablación, por lo que estos factores no pueden declararse causas demostradas.\\
 
-En relación con el segundo objetivo, LightGBM alcanzó el mayor AUC-ROC bajo las configuraciones disponibles. Esta comparación no demuestra que los modelos basados en árboles sean superiores en todos los conjuntos tabulares, porque la búsqueda de hiperparámetros no fue equivalente (LightGBM usa semilla fija y tuning documentado; CNN y MLP no fijan semilla).\\
+En relación con el segundo objetivo, LightGBM alcanzó el mayor AUC-ROC bajo las configuraciones disponibles. Esta comparación no demuestra que los modelos basados en árboles sean superiores en todos los conjuntos tabulares, porque la búsqueda de hiperparámetros no fue equivalente (LightGBM usa semilla fija y configuración documentada; CNN y MLP no fijan semilla).\\
 
 Para el tercer objetivo, se observó una disminución del rendimiento de LightGBM con el horizonte. El AUC-ROC pasó de 0,874 a un mes a 0,702 a dieciocho meses, mientras que el recall descendió de 0,542 a 0,034. Por tanto, los horizontes largos deben interpretarse con cautela y no pueden considerarse operativamente útiles sin calibración, selección de umbral y análisis de costos de error.\\
 
@@ -51,7 +51,7 @@ El trabajo futuro se organiza en cuatro líneas prioritarias:
 \begin{enumerate}
     \item \textbf{Reproducibilidad y robustez}: Registrar conteos por etapa y horizonte, fijar semillas para todos los modelos, realizar repeticiones con múltiples semillas (al menos 10), y versionar datos, código y entornos mediante \texttt{dvc} o \texttt{git-lfs}.
     
-    \item \textbf{Ablación de leakage}: Repetir la evaluación excluyendo las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) para estimar cuánto del poder predictivo se debe a la dependencia con la etiqueta. Este es el experimento más crítico antes de cualquier implementación operativa.
+    \item \textbf{Análisis de circularidad de constructo}: Repetir la evaluación excluyendo las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) para estimar cuánto del poder predictivo se debe a la dependencia con la etiqueta. Este es el experimento más crítico antes de cualquier implementación operativa.
     
     \item \textbf{Comparación equilibrada}: Equilibrar los presupuestos de ajuste (añadir \texttt{sample\_weights} al MLP, realizar búsqueda de hiperparámetros equivalente para CNN y MLP), reportar intervalos de confianza, incluir PR-AUC, calibración y selección de umbrales basada en costos de error (falsos positivos vs. falsos negativos).
     

@@ -8,7 +8,7 @@ El flujo metodológico comprende: integración de fuentes, agregación mensual, 
 
 \section{Diseño y arquitectura del sistema}
 
-La arquitectura integra cinco componentes: PostgreSQL 15 como repositorio operativo y analítico; Apache Airflow 2.10 como orquestador; Python 3.12 y Notebook Jupyter para el desarrollo de modelos; MLflow para el registro de experimentos; y Apache Superset para la visualización. La Figura 4.1 resume las interacciones entre estos componentes.
+La arquitectura integra cinco componentes: PostgreSQL 15 como repositorio operativo y analítico; Apache Airflow 2.10 como orquestador; Python 3.12 y Notebook Jupyter para el desarrollo de modelos; MLflow para el registro de experimentos; y Apache Superset para la visualización. La Figura~\ref{fig:arquitectura} resume las interacciones entre estos componentes.
 
 \begin{figure}[H]
     \centering
@@ -70,7 +70,7 @@ El proceso ETL (del inglés Extract, Transform and Load) integra tres fuentes in
     \label{tab:fuentes_datos}
 \end{table}
 
-La Tabla 4.3 documenta la trazabilidad de los datos desde las fuentes hasta las muestras de entrenamiento, extraída del análisis del código fuente.
+La Tabla~\ref{tab:trazabilidad} documenta la trazabilidad de los datos desde las fuentes hasta las muestras de entrenamiento, verificada mediante consultas directas a PostgreSQL y MLflow.
 
 \begin{table}[H]
     \centering
@@ -118,7 +118,7 @@ Las redes neuronales requieren una representación secuencial. Para cada bloque 
 
 \section{Ingeniería de características y variable objetivo}
 
-El proyecto calcula veintiuna características numéricas derivadas de las tres fuentes. La Tabla 4.4 presenta el diccionario completo extraído del código fuente.
+El proyecto calcula veintiuna características numéricas derivadas de las tres fuentes. La Tabla~\ref{tab:caracteristicas} presenta el diccionario completo extraído del código fuente.
 
 \begin{table}[H]
     \centering
@@ -436,7 +436,7 @@ El datamart adopta un esquema estrella con \texttt{dim\_tiempo}, \texttt{dim\_ri
 
 \section{Recursos computacionales}
 
-La Tabla 4.6 documenta los recursos utilizados para el entrenamiento de los modelos, extraída del código y la documentación del proyecto.
+La Tabla~\ref{tab:recursos} documenta los recursos utilizados para el entrenamiento de los modelos, extraída del código y la documentación del proyecto.
 
 \begin{table}[H]
     \centering
@@ -451,24 +451,24 @@ La Tabla 4.6 documenta los recursos utilizados para el entrenamiento de los mode
     \hline
         GPU & no presente \\
     \hline
-        Sistema operativo & Ubuntu Linux 24.02 \\
+        Sistema operativo & Ubuntu 24.04 LTS \\
     \hline
         Python & 3.12 \\
     \hline
-        TensorFlow/Keras & -- \\
+        TensorFlow & 2.21.0 \\
     \hline
-        LightGBM & -- \\
+        LightGBM & 4.6.0 \\
     \hline
         PostgreSQL & 15 \\
     \hline
         Apache Airflow & 2.10 \\
     \hline
-        MLflow & 3.14 \\
+        MLflow & 3.14.0 \\
     \hline
-        Apache Superset & 6.10 \\
+        Apache Superset & 6.1.0 \\
     \hline
     \end{tabular}
-    \caption{Recursos computacionales y versiones de software. Corresponde a un pc de uso doméstico}
+    \caption{Recursos computacionales y versiones de software. Hardware de entrenamiento utilizado durante el desarrollo}
     \label{tab:recursos}
 \end{table}
 
@@ -476,7 +476,7 @@ La Tabla 4.6 documenta los recursos utilizados para el entrenamiento de los mode
 
 \section{Versionado y reproducibilidad}
 
-El proyecto utiliza los siguientes mecanismos para garantizar la reproducibilidad:
+El proyecto utiliza los siguientes mecanismos para favorecer la reproducibilidad:
 
 \begin{itemize}
     \item \textbf{Semilla fija}: LightGBM utiliza \texttt{seed=42}; CNN y MLP no fijan semilla.
