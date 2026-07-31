@@ -100,3 +100,6 @@ tesis/revision004/main.synctex.gz
 tesis/revision004/main.synctex.gz
 tesis/revision004/main.fls
 tesis/revision004/main.fdb_latexmk
+*.fdb_latexmk
+*.fls
+*.gz
