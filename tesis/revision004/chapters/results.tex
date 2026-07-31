@@ -14,14 +14,14 @@ El conjunto consolidado contiene 45.077 registros a nivel bloque-mes y veintiún
     \hline
         Crisis & 5.417 & 12\% \\
     \hline
-        \textbf{Total} & 20.025 & 100\% \\
+        \textbf{Total} & 45.077 & 100\% \\
     \hline
     \end{tabular}
     \caption{Distribución global de la variable objetivo.}
     \label{tab:dist_objetivo}
     \end{table}
 
-El número de registros agregados no equivale directamente al número de secuencias utilizadas para entrenar los modelos. La versión original menciona 293 muestras de entrenamiento, pero no incluye los conteos necesarios para reproducir la transformación. Por esta razón, la muestra efectiva y la distribución por horizonte deben verificarse antes de considerar definitiva la evaluación.
+Las 45.077 filas de la vista materializada se reducen a 25.434 secuencias válidas tras aplicar la restricción de 24 meses de historial continuo (6 meses de ventana más 18 horizontes). De estas secuencias, 12.463 se destinan a entrenamiento, 5.340 a validación y 7.631 a prueba, conforme a la trazabilidad documentada en la Sección 4.3.
 
 \section{Resultados del procesamiento y \newline análisis exploratorio}
 
