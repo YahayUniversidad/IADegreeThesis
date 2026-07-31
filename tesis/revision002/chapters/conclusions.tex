@@ -36,7 +36,7 @@ El desarrollo del presente trabajo involucra datos crediticios reales de una ins
 
 \section{Limitaciones}
 
-El estudio presenta limitaciones metodológicas y de generalización. La definición de \texttt{crisis\_flag} quedó documentada mediante ocho condiciones con pesos acumulativos (umbral $\geq 5$), pero existe un riesgo confirmado de target leakage: las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) se utilizan tanto para definir la etiqueta como como características de entrada. Esta dependencia puede inflar artificialmente el poder predictivo de esas variables y del modelo.\\
+El estudio presenta limitaciones metodológicas y de generalización. La definición de \texttt{crisis\_flag} quedó documentada mediante ocho condiciones con pesos acumulativos (umbral $\geq 5$), pero existe un riesgo confirmado de target leakage: las variables judiciales (\texttt{tasa\_judicial}, \texttt{creditos\_judiciales}, \texttt{total\_costo\_judicial}) se utilizan tanto para definir la etiqueta como características de entrada. Esta dependencia puede inflar artificialmente el poder predictivo de esas variables y del modelo.\\
 
 La división de datos sigue un protocolo temporal con tres conjuntos (49\% entrenamiento, 21\% validación, 30\% prueba), y el early stopping utiliza exclusivamente el conjunto de validación. Sin embargo, no se reportan conteos por horizonte, no se fijan semillas para CNN y MLP, y no se realizan repeticiones para estimar variabilidad.\\
 
@@ -46,7 +46,7 @@ Desde la perspectiva operativa, las capturas demuestran la implementación de lo
 
 \section{Trabajo futuro}
 
-El trabajo futuro se organiza en tres líneas prioritarias:
+El trabajo futuro se organiza en cuatro líneas prioritarias:
 
 \begin{enumerate}
     \item \textbf{Reproducibilidad y robustez}: Registrar conteos por etapa y horizonte, fijar semillas para todos los modelos, realizar repeticiones con múltiples semillas (al menos 10), y versionar datos, código y entornos mediante \texttt{dvc} o \texttt{git-lfs}.

@@ -2,7 +2,7 @@ Este capítulo describe el diseño de la investigación, la arquitectura del pro
 
 \section{Diseño de la investigación}
 
-El estudio es practico, cuantitativo y experimental en el sentido de que implementa y compara tres modelos sobre una división temporal del mismo conjunto de datos. La unidad analítica corresponde a un bloque-mes, definido por la combinación de mes, nivel de riesgo, sector económico y sucursal. Sobre cada bloque se calculan características agregadas y una etiqueta binaria de crisis.\\
+El estudio es práctico, cuantitativo y experimental en el sentido de que implementa y compara tres modelos sobre una división temporal del mismo conjunto de datos. La unidad analítica corresponde a un bloque-mes, definido por la combinación de mes, nivel de riesgo, sector económico y sucursal. Sobre cada bloque se calculan características agregadas y una etiqueta binaria de crisis.\\
 
 El flujo metodológico comprende: integración de fuentes, agregación mensual, construcción de características y etiquetas, generación de ventanas temporales, entrenamiento de modelos, evaluación por horizonte, selección del modelo, registro en MLflow, inferencia, almacenamiento de predicciones y visualización detallada.
 
@@ -49,7 +49,7 @@ La implementación incluye un flujo mensual de entrenamiento y un flujo diario d
 
 \section{Fuentes de datos y unidad de análisis}
 
-El proceso ETL (del ingles Extract, Transform and Load) integra tres fuentes institucionales en formato de archivos separados por comas, obtenidos de manera mensual.
+El proceso ETL (del inglés Extract, Transform and Load) integra tres fuentes institucionales en formato de archivos separados por comas, obtenidos de manera mensual.
 
 \begin{table}[H]
     \centering
@@ -72,7 +72,7 @@ El proceso ETL (del ingles Extract, Transform and Load) integra tres fuentes ins
     \label{tab:fuentes_datos}
 \end{table}
 
-La Tabla 4.2b documenta la trazabilidad de los datos desde las fuentes hasta las muestras de entrenamiento, extraída del análisis del código fuente.
+La Tabla 4.3 documenta la trazabilidad de los datos desde las fuentes hasta las muestras de entrenamiento, extraída del análisis del código fuente.
 
 \begin{table}[H]
     \centering
@@ -120,7 +120,7 @@ Las redes neuronales requieren una representación secuencial. Para cada bloque 
 
 \section{Ingeniería de características y variable objetivo}
 
-El proyecto calcula veintiuna características numéricas derivadas de las tres fuentes. La Tabla 4.3 presenta el diccionario completo extraído del código fuente.
+El proyecto calcula veintiuna características numéricas derivadas de las tres fuentes. La Tabla 4.4 presenta el diccionario completo extraído del código fuente.
 
 \begin{table}[H]
     \centering

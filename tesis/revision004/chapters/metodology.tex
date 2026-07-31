@@ -2,20 +2,18 @@ Este capítulo describe el diseño de la investigación, la arquitectura del pro
 
 \section{Diseño de la investigación}
 
-El estudio es practico, cuantitativo y experimental en el sentido de que implementa y compara tres modelos sobre una división temporal del mismo conjunto de datos. La unidad analítica corresponde a un bloque-mes, definido por la combinación de mes, nivel de riesgo, sector económico y sucursal. Sobre cada bloque se calculan características agregadas y una etiqueta binaria de crisis.\\
+El estudio es práctico, cuantitativo y experimental en el sentido de que implementa y compara tres modelos sobre una división temporal del mismo conjunto de datos. La unidad analítica corresponde a un bloque-mes, definido por la combinación de mes, nivel de riesgo, sector económico y sucursal. Sobre cada bloque se calculan características agregadas y una etiqueta binaria de crisis.\\
 
 El flujo metodológico comprende: integración de fuentes, agregación mensual, construcción de características y etiquetas, generación de ventanas temporales, entrenamiento de modelos, evaluación por horizonte, selección del modelo, registro en MLflow, inferencia, almacenamiento de predicciones y visualización detallada.
 
 \section{Diseño y arquitectura del sistema}
 
-La arquitectura integra cinco componentes: PostgreSQL 15 como repositorio operativo y analítico; Apache Airflow 2.10 como orquestador; Python 3.12 y Notebook Jupyter para el desarrollo de modelos; MLflow para el registro de experimentos; y Apache Superset para la visualización.
-
-\section{Síntesis comparativa}
+La arquitectura integra cinco componentes: PostgreSQL 15 como repositorio operativo y analítico; Apache Airflow 2.10 como orquestador; Python 3.12 y Notebook Jupyter para el desarrollo de modelos; MLflow para el registro de experimentos; y Apache Superset para la visualización. La Figura 4.1 resume las interacciones entre estos componentes.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.45\linewidth]{images/mermaid-diagram.png}
-    \caption{Diagrama de Arquitectura Propuesta}
+    \includegraphics[width=0.8\linewidth]{images/MM-04 Arquitectura del Sistema Completo.png}
+    \caption{Arquitectura general del prototipo de inteligencia de negocio y MLOps. Las fuentes se integran mediante ETL, los modelos se entrenan y registran en MLflow, y los resultados se visualizan en Apache Superset.}
     \label{fig:arquitectura}
 \end{figure}
 
@@ -49,7 +47,7 @@ La implementación incluye un flujo mensual de entrenamiento y un flujo diario d
 
 \section{Fuentes de datos y unidad de análisis}
 
-El proceso ETL (del ingles Extract, Transform and Load) integra tres fuentes institucionales en formato de archivos separados por comas, obtenidos de manera mensual.
+El proceso ETL (del inglés Extract, Transform and Load) integra tres fuentes institucionales en formato de archivos separados por comas, obtenidos de manera mensual.
 
 \begin{table}[H]
     \centering
@@ -72,7 +70,7 @@ El proceso ETL (del ingles Extract, Transform and Load) integra tres fuentes ins
     \label{tab:fuentes_datos}
 \end{table}
 
-La Tabla 4.2b documenta la trazabilidad de los datos desde las fuentes hasta las muestras de entrenamiento, extraída del análisis del código fuente.
+La Tabla 4.3 documenta la trazabilidad de los datos desde las fuentes hasta las muestras de entrenamiento, extraída del análisis del código fuente.
 
 \begin{table}[H]
     \centering
@@ -120,7 +118,7 @@ Las redes neuronales requieren una representación secuencial. Para cada bloque 
 
 \section{Ingeniería de características y variable objetivo}
 
-El proyecto calcula veintiuna características numéricas derivadas de las tres fuentes. La Tabla 4.3 presenta el diccionario completo extraído del código fuente.
+El proyecto calcula veintiuna características numéricas derivadas de las tres fuentes. La Tabla 4.4 presenta el diccionario completo extraído del código fuente.
 
 \begin{table}[H]
     \centering
@@ -304,7 +302,7 @@ LightGBM se implementa mediante dieciocho clasificadores independientes, uno por
     \item Escalado: MinMaxScaler (fit solo en train)
 \end{itemize}
 
-A diferencia de las redes neuronales, LightGBM no requiere representación secuencial; cada horizonte se entrena como un problema de clasificación binaria independiente con las mismas 21 características.\\
+A diferencia de las redes neuronales, LightGBM entrena 18 clasificadores independientes, uno por horizonte. Sin embargo, la entrada de cada clasificador es idéntica a la de CNN y MLP: un vector de $6 \times 21 = 126$ valores obtenido mediante aplanamiento de la ventana temporal, sin cálculo de estadísticas agregadas.\\
 
 \begin{table}[H]
     \centering

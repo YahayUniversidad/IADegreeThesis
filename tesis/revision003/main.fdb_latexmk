@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1785368340.11755 "main.aux" "main.bbl" "main" 1785370436.83142 0
+["bibtex main"] 1785368340.11755 "main.aux" "main.bbl" "main" 1785465328.42224 0
   "./bib/referencias.bib" 1785298431.60972 8196 6cc83968691d8a42379beaf49af8894a ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/ieeetran/IEEEtran.bst" 1440712899 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
-  "main.aux" 1785370436.5704 30633 56a4a5c59ecbece1b55db9a2001e9e3a "pdflatex"
+  "main.aux" 1785465328.15005 30633 56a4a5c59ecbece1b55db9a2001e9e3a "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1785370433.4647 "/home/ovelez/Documentos/cursos/Maestria/IADegreeThesis/tesis/revision003/main.tex" "main.pdf" "main" 1785370436.83159 0
+["pdflatex"] 1785465324.80336 "/home/ovelez/Documentos/cursos/Maestria/IADegreeThesis/tesis/revision003/main.tex" "main.pdf" "main" 1785465328.4224 0
   "/etc/texmf/web2c/texmf.cnf" 1756568065.68848 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/ovelez/Documentos/cursos/Maestria/IADegreeThesis/tesis/revision003/main.tex" 1785168067.34358 6578 237c92bd80cbbe3d361b0052a6b0c0e5 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -194,14 +194,14 @@
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1785077733 8212586 7ae05ef55d2c5f12b2b83c56352769a9 ""
   "chapters/abstract.tex" 1785370380.51284 1306 675b471745da2289ccdc69cc9c0bc2f3 ""
   "chapters/appendix.tex" 1785282392.35592 3229 b0cbd476dc4adf73af49a77863fa9c54 ""
-  "chapters/conclusions.tex" 1785293841.16221 7620 ca2c130626d72d73a857f949d91c6ad4 ""
-  "chapters/fundamentals.tex" 1785282392.35592 8206 859e00dc00f0c1420c2dff551a177845 ""
+  "chapters/conclusions.tex" 1785465324.61 7617 9f0fb6f115f1ea137a3ce0ecd7ddc191 ""
+  "chapters/fundamentals.tex" 1785464946.09736 8207 20bfc1fa9b1557464bab86bf06792eab ""
   "chapters/glosaries.tex" 1785168944.30123 1107 74d45f26e09ca7229bb099a69048fc81 ""
   "chapters/introduction.tex" 1785282392.35592 7295 9179d35c2bda75e47341090e4b9faf0c ""
-  "chapters/metodology.tex" 1785298151.33075 28142 23d81c605d46bfaf3fc51f97f0de5aaf ""
-  "chapters/results.tex" 1785298151.33075 14893 8e68d20227357568cb2753f0a1b30bfb ""
+  "chapters/metodology.tex" 1785465196.29067 28143 0df40c729c5cbadc199e47b7e38d3b4e ""
+  "chapters/results.tex" 1785464919.39034 14894 c473d4bdc329fe64b87f22c851200e2b ""
   "chapters/resumen.tex" 1785370433.28054 1423 018767c6778400f6737e9d4f54a4ce69 ""
-  "chapters/state_of_art.tex" 1785298446.71894 6174 07377e92e1112598fcf9ca84bc50bb25 ""
+  "chapters/state_of_art.tex" 1785465000.79447 6175 aa6a84d42b1d2075c28f394e2890a111 ""
   "images/01_heatmap_correlaciones.png" 1785078115.64915 23074 8212b8394dd844ae016ff976bb413c63 ""
   "images/07_tasa_crisis_temporal.png" 1785078119.18648 89461 beaf7f38a529ca24649e8aa5f288d13d ""
   "images/09_auc_roc_variable.png" 1785078123.92492 39107 e0b0b461ed5e3c18441d2806aa2a93ff ""
@@ -226,14 +226,14 @@
   "images/mermaid-diagram.png" 1785078181.91105 188280 993e9df637d5a0589eff8de4ff2a6993 ""
   "images/yachaytech.png" 1785078184.8693 16905 e652f10edb9e416d40d8773c498b8f8d ""
   "main.acronyms" 0 -1 0 ""
-  "main.aux" 1785370436.5704 30633 56a4a5c59ecbece1b55db9a2001e9e3a "pdflatex"
+  "main.aux" 1785465328.15005 30633 56a4a5c59ecbece1b55db9a2001e9e3a "pdflatex"
   "main.bbl" 1785368340.21222 6828 93a7f8a91f64717512f3d4cda87a9731 "bibtex main"
   "main.gls" 0 -1 0 ""
-  "main.lof" 1785370436.5724 5871 753ee67d8252412528cf91b757ca813b "pdflatex"
-  "main.lot" 1785370436.5724 2227 4dec4958c331a24b1d0b5836a961ffb6 "pdflatex"
-  "main.out" 1785370436.5724 15053 ceddcba819da433858c75783fa8f506f "pdflatex"
+  "main.lof" 1785465328.15305 5871 753ee67d8252412528cf91b757ca813b "pdflatex"
+  "main.lot" 1785465328.15305 2227 4dec4958c331a24b1d0b5836a961ffb6 "pdflatex"
+  "main.out" 1785465328.15205 15053 ceddcba819da433858c75783fa8f506f "pdflatex"
   "main.tex" 1785168067.34358 6578 237c92bd80cbbe3d361b0052a6b0c0e5 ""
-  "main.toc" 1785370436.5724 7020 e0a6d9ba5056a5c61174ee03d5ba67d7 "pdflatex"
+  "main.toc" 1785465328.15305 7020 e0a6d9ba5056a5c61174ee03d5ba67d7 "pdflatex"
   (generated)
   "main.aux"
   "main.lof"
