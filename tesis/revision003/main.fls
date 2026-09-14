@@ -1,9 +1,9 @@
-PWD /home/ovelez/Documentos/cursos/Maestria/IADegreeThesis/tesis/revision002
+PWD /home/ovelez/Documentos/cursos/Maestria/IADegreeThesis/tesis/revision003
 INPUT /etc/texmf/web2c/texmf.cnf
 INPUT /usr/share/texmf/web2c/texmf.cnf
 INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
 INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
-INPUT /home/ovelez/Documentos/cursos/Maestria/IADegreeThesis/tesis/revision002/main.tex
+INPUT /home/ovelez/Documentos/cursos/Maestria/IADegreeThesis/tesis/revision003/main.tex
 OUTPUT main.log
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/book.cls
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/book.cls
@@ -384,21 +384,21 @@ INPUT ./images/mermaid-diagram.png
 INPUT ./images/mermaid-diagram.png
 INPUT ./images/mermaid-diagram.png
 INPUT ./images/mermaid-diagram.png
-INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmtt10.tfm
-INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmtt8.tfm
-INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmtt8.tfm
-INPUT ./images/MM-07 Definicion de crisis_flag.png
-INPUT ./images/MM-07 Definicion de crisis_flag.png
-INPUT ./images/MM-07 Definicion de crisis_flag.png
-INPUT ./images/MM-07 Definicion de crisis_flag.png
-INPUT ./images/MM-07 Definicion de crisis_flag.png
-INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
-INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
-INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
-INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
-INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
-INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmtt8.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmtt8.tfm
+INPUT ./images/MM-07 Definicion de crisis_flag.png
+INPUT ./images/MM-07 Definicion de crisis_flag.png
+INPUT ./images/MM-07 Definicion de crisis_flag.png
+INPUT ./images/MM-07 Definicion de crisis_flag.png
+INPUT ./images/MM-07 Definicion de crisis_flag.png
+INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc
+INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
+INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
+INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
+INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
+INPUT ./images/MM-01 Ventana Temporal de Entrada (6 meses × 21 features).png
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmtt10.tfm
 INPUT ./images/MM-03 Comparacion de Arquitecturas de Modelos.png
 INPUT ./images/MM-03 Comparacion de Arquitecturas de Modelos.png
 INPUT ./images/MM-03 Comparacion de Arquitecturas de Modelos.png

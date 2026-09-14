@@ -16,7 +16,7 @@ El esquema estrella organiza una tabla de hechos central y varias tablas de dime
 
 La predicción multi-horizonte estima el estado futuro de una variable para varios plazos. Si $x_t$ representa la información disponible hasta el mes $t$, el objetivo consiste en estimar una probabilidad $\hat{p}_{t+h}$ para cada horizonte $h \in \{1, \ldots, 18\}$. Los horizontes cortos y largos no necesariamente presentan la misma dificultad, porque a mayor distancia en el tiempo aumenta la incertidumbre entre la información actual y el evento futuro.\\
 
-El proyecto utiliza dos estrategias. CNN (del ingles Convolutional Neural Network) y MLP (del Multilayer Perceptron) producen dieciocho salidas simultáneas, una por horizonte. Y el modelo de Gradient Boosting con la implementación en la biblioteca LightGBM desarrollado por Microsoft que utiliza dieciocho clasificadores independientes. Estas estrategias no son idénticas: la salida conjunta puede compartir representaciones entre horizontes, mientras que los modelos independientes optimizan cada plazo por separado. Esta diferencia debe considerarse al interpretar la comparación.
+El proyecto utiliza dos estrategias. CNN (del inglés Convolutional Neural Network) y MLP (del Multilayer Perceptron) producen dieciocho salidas simultáneas, una por horizonte. Y el modelo de Gradient Boosting con la implementación en la biblioteca LightGBM desarrollado por Microsoft que utiliza dieciocho clasificadores independientes. Estas estrategias no son idénticas: la salida conjunta puede compartir representaciones entre horizontes, mientras que los modelos independientes optimizan cada plazo por separado. Esta diferencia debe considerarse al interpretar la comparación.
 
 \section{Clases desbalanceadas}
 
