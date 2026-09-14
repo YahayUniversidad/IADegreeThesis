@@ -63,3 +63,24 @@ Indicar qué resultados se van a mostrar y cómo se organizarían. Por ejemplo:
 
 ---
 ![icon](DocumentosBase/yachayCuadrado.jpg)<br/>***<omar.velez@yachaytech.edu.ec>***<br/>*julio 2026*
+
+
+import librerias
+
+python -m pip install -U matplotlib
+python -m pip install mlflow
+python -m pip install -U polars
+python -m pip install -U psycopg2-binary
+python -m pip install -U lightgbm
+python -m pip install tensorflow
+python -m pip install sqlalchemy
+
+python -m pip install numpy
+python -m pip install pandas
+python -m pip install scikit-learn
+python -m pip install tensorflow
+python -m pip install joblib
+python -m pip install matplotlib
+python -m pip install seaborn
+python -m pip install mlflow
+python -m pip install requests
