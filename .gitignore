@@ -72,3 +72,4 @@ tesis/revision*/DIAGRAMAS_MERMAID_files/
 *.out
 *.synctex.gz
 *.toc
+Contenedores/script/setup.sh

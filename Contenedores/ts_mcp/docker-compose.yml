@@ -11,7 +11,7 @@ services:
       - "5009:5009"
     environment:
       POSTGRES_HOST: "192.168.0.97"
-      POSTGRES_PORT: "5432"
+      POSTGRES_PORT: "5434"
       POSTGRES_USER: "${PG_USER}"
       POSTGRES_PASSWORD: "${PG_PASSWORD}"
       POSTGRES_DB: "${PG_DB}"

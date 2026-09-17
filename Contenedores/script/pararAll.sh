@@ -11,11 +11,6 @@ cd ts_airflow
 cd ..
 echo "Contenedores de airflow detenidos."
 
-cd ts_mlflow
-./parar.sh
-cd ..
-echo "Contenedores de mlflow detenidos."
-
 cd ts_superset
 ./parar.sh
 cd ..

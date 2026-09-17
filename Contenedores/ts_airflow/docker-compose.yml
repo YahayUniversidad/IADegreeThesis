@@ -7,7 +7,8 @@ x-airflow-common: &airflow-common
   image: ts_airflow:latest
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres_srv:5432/${POSTGRES_DB}
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${PG_USER}:${POSTGRES_PASSWORD}@host.docker.internal:${PG_PORT}/${PG_DB}
+    AIRFLOW__DATABASE__SQL_ALCHEMY_SCHEMA: airflow
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false' ## si pone true se cargan los ejemplos
@@ -20,8 +21,8 @@ x-airflow-common: &airflow-common
 
     ## Configuracion de correos
     AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
-    AIRFLOW__SMTP__SMTP_USER: omargo33@gmail.com
-    AIRFLOW__SMTP__SMTP_PASSWORD: 'jqnn imwa oczw ibgx'
+    AIRFLOW__SMTP__SMTP_USER: ${SMTP_USER}
+    AIRFLOW__SMTP__SMTP_PASSWORD: ${SMTP_PASSWORD}
     AIRFLOW__SMTP__SMTP_PORT: 587
     AIRFLOW__SMTP__SMTP_MAIL_FROM: omargo33@gmail.com
   volumes:
@@ -32,30 +33,13 @@ x-airflow-common: &airflow-common
     - ./config:/opt/airflow/config
     - ./data:/opt/airflow/data
   user: "${AIRFLOW_UID:-50000}:0"
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   depends_on:
-    postgres_srv:
-      condition: service_healthy
     redis_srv:
       condition: service_healthy
 
 services:
-  postgres_srv:
-    image: postgres:14
-    container_name: airflow-postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - postgres_data_airflow:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT}:5432"  # Usa 5433 para no conflictuar con tu Superset (5434) u otros
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   redis_srv:
     image: redis:7
     container_name: airflow-redis
@@ -78,6 +62,9 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+    depends_on:
+      airflow_init:
+        condition: service_completed_successfully
 
   airflow_scheduler:
     <<: *airflow-common
@@ -88,6 +75,9 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+    depends_on:
+      airflow_init:
+        condition: service_completed_successfully
 
   airflow_init:
     <<: *airflow-common
@@ -96,6 +86,23 @@ services:
     command:
       - -c
       - |
+        echo "Esperando a PostgreSQL..."
+        python -c "
+        import socket, time, sys
+        for i in range(60):
+            try:
+                s = socket.create_connection(('host.docker.internal', int('${PG_PORT}')), timeout=2)
+                s.close()
+                print('PostgreSQL disponible')
+                sys.exit(0)
+            except OSError:
+                print(f'PostgreSQL no listo, reintentando ({i+1}/60)...')
+                time.sleep(2)
+        print('ERROR: PostgreSQL no respondio despues de 120s')
+        sys.exit(1)
+        "
+
+        echo "Ejecutando migraciones de Airflow..."
         airflow db migrate &&
         airflow users create \
           --username admin \
@@ -105,6 +112,3 @@ services:
           --email admin@example.com \
           --password admin
     restart: "no"
-
-volumes:
-  postgres_data_airflow:

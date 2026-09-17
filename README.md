@@ -84,3 +84,4 @@ python -m pip install matplotlib
 python -m pip install seaborn
 python -m pip install mlflow
 python -m pip install requests
+python -m pip install tensorflow
