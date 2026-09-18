@@ -1,87 +1,102 @@
 # IADegreeThesis
 
-Tesis de grado de IA
+**Sistema Integrado de Inteligencia de Negocio para la Predicción de Crisis Crediticias mediante técnicas de Inteligencia Artificial y Analítica de negocios**
 
-
+Trabajo de titulación — Universidad Yachay Tech
+**Autor:** Omar Antonio Vélez Bayas
+**Tutor:** Juan Pablo Astudillo León, Ph.D.
+*Urcuquí, Agosto 2026*
 
 ## Links
 
 - [Overleaf Project](https://es.overleaf.com/project)
 - [IA super set](https://superset.apache.org/user-docs/using-superset/using-ai-with-superset)
+- [Airflow](https://airflow.apache.org/)
 
+## Estructura de la Tesis
 
-pendientes:
+La tesis se compila desde `tesis/final/main.tex`. Los capítulos están en `tesis/final/chapters/`.
 
-## Capítulo 1: Introducción
+### Preliminares
 
-Este capítulo debe estar completamente desarrollado. Debe incluir:
+| Archivo | Contenido |
+|---|---|
+| `autoria.tex` | Autoría |
+| `autorizacion.tex` | Autorización de publicación |
+| `dedication.tex` | Dedicatoria |
+| `acknowledgments.tex` | Agradecimientos |
+| `resumen.tex` | Resumen en español |
+| `abstract.tex` | Abstract en inglés |
 
-- Background
-- Motivación
-- Planteamiento del problema
-- Objetivo general
-- Objetivos específicos
+### Capítulos principales
 
-## Capítulo 2: Marco teórico
+| # | Capítulo | Archivo | Contenido |
+|---|---|---|---|
+| 1 | Introducción | `introduction.tex` | Background, motivación, planteamiento del problema, objetivo general y específicos |
+| 2 | Marco Teórico | `fundamentals.tex` | Conceptos fundamentales, técnicas, modelos y herramientas utilizadas |
+| 3 | Estado del Arte | `state_of_art.tex` | Revisión de literatura, estrategia de búsqueda, trabajos relacionados, brechas identificadas |
+| 4 | Metodología | `metodology.tex` | Diseño de la propuesta, dataset, preprocesamiento, arquitectura, configuración experimental |
+| 5 | Resultados | `results.tex` | Resultados experimentales, comparación de modelos, análisis de métricas |
+| 6 | Conclusiones | `conclusions.tex` | Conclusiones del trabajo |
 
-Incluir un índice tentativo breve con las secciones y subsecciones principales que debería contener este capítulo. Por ejemplo:
+## Estructura del Proyecto
 
-- Conceptos fundamentales del tema de investigación
-- Técnicas, modelos o herramientas principales
-- Tecnologías relacionadas
-- Métricas o criterios de evaluación
+```
+├── tesis/final/          # Documento LaTeX de la tesis
+│   ├── main.tex          # Archivo principal
+│   ├── chapters/         # Capítulos
+│   ├── bib/              # Bibliografía
+│   ├── images/           # Figuras
+│   └── codes/            # Fragmentos de código
+├── Contenedores/         # Infraestructura Docker
+├── Desarrollo/           # Código fuente de la aplicación
+└── script/               # Scripts de configuración centralizados
+```
 
-## Capítulo 3: Estado del arte
+### Contenedores
 
-Indicar la ecuación de búsqueda o, al menos, describir qué literatura tienes previsto revisar. Un índice tentativo podría ser:
+Infraestructura Docker que sostiene todo el sistema. Cada subdirectorio es un servicio independiente con su propio `docker-compose.yml`, scripts de gestión (`ejecutar.sh`, `parar.sh`) y configuración `.env`. La configuración centralizada vive en `script/setup.sh`.
 
-- Estrategia de búsqueda
-- Criterios de inclusión y exclusión
-- Trabajos relacionados
-- Comparación de enfoques existentes
-- Brechas identificadas en la literatura
+| Servicio | Contenedor | Descripción |
+|---|---|---|
+| `ts_train` | PostgreSQL + pgvector | Base de datos principal. Almacena el datamart, embeddings y datos de entrenamiento. Expuesta en puerto 5434. |
+| `ts_airflow` | Apache Airflow | Orquestador de pipelines. Ejecuta los DAGs de entrenamiento e inferencia. Interfaz web en puerto 8080. |
+| `ts_superset` | Apache Superset | Tableros de analítica de negocio. Conecta al datamart para visualizar predicciones y métricas. Puerto 8088. |
+| `ts_mlflow` | MLflow + RustFS | Tracking de experimentos ML. Registra modelos, métricas y artefactos de CNN, MLP y LightGBM. Puerto 5000. |
+| `ts_mcp` | MCP server | Servidor de herramientas para interacción con el sistema vía protocolo MCP. |
 
-## Capítulo 4: Metodología
+### Desarrollo
 
-Incluir un índice tentativo breve de lo que debería contener este capítulo. Puedes apoyarte en lo sigueinte, pero adaptándolo al enfoque real de la tesis. Por ejemplo:
+Código fuente de la aplicación y pipelines de datos.
 
-- Diseño general de la propuesta
-- Dataset o datos utilizados
-- Preprocesamiento
-- Modelos, algoritmos o arquitectura propuesta
-- Configuración experimental
-- Métricas de evaluación
+| Directorio | Descripción |
+|---|---|
+| `src/` | Módulos principales del sistema |
+| `src/ts_csv/` | ETL: carga y transformación de datos CSV hacia la base de datos |
+| `src/ts_datamart/` | Construcción y actualización del datamart de riesgo crediticio |
+| `src/ts_cnn/` | Pipeline de entrenamiento del modelo CNN |
+| `src/ts_mlp/` | Pipeline de entrenamiento del modelo MLP |
+| `src/ts_lightgbm/` | Pipeline de entrenamiento del modelo LightGBM |
+| `src/ts_predicciones/` | Inferencia: ejecuta predicciones con el modelo seleccionado |
+| `src/ts_eva/` | Análisis EDA/EVA (Exploratory Data/Variable Analysis) |
+| `src/ts_embeddings/` | Generación de embeddings con pgvector |
+| `src/ts_chatbot/` | Chatbot de interacción con el sistema |
+| `src/ts_mcp/` | Herramientas MCP expuestas al servidor |
+| `src/ts_sql/` | Utilidades y queries SQL reutilizables |
+| `src/common/` | Configuración y utilidades compartidas entre módulos |
+| `airflow/` | DAGs de Airflow |
+| `airflow/dag_entrenamiento.py` | DAG de entrenamiento: CSV → EDA → CNN + MLP + LightGBM → MLflow |
+| `airflow/dag_inferencia.py` | DAG de inferencia: CSV → Datamart → Predicción → Superset |
+| `noteBooks/` | Jupyter notebooks de exploración y análisis |
+| `chat_cli.py` | CLI para interactuar con el chatbot |
+| `generate_embeddings.py` | Script standalone para generar embeddings |
+| `run_servers.py` | Script para levantar servidores locales |
 
-## Capítulo 5: Resultados
+#### Dependencias Python
 
-Indicar qué resultados se van a mostrar y cómo se organizarían. Por ejemplo:
-
-- Resultados experimentales
-- Comparación de modelos o enfoques
-- Análisis de métricas
-- Discusión de resultados principales
+```bash
+pip install polars psycopg2-binary mlflow lightgbm tensorflow sqlalchemy numpy pandas scikit-learn joblib matplotlib seaborn requests
+```
 
 ---
-![icon](DocumentosBase/yachayCuadrado.jpg)<br/>***<omar.velez@yachaytech.edu.ec>***<br/>*julio 2026*
-
-
-import librerias
-
-python -m pip install -U matplotlib
-python -m pip install mlflow
-python -m pip install -U polars
-python -m pip install -U psycopg2-binary
-python -m pip install -U lightgbm
-python -m pip install tensorflow
-python -m pip install sqlalchemy
-
-python -m pip install numpy
-python -m pip install pandas
-python -m pip install scikit-learn
-python -m pip install tensorflow
-python -m pip install joblib
-python -m pip install matplotlib
-python -m pip install seaborn
-python -m pip install mlflow
-python -m pip install requests
-python -m pip install tensorflow
+***<omar.velez@yachaytech.edu.ec>*** — *Agosto 2026*

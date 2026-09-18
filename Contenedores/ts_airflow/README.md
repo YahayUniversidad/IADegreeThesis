@@ -26,6 +26,33 @@ Para la configuración del sistema tenemos los siguientes volúmenes:
 - *plugins*: Espacio para los componentes extras a la configuración.
 - *config*: Carpeta con cambios de configuraciones personalizados.
 
+## Variables de Airflow
+
+Los DAGs del proyecto requieren tres **Variables** de Airflow configuradas desde la UI (Admin → Variables) o por CLI. Estas variables se leen en tiempo de ejecución y pueden sobreescribirse por parámetro al lanzar cada DAG.
+
+| Variable | Tipo | Descripción | Usada por | Valor ejemplo |
+|---|---|---|---|---|
+| `string_conexion` | string | Cadena de conexión a PostgreSQL (base de datos del proyecto) | Entrenamiento, Inferencia | `postgresql://postgres_usr:admin123@host.docker.internal:5434/postgres_db` |
+| `mlflow_uri` | string | URI del servidor MLflow Tracking | Entrenamiento, Inferencia | `http://192.168.0.97:5000` |
+| `mlflow_experiment_id` | string | ID del experimento MLflow con el mejor modelo seleccionado | Inferencia | `1` (se obtiene de MLflow tras entrenar) |
+
+> [!NOTE]
+> La base de datos de PostgreSQL (`ts_train`) puede darse de baja y recrearse arbitrariamente. Las variables de Airflow apuntan a ella pero no gestionan su ciclo de vida. Si la base se reinicia, hay que reejecutar el DAG de entrenamiento para repoblar los datos.
+
+> [!IMPORTANT]
+> `mlflow_experiment_id` se setea manualmente después de revisar los resultados del DAG de entrenamiento. El entrenamiento empuja el mejor experimento a XCom (`mejor_experiment_id`), pero es responsabilidad del operador revisar el resultado en MLflow y persistirlo como Variable antes de ejecutar el DAG de inferencia.
+
+### Crear variables por CLI
+
+```bash
+# Desde el contenedor del scheduler
+docker exec airflow-scheduler airflow variables set string_conexion "postgresql://postgres_usr:admin123@host.docker.internal:5434/postgres_db"
+docker exec airflow-scheduler airflow variables set mlflow_uri "http://192.168.0.97:5000"
+
+# Tras ejecutar el DAG de entrenamiento, revisar MLflow y setear el experiment_id del mejor modelo
+docker exec airflow-scheduler airflow variables set mlflow_experiment_id "1"
+```
+
 ## Flujo de Riesgo Crediticio:
 
 Los flujos de riesgo son dos, el primero para la fase de entrenamiento y el segundo es para la aprobación en la puesta a producción o liberado el dashboard a los usuarios finales.
@@ -33,18 +60,19 @@ Los flujos de riesgo son dos, el primero para la fase de entrenamiento y el segu
 **Pasos de entrenamiento:** 
 
 - [x] Up datos CSV a la base de datos entrenamiento
-- [ ] Validación de data completa por consolas a la Base de datos
-- [ ] Lanzamiento de modelo CNN
-- [ ] Lanzamiento de modelo TODO
-- [ ] Comparativa de lanzamiento
-- [ ] Orden de validación por el usuario experto 
+- [x] Validación de data completa por consolas a la Base de datos
+- [x] Lanzamiento de modelo CNN
+- [x] Lanzamiento de modelo lightgbm
+- [x] Lanzamiento de modelo MLP
+- [x] Comparativa de lanzamiento
+- [x] Orden de validación por el usuario experto 
 
 **Pasos de producción**
 
-- [ ] Creación/actualización de data mart
-- [ ] Generación de data predictiva con usos de modelos de IA
-- [ ] Creación/actualización de Dashboards
-- [ ] Informe al usuario de para su análisis
+- [x] Creación/actualización de data mart
+- [x] Generación de data predictiva con usos de modelos de IA
+- [x] Creación/actualización de Dashboards
+- [x] Informe al usuario de para su análisis
 
 ---
 ![icon](../../DocumentosBase/yachayCuadrado.jpg)<br/>***<omar.velez@yachaytech.edu.ec>***<br/>*julio 2026*

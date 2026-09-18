@@ -32,12 +32,15 @@ Contenedores/ts_airflow/plugins/
 *superset_data/
 *superset/__pycache__/
 
+
 # Editor y herramientas
 *.obsidian/
 *.libs/
 *.mimocode/
 *.mimocode_code/
 *DIAGRAMAS_MERMAID_files/
+
+*graphify-out/
 
 # Documentos base
 DocumentosBase/
