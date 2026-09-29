@@ -46,25 +46,6 @@ Contenedores/ts_airflow/plugins/
 # Documentos base
 DocumentosBase/
 
-# Tesis y artefactos de LaTeX
-tesis/TesisMuestra.txt
-tesis/revision*/main.bbl
-tesis/revision*/main.blg
-tesis/revision*/main.fdb_latexmk
-tesis/revision*/main.fls
-tesis/revision*/main.aux
-tesis/revision*/main.synctex.gz
-tesis/revision*/main.toc
-tesis/revision*/main.lof
-tesis/revision*/main.lot
-tesis/revision*/main.out
-tesis/revision*/main.log
-tesis/revision*/main.gz
-tesis/revision*/main.pdf
-tesis/revision*/main.bcf
-tesis/revision*/main.run.xml
-tesis/revision*/RESUMEN_CAMBIOS.md
-tesis/revision*/DIAGRAMAS_MERMAID_files/
 *.aux
 *.bbl
 *.blg

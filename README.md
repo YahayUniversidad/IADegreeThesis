@@ -12,6 +12,8 @@ Trabajo de titulación — Universidad Yachay Tech
 - [Overleaf Project](https://es.overleaf.com/project)
 - [IA super set](https://superset.apache.org/user-docs/using-superset/using-ai-with-superset)
 - [Airflow](https://airflow.apache.org/)
+- [MlFlow](https://mlflow.org/)
+- [Postgres](https://www.postgresql.org/)
 
 ## Estructura de la Tesis
 
