@@ -1,28 +1,36 @@
 #!/bin/bash
-cd ..
+set -e
 
-# Setup centralizado: genera .env y configura permisos
-echo "Ejecutando setup centralizado..."
-cd script
-./setup.sh
-cd ..
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "Iniciando contenedores de train"
-cd ts_train
+# Setup centralizado: genera .env
+echo "=== Ejecutando setup centralizado ==="
+bash "$SCRIPT_DIR/setup.sh"
+echo ""
+
+# ts_train (fuente de datos, DEBE ser primero)
+echo "=== Iniciando ts_train (PostgreSQL) ==="
+cd "$BASE_DIR/ts_train"
 ./ejecutar.sh
-cd ..
+echo ""
 
-echo "Iniciando contenedores de airflow"
-cd ts_airflow
+# ts_airflow (depende de ts_train)
+echo "=== Iniciando ts_airflow ==="
+cd "$BASE_DIR/ts_airflow"
 ./ejecutar.sh
-cd ..
+echo ""
 
-echo "Iniciando contenedores de superset"
-cd ts_superset
+# ts_superset (depende de ts_train)
+echo "=== Iniciando ts_superset ==="
+cd "$BASE_DIR/ts_superset"
 ./ejecutar.sh
-cd ..
+echo ""
 
-echo "Iniciando contenedores de mlflow"
-cd ts_mlflow
+# ts_mlflow (INDEPENDIENTE, no tocar configuración)
+echo "=== Iniciando ts_mlflow ==="
+cd "$BASE_DIR/ts_mlflow"
 ./ejecutar.sh
-cd ..
+echo ""
+
+echo "=== Arquitectura completa levantada ==="

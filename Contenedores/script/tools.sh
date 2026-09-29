@@ -61,3 +61,17 @@ animacion_wait_db() {
   printf "\n\n%s ya está activo en %s:%s\n" "$nombre" "$host" "$port"
   return 0
 }
+
+## Funcion para iniciar contenedores sin perder datos.
+## Si los contenedores ya existen (detenidos), los reinicia con `start`.
+## Si no existen (primera vez), los crea con `up -d`.
+## Acepta los mismos flags que docker compose (ej: -p ts_mlflow).
+docker_start_or_up() {
+  if docker compose "$@" ps -a -q 2>/dev/null | grep -q .; then
+    echo "Contenedores existentes detectados, reiniciando..."
+    docker compose "$@" start
+  else
+    echo "Primera vez, creando contenedores..."
+    docker compose "$@" up -d
+  fi
+}

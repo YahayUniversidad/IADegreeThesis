@@ -14,6 +14,8 @@ services:
       - ./initPostgres:/docker-entrypoint-initdb.d
     ports:
       - "5434:5432"
+    mem_limit: 6g
+    memswap_limit: 6g
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s

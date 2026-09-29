@@ -21,6 +21,8 @@ services:
       MCP_DEV_USERNAME: ${MCP_DEV_USERNAME}
     volumes:
       - ./superset_data:/var/lib/superset
+    mem_limit: 4g
+    memswap_limit: 4g
     command:
       - /bin/bash
       - -c

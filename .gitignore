@@ -4,6 +4,7 @@ modelos_cnn/
 wandb/
 .vscode/
 .venv/
+.agents/
 
 # Logs y salidas temporales
 *logs/
