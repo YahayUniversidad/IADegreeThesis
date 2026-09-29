@@ -1,27 +1,30 @@
 #!/bin/bash
-cd ..
 
-cd ts_train
-./parar.sh
-cd ..
-echo "Contenedores de train detenidos."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_DIR="$(dirname "$SCRIPT_DIR")"
 
-cd ts_airflow
+# ts_mlflow (primero porque es independiente y puede tener contenedores huérfanos)
+echo "=== Deteniendo ts_mlflow ==="
+cd "$BASE_DIR/ts_mlflow"
 ./parar.sh
-cd ..
-echo "Contenedores de airflow detenidos."
+echo ""
 
-cd ts_mlflow
+# ts_superset
+echo "=== Deteniendo ts_superset ==="
+cd "$BASE_DIR/ts_superset"
 ./parar.sh
-cd ..
-echo "Contenedores de mlflow detenidos."
+echo ""
 
-cd ts_superset
+# ts_airflow
+echo "=== Deteniendo ts_airflow ==="
+cd "$BASE_DIR/ts_airflow"
 ./parar.sh
-cd ..
-echo "Contenedores de superset detenidos."
+echo ""
 
-cd ts_mcp
+# ts_train (último porque otros dependen de él)
+echo "=== Deteniendo ts_train ==="
+cd "$BASE_DIR/ts_train"
 ./parar.sh
-cd ..
-echo "Contenedores de mcp detenidos."
+echo ""
+
+echo "=== Todos los contenedores detenidos ==="

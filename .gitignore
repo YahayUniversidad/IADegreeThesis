@@ -4,6 +4,7 @@ modelos_cnn/
 wandb/
 .vscode/
 .venv/
+.agents/
 
 # Logs y salidas temporales
 *logs/
@@ -32,6 +33,7 @@ Contenedores/ts_airflow/plugins/
 *superset_data/
 *superset/__pycache__/
 
+
 # Editor y herramientas
 *.obsidian/
 *.libs/
@@ -39,28 +41,11 @@ Contenedores/ts_airflow/plugins/
 *.mimocode_code/
 *DIAGRAMAS_MERMAID_files/
 
+*graphify-out/
+
 # Documentos base
 DocumentosBase/
 
-# Tesis y artefactos de LaTeX
-tesis/TesisMuestra.txt
-tesis/revision*/main.bbl
-tesis/revision*/main.blg
-tesis/revision*/main.fdb_latexmk
-tesis/revision*/main.fls
-tesis/revision*/main.aux
-tesis/revision*/main.synctex.gz
-tesis/revision*/main.toc
-tesis/revision*/main.lof
-tesis/revision*/main.lot
-tesis/revision*/main.out
-tesis/revision*/main.log
-tesis/revision*/main.gz
-tesis/revision*/main.pdf
-tesis/revision*/main.bcf
-tesis/revision*/main.run.xml
-tesis/revision*/RESUMEN_CAMBIOS.md
-tesis/revision*/DIAGRAMAS_MERMAID_files/
 *.aux
 *.bbl
 *.blg
@@ -72,3 +57,4 @@ tesis/revision*/DIAGRAMAS_MERMAID_files/
 *.out
 *.synctex.gz
 *.toc
+Contenedores/script/setup.sh

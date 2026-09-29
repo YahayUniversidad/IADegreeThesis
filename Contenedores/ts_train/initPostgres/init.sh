@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+    CREATE EXTENSION IF NOT EXISTS vector;
+
+    CREATE SCHEMA IF NOT EXISTS datamart;
+    CREATE SCHEMA IF NOT EXISTS embeddings;
+    CREATE SCHEMA IF NOT EXISTS airflow;
+    CREATE SCHEMA IF NOT EXISTS superset;
+
+    GRANT ALL ON SCHEMA datamart TO "$POSTGRES_USER";
+    GRANT ALL ON SCHEMA embeddings TO "$POSTGRES_USER";
+    GRANT ALL ON SCHEMA airflow TO "$POSTGRES_USER";
+    GRANT ALL ON SCHEMA superset TO "$POSTGRES_USER";
+EOSQL
