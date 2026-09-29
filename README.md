@@ -1,6 +1,6 @@
 # IADegreeThesis
 
-**Sistema Integrado de Inteligencia de Negocio para la Predicción de Crisis Crediticias mediante técnicas de Inteligencia Artificial y Analítica de negocios**
+## Sistema Integrado de Inteligencia de Negocio para la Predicción de Crisis Crediticias mediante técnicas de Inteligencia Artificial y Analítica de negocios
 
 Trabajo de titulación — Universidad Yachay Tech
 **Autor:** Omar Antonio Vélez Bayas
@@ -20,7 +20,7 @@ La tesis se compila desde `tesis/final/main.tex`. Los capítulos están en `tesi
 ### Preliminares
 
 | Archivo | Contenido |
-|---|---|
+| --- | --- |
 | `autoria.tex` | Autoría |
 | `autorizacion.tex` | Autorización de publicación |
 | `dedication.tex` | Dedicatoria |
@@ -31,7 +31,7 @@ La tesis se compila desde `tesis/final/main.tex`. Los capítulos están en `tesi
 ### Capítulos principales
 
 | # | Capítulo | Archivo | Contenido |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1 | Introducción | `introduction.tex` | Background, motivación, planteamiento del problema, objetivo general y específicos |
 | 2 | Marco Teórico | `fundamentals.tex` | Conceptos fundamentales, técnicas, modelos y herramientas utilizadas |
 | 3 | Estado del Arte | `state_of_art.tex` | Revisión de literatura, estrategia de búsqueda, trabajos relacionados, brechas identificadas |
@@ -41,7 +41,7 @@ La tesis se compila desde `tesis/final/main.tex`. Los capítulos están en `tesi
 
 ## Estructura del Proyecto
 
-```
+```bash
 ├── tesis/final/          # Documento LaTeX de la tesis
 │   ├── main.tex          # Archivo principal
 │   ├── chapters/         # Capítulos
@@ -58,7 +58,7 @@ La tesis se compila desde `tesis/final/main.tex`. Los capítulos están en `tesi
 Infraestructura Docker que sostiene todo el sistema. Cada subdirectorio es un servicio independiente con su propio `docker-compose.yml`, scripts de gestión (`ejecutar.sh`, `parar.sh`) y configuración `.env`. La configuración centralizada vive en `script/setup.sh`.
 
 | Servicio | Contenedor | Descripción |
-|---|---|---|
+| --- | --- | --- |
 | `ts_train` | PostgreSQL + pgvector | Base de datos principal. Almacena el datamart, embeddings y datos de entrenamiento. Expuesta en puerto 5434. |
 | `ts_airflow` | Apache Airflow | Orquestador de pipelines. Ejecuta los DAGs de entrenamiento e inferencia. Interfaz web en puerto 8080. |
 | `ts_superset` | Apache Superset | Tableros de analítica de negocio. Conecta al datamart para visualizar predicciones y métricas. Puerto 8088. |
@@ -70,7 +70,7 @@ Infraestructura Docker que sostiene todo el sistema. Cada subdirectorio es un se
 Código fuente de la aplicación y pipelines de datos.
 
 | Directorio | Descripción |
-|---|---|
+| --- | --- |
 | `src/` | Módulos principales del sistema |
 | `src/ts_csv/` | ETL: carga y transformación de datos CSV hacia la base de datos |
 | `src/ts_datamart/` | Construcción y actualización del datamart de riesgo crediticio |
@@ -99,4 +99,7 @@ pip install polars psycopg2-binary mlflow lightgbm tensorflow sqlalchemy numpy p
 ```
 
 ---
+
+![logo](/DocumentosBase/yachayCuadrado.jpg)
+
 ***<omar.velez@yachaytech.edu.ec>*** — *Agosto 2026*
