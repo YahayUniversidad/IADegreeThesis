@@ -223,6 +223,46 @@ LightGBM (*Light Gradient Boosting Machine*) es un algoritmo de boosting basado 
 
 ---
 
+## Tarjeta 6b — ¿Por qué solo h ≤ 6 es fiable?
+
+### Tabla completa de métricas de LightGBM por horizonte
+
+| Horizonte | Accuracy | Precision | Recall | AUC-ROC | ¿Operativo? |
+|-----------|----------|-----------|--------|---------|-------------|
+| 1 mes | 0,937 | 0,694 | 0,542 | **0,874** | Sí |
+| 3 meses | 0,942 | 0,837 | 0,512 | 0,869 | Sí |
+| 6 meses | 0,927 | 0,632 | 0,525 | 0,838 | Sí |
+| 8 meses | — | — | **0,000** | — | **No** |
+| 12 meses | 0,906 | 0,447 | 0,369 | 0,765 | No |
+| 18 meses | 0,897 | 0,500 | **0,034** | **0,702** | No |
+| **Promedio** | **0,917** | **0,571** | **0,391** | **0,800** | — |
+
+### Tres razones
+
+1. **Incertidumbre temporal creciente.** A mayor distancia entre la información actual y el evento futuro, mayor la incertidumbre. Predecir a 18 meses es intrínsecamente más difícil que a 1 mes (`fundamentals.tex:17-19`).
+
+2. **Recall inutilizable en h > 6.** A partir de **h = 8**, el recall cae a **0** bajo el umbral de 0,5: el modelo no identifica *ningún* caso de crisis. A h = 18, el recall es 0,034 (detecta solo el 3% de las crisis reales). Un AUC moderado (> 0,70) puede coexistir con detección casi nula (`results.tex:220`, `conclusions.tex:21`).
+
+3. **Sin calibración ni umbral optimizado.** El umbral 0,5 es una decisión de implementación, no un umbral de negocio validado. Sin análisis de costos de error (falsos negativos vs falsos positivos), los horizontes largos no pueden considerarse operativamente útiles (`results.tex:220`, `conclusions.tex:21`).
+
+### Cifras clave para recordar
+
+| Número | Significado |
+|--------|-------------|
+| **h ≤ 6** | Rango de utilidad operativa |
+| **h = 8** | Punto donde recall = 0 |
+| **0,874** | Mejor AUC-ROC (h = 1) |
+| **0,838** | AUC-ROC en el límite operativo (h = 6) |
+| **0,702** | Peor AUC-ROC (h = 18) |
+| **0,542 → 0,034** | Caída de recall de h=1 a h=18 |
+| **0,5** | Umbral de clasificación utilizado |
+
+### Respuesta modelo para la defensa
+
+> "Aunque el sistema genera predicciones para los 18 horizontes, el análisis muestra que a partir del horizonte 8 el recall cae a cero: el modelo no detecta ninguna crisis con el umbral de 0,5. Por eso la utilidad operativa se concentra en los horizontes cortos (h ≤ 6), donde el AUC-ROC se mantiene por encima de 0,83 y el recall en niveles aceptables (~0,52). Los horizontes largos requieren calibración, selección de umbral y análisis de costos de error antes de ser considerados útiles."
+
+---
+
 ## Tarjeta 7 — Stack Tecnológico
 
 | Componente | Tecnología | Versión |
