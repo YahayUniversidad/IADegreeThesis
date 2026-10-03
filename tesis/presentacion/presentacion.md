@@ -1,5 +1,5 @@
 ---
-marp: true
+marp: false
 theme: default
 class: lead slide--tecnica
 paginate: true
@@ -69,8 +69,7 @@ style: |-
   }
   section.slide--warning {
     background: linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)), url("warning.jpg") no-repeat center center / cover !important;
-
-    padding-top: 90px;
+    padding-top: 45px;
   }
   section.slide--warning .negocio-card {
     background: rgba(255, 255, 255, 0.8);
@@ -88,7 +87,8 @@ style: |-
   section.slide--warning .negocio-card strong {
     color: inherit;
   }
-  section::after {
+  /* Banner decorativo en ::before para no pisar la paginación de Marpit (::after) */
+  section::before {
     content: "";
     position: absolute;
     left: 0px;
@@ -98,6 +98,34 @@ style: |-
     background: url("image5.jpeg") no-repeat left center / contain;
     opacity: 0.95;
     pointer-events: none;
+    z-index: 1;
+  }
+  /* Número de página: texto blanco sobre marco con color */
+  section::after {
+    content: attr(data-marpit-pagination) " / " attr(data-marpit-pagination-total);
+    position: absolute;
+    right: 18px;
+    bottom: 22px;
+    font-size: 0.85em;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #ffffff;
+    background: #1a5276;
+    border: 2px solid #2e86c1;
+    border-radius: 999px;
+    padding: 4px 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    pointer-events: none;
+    z-index: 2;
+    box-sizing: border-box;
+    overflow: visible;
+  }
+  /* En diapositivas invertidas, marco más claro para mantener contraste */
+  section.invert::after,
+  section.slide--negocio.invert::after {
+    color: #1a5276;
+    background: #ffffff;
+    border-color: #1a5276;
   }
 ---
 
@@ -110,10 +138,13 @@ style: |-
 **Omar Vélez Bayas**  
 omar.velez@yachaytech.edu.ec
 
+**Juan Astudillo**
+Tutor
+
 Universidad Yachay Tech  
 Maestría en Inteligencia Artificial
 
-Agosto 2026
+Octubre 2026
 
 ---
 
@@ -277,6 +308,8 @@ CSV (51 archivos) ──→ ETL ──→ PostgreSQL ──→ Datamart (Estrell
 - **51 archivos CSV**: préstamos, amortizaciones, juicios (2015–2026)
 - Carga masiva con `COPY` + proceso incremental `ON CONFLICT DO UPDATE`
 
+---
+
 ### Datamart (Esquema Estrella)
 
 | Dimensión / Hecho | Contenido |
@@ -339,6 +372,8 @@ La consulta SQL genera **12M+ registros** que agotan la memoria RAM.
                                           P(crisis_flag | horizonte h)
 ```
 
+---
+
 | Modelo | Arquitectura diseñada | Multi-horizonte |
 |--------|----------------------|-----------------|
 | **CNN** | Conv1D(64)→BN→Conv1D(128)→BN→MaxPool→Dense(128)→Dense(64) | 18 × Dense(1, sigmoid) |
@@ -346,6 +381,8 @@ La consulta SQL genera **12M+ registros** que agotan la memoria RAM.
 | **LightGBM** | Gradient boosting con `scale_pos_weight` por horizonte | 18 clasificadores independientes |
 
 **Target:** `crisis_flag` (score ≥ 4) · **Pérdida:** binary cross-entropy con pesos por clase (desbalance)
+
+---
 
 ### Nexo con la orquestación programada (Airflow)
 
@@ -367,6 +404,8 @@ La consulta SQL genera **12M+ registros** que agotan la memoria RAM.
 - Modelo seleccionado genera `prob_h01` … `prob_h18`
 - Predicciones se almacenan en `fact_predicciones`
 - **LightGBM** seleccionado como mejor modelo
+
+---
 
 ### Aprobación Humana
 
