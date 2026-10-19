@@ -4,9 +4,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
 
-# Setup centralizado: genera .env
-echo "=== Ejecutando setup centralizado ==="
-bash "$SCRIPT_DIR/setup.sh"
+# Generacion centralizada de .env
+echo "=== Generando archivos .env ==="
+bash "$SCRIPT_DIR/generarEnv.sh"
 echo ""
 
 # ts_train (fuente de datos, DEBE ser primero)

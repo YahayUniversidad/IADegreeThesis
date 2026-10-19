@@ -1,0 +1,46 @@
+# Spec Delta
+
+## MODIFIED Requirements
+
+### Requirement: Variables de entorno configuradas
+El sistema SHALL cargar las variables de entorno desde archivos `.env` para cada servicio, y los servicios `ts_train`, `ts_airflow` y `ts_superset` SHALL obtener sus valores de un conjunto de variables compartidas y consistentes entre sí (mismas credenciales y puerto de PostgreSQL).
+
+#### Scenario: Archivo .env existe
+- **WHEN** existe un archivo .env para un servicio
+- **THEN** el sistema carga las variables y las usa en la configuración
+
+#### Scenario: Archivo .env no existe
+- **WHEN** no existe un archivo .env para un servicio
+- **THEN** el sistema usa valores por defecto o muestra un error
+
+#### Scenario: Valores compartidos entre servicios
+- **WHEN** se generan los `.env` de `ts_train`, `ts_airflow` y `ts_superset`
+- **THEN** las credenciales y el puerto de PostgreSQL referenciados por Airflow y Superset coinciden con los definidos por `ts_train` (publicación en el puerto 5434)
+
+## ADDED Requirements
+
+### Requirement: Generación centralizada de archivos .env
+El sistema SHALL proporcionar el script `Contenedores/script/generarEnv.sh` que genera los archivos `.env` de `ts_train`, `ts_airflow` y `ts_superset` a partir de valores por defecto definidos en un solo lugar, y SHALL sobrescribir los `.env` existentes en cada ejecución. `ts_mlflow` y `ts_mcp` quedan fuera del alcance de este script.
+
+#### Scenario: Primera generación
+- **WHEN** se ejecuta `generarEnv.sh` y no existen archivos `.env` en los servicios cubiertos
+- **THEN** se crean los archivos `.env` de `ts_train`, `ts_airflow` y `ts_superset` con todas las variables que sus `docker-compose.yml` referencian
+
+#### Scenario: Regeneración sobre archivos existentes
+- **WHEN** se ejecuta `generarEnv.sh` y ya existen archivos `.env` generados previamente
+- **THEN** los archivos se sobrescriben con los valores por defecto vigentes del script
+
+#### Scenario: Servicios fuera de alcance
+- **WHEN** se ejecuta `generarEnv.sh`
+- **THEN** no se crean ni modifican archivos en `ts_mlflow` ni `ts_mcp`
+
+### Requirement: Integración del generador en el despliegue centralizado
+`ejecutarAll.sh` SHALL ejecutar `generarEnv.sh` antes de levantar los contenedores, de modo que el despliegue completo no dependa de la creación manual previa de los archivos `.env`.
+
+#### Scenario: Despliegue completo con generación previa
+- **WHEN** se ejecuta `script/ejecutarAll.sh`
+- **THEN** se ejecuta `generarEnv.sh` y, en caso de éxito, continúa el levantamiento ordenado de los contenedores
+
+#### Scenario: Fallo del generador detiene el despliegue
+- **WHEN** `generarEnv.sh` termina con error
+- **THEN** `ejecutarAll.sh` muestra el error y no intenta levantar los contenedores

@@ -6,6 +6,8 @@ x-airflow-common: &airflow-common
   build: .
   image: ts_airflow:latest
   environment: &airflow-common-env
+    ## Permite AIRFLOW_UID arbitrario: la CLI exige un nombre de usuario resoluble
+    USER: airflow
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${PG_USER}:${PG_PASSWORD}@host.docker.internal:${PG_PORT}/${PG_DB}
     AIRFLOW__DATABASE__SQL_ALCHEMY_SCHEMA: airflow
